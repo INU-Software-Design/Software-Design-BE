@@ -20,7 +20,7 @@ public class StudentController {
 
     @PostMapping("/login")
     @Operation(summary = "학생 로그인", description = "학생아이디는 학생에게 주어진 고유 ID입니다. \n" +
-            "비밀번호는 초기에는 생년월일이며, 추후 변경 가능합니다. ")
+            "초기 비밀번호는 생년월일이며, 추후 변경 가능합니다. ")
     public ResponseEntity<StudentResponseDto> login(@RequestBody LoginRequestDto loginRequestDto) {
         return ResponseEntity.ok(studentService.login(loginRequestDto));
     }
