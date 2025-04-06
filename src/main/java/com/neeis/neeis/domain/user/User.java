@@ -1,0 +1,38 @@
+package com.neeis.neeis.domain.user;
+
+import jakarta.persistence.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@Entity
+@Getter
+@RequiredArgsConstructor
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
+    private Long id;
+
+    @Column(nullable = false)
+    private String school;
+
+    @Column(nullable = false, unique = true)
+    private String username;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
+    @Builder
+    private User( String school, String username, String password, Role role) {
+        this.school = school;
+        this.username = username;
+        this.password = password;
+        this.role = role;
+    }
+}
