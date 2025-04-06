@@ -1,11 +1,12 @@
 package com.neeis.neeis.domain.student.controller;
 
-import com.neeis.neeis.domain.student.dto.LoginRequestDto;
-import com.neeis.neeis.domain.student.dto.StudentResponseDto;
 import com.neeis.neeis.domain.student.dto.req.FindIdRequestDto;
 import com.neeis.neeis.domain.student.dto.req.LoginRequestDto;
+import com.neeis.neeis.domain.student.dto.req.PasswordRequestDto;
+import com.neeis.neeis.domain.student.dto.res.PasswordResponseDto;
 import com.neeis.neeis.domain.student.dto.res.StudentResponseDto;
 import com.neeis.neeis.domain.student.service.StudentService;
+import com.neeis.neeis.global.common.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -27,8 +28,6 @@ public class StudentController {
     @PostMapping("/login")
     @Operation(summary = "학생 로그인", description = "학생아이디는 학생에게 주어진 고유 ID입니다. \n" +
             "초기 비밀번호는 생년월일이며, 추후 변경 가능합니다. ")
-    public ResponseEntity<StudentResponseDto> login(@RequestBody LoginRequestDto loginRequestDto) {
-        return ResponseEntity.ok(studentService.login(loginRequestDto));
     public ResponseEntity<CommonResponse<StudentResponseDto>> login(@RequestBody LoginRequestDto loginRequestDto) {
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_LOGIN.getMessage(),studentService.login(loginRequestDto)));
     }
@@ -38,4 +37,11 @@ public class StudentController {
     public ResponseEntity<CommonResponse<StudentResponseDto>> findUsername(@RequestBody FindIdRequestDto findIdRequestDto) {
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_FIND_USERNAME.getMessage(), studentService.findUsername(findIdRequestDto)));
     }
+
+    @PostMapping("/find-password")
+    @Operation(summary = "비밀번호 찾기")
+    public ResponseEntity<CommonResponse<PasswordResponseDto>> findPassword(@RequestBody PasswordRequestDto passwordRequestDto) {
+        return ResponseEntity.ok(CommonResponse.from(SUCCESS_FIND_USERNAME.getMessage(), studentService.findPassword(passwordRequestDto)));
+    }
+
 }
