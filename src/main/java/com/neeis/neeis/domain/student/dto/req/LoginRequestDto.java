@@ -1,12 +1,12 @@
-package com.neeis.neeis.domain.student.dto;
+package com.neeis.neeis.domain.student.dto.req;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 
 @Getter
-@RequiredArgsConstructor
+@NoArgsConstructor
 @Schema(description = "학생 로그인 요청 DTO")
 public class LoginRequestDto {
 

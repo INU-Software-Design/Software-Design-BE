@@ -34,5 +34,15 @@ public class StudentService {
         return StudentResponseDto.of(student);
     }
 
+    public StudentResponseDto findUsername(FindIdRequestDto findIdRequestDto) {
+        Student student = studentRepository.findByPhone(findIdRequestDto.getPhone()).orElseThrow(
+                () -> new CustomException(ErrorCode.ENTITY_NOT_FOUND));
+
+        if(!student.getName().equals(findIdRequestDto.getName()) ||
+        !student.getUser().getSchool().equals(findIdRequestDto.getSchool())) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        return StudentResponseDto.of(student);
+    }
 
 }
