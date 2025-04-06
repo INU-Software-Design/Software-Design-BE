@@ -13,6 +13,14 @@ body:
       required: true
 
   - type: input
+    id: branch
+    attributes:
+      label: '🌳 브랜치명 (Branch)'
+      description: '영어로 브랜치명을 작성해주세요'
+    validations:
+      required: true
+
+  - type: input
     id: description
     attributes:
       label: '📝 상세 내용(Description)'
