@@ -19,8 +19,7 @@ bin/
 
 src/main/resources/**
 application.properties
-
-
+.env
 
 ### IntelliJ IDEA ###
 .idea
