@@ -1,8 +1,8 @@
 package com.neeis.neeis.domain.student;
 
 import com.neeis.neeis.domain.classroom.Classroom;
-import com.neeis.neeis.domain.user.Role;
 import com.neeis.neeis.domain.user.User;
+import com.neeis.neeis.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,13 +12,13 @@ import java.time.LocalDate;
 @Entity
 @NoArgsConstructor
 @Getter
-public class Student {
+public class Student extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String num;
+    private int num;
 
     private String name;
 
@@ -42,7 +42,7 @@ public class Student {
     @JoinColumn(name = "user_id")
     private User user;
 
-    private Student(String num, String name, String image, String gender, String ssn, String address, String phone, LocalDate admissionDate, Classroom classroom) {
+    private Student(int num, String name, String image, String gender, String ssn, String address, String phone, LocalDate admissionDate, Classroom classroom) {
         this.num = num;
         this.name = name;
         this.image = image;

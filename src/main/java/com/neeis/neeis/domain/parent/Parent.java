@@ -1,10 +1,11 @@
 package com.neeis.neeis.domain.parent;
 
 import com.neeis.neeis.domain.student.Student;
+import com.neeis.neeis.global.common.BaseEntity;
 import jakarta.persistence.*;
 
 @Entity
-public class Parent {
+public class Parent extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
