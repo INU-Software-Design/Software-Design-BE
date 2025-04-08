@@ -27,7 +27,7 @@ public class StudentService {
                 () -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
 
         Student student = studentRepository.findByUser(user).orElseThrow(
-                ()  -> new CustomException(ErrorCode.ENTITY_NOT_FOUND));
+                ()  -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if(!user.getPassword().equals(loginRequestDto.getPassword())) {
             throw new CustomException(ErrorCode.LOGIN_INPUT_INVALID);
@@ -38,7 +38,7 @@ public class StudentService {
 
     public StudentResponseDto findUsername(FindIdRequestDto findIdRequestDto) {
         Student student = studentRepository.findByPhone(findIdRequestDto.getPhone()).orElseThrow(
-                () -> new CustomException(ErrorCode.ENTITY_NOT_FOUND));
+                () -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if(!student.getName().equals(findIdRequestDto.getName()) ||
         !student.getUser().getSchool().equals(findIdRequestDto.getSchool())) {
@@ -49,7 +49,7 @@ public class StudentService {
 
     public PasswordResponseDto findPassword(PasswordRequestDto passwordRequestDto) {
         Student student = studentRepository.findByPhone(passwordRequestDto.getPhone()).orElseThrow(
-                () -> new CustomException(ErrorCode.ENTITY_NOT_FOUND));
+                () -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if(!student.getName().equals(passwordRequestDto.getName()) ||
                 !student.getUser().getSchool().equals(passwordRequestDto.getSchool()) ||
