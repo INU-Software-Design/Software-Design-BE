@@ -20,20 +20,20 @@ public class SwaggerConfig {
         Server server = new Server();
         server.setUrl(serverUrl);
 
-//        SecurityScheme securityScheme = new SecurityScheme()
-//                .type(SecurityScheme.Type.HTTP)
-//                .scheme("bearer")
-//                .bearerFormat("JWT")
-//                .in(SecurityScheme.In.HEADER)
-//                .name("Authorization");
-//
-//        SecurityRequirement securityRequirement = new SecurityRequirement().addList("Authorization");
+        SecurityScheme securityScheme = new SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
+                .in(SecurityScheme.In.HEADER)
+                .name("Authorization");
+
+        SecurityRequirement securityRequirement = new SecurityRequirement().addList("Authorization");
 
         return new OpenAPI()
                 .addServersItem(server)
-                .info(apiInfo());
-//                .addSecurityItem(securityRequirement)
-//                .schemaRequirement("Authorization", securityScheme);
+                .info(apiInfo())
+                .addSecurityItem(securityRequirement)
+                .schemaRequirement("Authorization", securityScheme);
     }
 
     private Info apiInfo() {

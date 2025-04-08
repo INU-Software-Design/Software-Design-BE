@@ -7,10 +7,12 @@ import com.neeis.neeis.domain.student.dto.req.LoginRequestDto;
 import com.neeis.neeis.domain.student.dto.req.PasswordRequestDto;
 import com.neeis.neeis.domain.student.dto.res.PasswordResponseDto;
 import com.neeis.neeis.domain.student.dto.res.StudentResponseDto;
+import com.neeis.neeis.domain.student.dto.res.TokenResponseDto;
 import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.domain.user.UserRepository;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
+import com.neeis.neeis.global.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,24 +23,27 @@ import org.springframework.transaction.annotation.Transactional;
 public class StudentService {
     private final StudentRepository studentRepository;
     private final UserRepository userRepository;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    public StudentResponseDto login(LoginRequestDto loginRequestDto) {
+    public TokenResponseDto login(LoginRequestDto loginRequestDto) {
         User user = userRepository.findByUsername(loginRequestDto.getLoginId()).orElseThrow(
-                () -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
+                () -> new CustomException(ErrorCode.LOGIN_INPUT_INVALID));
 
         Student student = studentRepository.findByUser(user).orElseThrow(
-                ()  -> new CustomException(ErrorCode.ENTITY_NOT_FOUND));
+                ()  -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if(!user.getPassword().equals(loginRequestDto.getPassword())) {
             throw new CustomException(ErrorCode.LOGIN_INPUT_INVALID);
         }
 
-        return StudentResponseDto.of(student);
+        String accessToken = jwtTokenProvider.createAccessToken(user.getUsername(), user.getRole().name());
+
+        return TokenResponseDto.of(accessToken);
     }
 
     public StudentResponseDto findUsername(FindIdRequestDto findIdRequestDto) {
         Student student = studentRepository.findByPhone(findIdRequestDto.getPhone()).orElseThrow(
-                () -> new CustomException(ErrorCode.ENTITY_NOT_FOUND));
+                () -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if(!student.getName().equals(findIdRequestDto.getName()) ||
         !student.getUser().getSchool().equals(findIdRequestDto.getSchool())) {
@@ -49,7 +54,7 @@ public class StudentService {
 
     public PasswordResponseDto findPassword(PasswordRequestDto passwordRequestDto) {
         Student student = studentRepository.findByPhone(passwordRequestDto.getPhone()).orElseThrow(
-                () -> new CustomException(ErrorCode.ENTITY_NOT_FOUND));
+                () -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if(!student.getName().equals(passwordRequestDto.getName()) ||
                 !student.getUser().getSchool().equals(passwordRequestDto.getSchool()) ||
