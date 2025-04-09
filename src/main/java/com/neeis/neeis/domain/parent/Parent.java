@@ -3,8 +3,13 @@ package com.neeis.neeis.domain.parent;
 import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.global.common.BaseEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Parent extends BaseEntity {
 
     @Id

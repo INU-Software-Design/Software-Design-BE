@@ -15,7 +15,7 @@ public enum ErrorCode {
     INVALID_TYPE_VALUE(HttpStatus.BAD_REQUEST,"Common-004", " Invalid Type Value"),
     HANDLE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "Common-005", "Access is Denied"),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "Common-006", "Token Expired"),
-
+    INVALID_DATA(HttpStatus.CONFLICT, "DB-001", "Invalid Data"),
     //Member Validation
     USER_NOT_FOUND(HttpStatus.BAD_REQUEST,"Member-001", "회원정보를 찾을 수 없습니다."),
     LOGIN_INPUT_INVALID(HttpStatus.BAD_REQUEST, "Member-002", "회원정보를 찾을 수 없습니다.")
