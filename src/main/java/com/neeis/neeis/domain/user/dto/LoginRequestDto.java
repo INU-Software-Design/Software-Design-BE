@@ -1,4 +1,4 @@
-package com.neeis.neeis.domain.student.dto.req;
+package com.neeis.neeis.domain.user.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
