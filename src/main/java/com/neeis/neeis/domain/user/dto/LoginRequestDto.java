@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Schema(description = "학생 로그인 요청 DTO")
 public class LoginRequestDto {
 
-    @Schema(description = "로그인 아이디", example = "학생아이디")
+    @Schema(description = "로그인 아이디", example = "로그인아이디")
     private String loginId;
 
     @Schema(description = "비밀번호", example = "비밀번호")
