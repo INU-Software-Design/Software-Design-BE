@@ -14,7 +14,7 @@ import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.domain.user.service.UserService;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
-import com.neeis.neeis.global.jwt.JwtTokenProvider;
+import com.neeis.neeis.global.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +30,7 @@ public class TeacherService {
     private final ClassroomRepository classroomRepository;
     private final UserService userService;
     private final StudentService studentService;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final JwtProvider jwtProvider;
 
     // 담당 학생들 조회
     public List<StudentResponseDto> getStudents(String username) {

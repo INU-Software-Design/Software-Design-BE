@@ -5,18 +5,14 @@ import com.neeis.neeis.domain.parent.ParentRepository;
 import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.domain.student.StudentRepository;
 import com.neeis.neeis.domain.student.dto.req.FindIdRequestDto;
-import com.neeis.neeis.domain.user.dto.LoginRequestDto;
 import com.neeis.neeis.domain.student.dto.req.PasswordRequestDto;
 import com.neeis.neeis.domain.student.dto.res.PasswordResponseDto;
 import com.neeis.neeis.domain.student.dto.res.StudentDetailResDto;
 import com.neeis.neeis.domain.student.dto.res.StudentResponseDto;
-import com.neeis.neeis.domain.student.dto.res.TokenResponseDto;
-import com.neeis.neeis.domain.user.User;
-import com.neeis.neeis.domain.user.UserRepository;
 import com.neeis.neeis.domain.user.service.UserService;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
-import com.neeis.neeis.global.jwt.JwtTokenProvider;
+import com.neeis.neeis.global.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +26,7 @@ public class StudentService {
     private final StudentRepository studentRepository;
     private final ParentRepository parentRepository;
     private final UserService userService;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final JwtProvider jwtProvider;
 
 
     // 아이디 찾기

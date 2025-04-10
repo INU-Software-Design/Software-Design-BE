@@ -21,15 +21,15 @@ import java.io.IOException;
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtTokenProvider jwtTokenProvider;
+    private final JwtProvider jwtProvider;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        String accessToken = jwtTokenProvider.resolveToken(request);
+        String accessToken = jwtProvider.resolveToken(request);
         try {
             if (accessToken != null) {
-                Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
+                Authentication authentication = jwtProvider.getAuthentication(accessToken);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }catch(ExpiredJwtException e) {
