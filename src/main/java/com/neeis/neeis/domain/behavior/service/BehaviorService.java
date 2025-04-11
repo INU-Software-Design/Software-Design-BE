@@ -34,5 +34,25 @@ public class BehaviorService {
         return BehaviorResponseDto.of(behavior);
     }
 
+    public BehaviorDetailResponseDto getBehavior(String username, Long studentId) {
+        // 교사 확인
+        Teacher teacher = teacherService.authenticate(username);
+
+        // 담당 학급 확인
+        Classroom classroom = teacherService.checkClassroom(teacher.getId());
+
+        Student student = studentService.getStudent(studentId);
+
+        // 담당 학생 아닐 경우 접근 제한.
+        if(!student.getClassroom().getId().equals(classroom.getId())) {
+            throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
+        }
+
+        Behavior behavior = behaviorRepository.findByStudentId(student.getId()).orElseThrow(
+                () -> new CustomException(ErrorCode.DATA_NOT_FOUND));
+
+        return BehaviorDetailResponseDto.of(behavior);
+    }
+
 
 }

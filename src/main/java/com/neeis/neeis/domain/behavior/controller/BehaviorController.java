@@ -28,4 +28,12 @@ public class BehaviorController {
     public ResponseEntity<CommonResponse<BehaviorResponseDto>> postBehavior(@RequestParam Long studentId, @RequestBody BehaviorRequestDto requestDto) {
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_POST_BEHAVIOR.getMessage(), behaviorService.postBehavior(studentId, requestDto)));
     }
+
+    @GetMapping
+    @Operation(summary = "행동 / 태도 조회", description = "학생 개인의 행동, 행동피드백, 태도, 태도피드백을 조회합니다. ")
+    public ResponseEntity<CommonResponse<BehaviorDetailResponseDto>> getBehavior( @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam Long studentId ) {
+        return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_BEHAVIOR.getMessage(), behaviorService.getBehavior(userDetails.getUsername(),studentId)));
+    }
+
 }
