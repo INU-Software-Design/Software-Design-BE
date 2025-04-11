@@ -43,7 +43,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests((auth) -> auth
                         .requestMatchers("/swagger-ui/**","/swagger-ui/index.html#/","/v3/api-docs/**", "/swagger-resources/**").permitAll()
                         .requestMatchers("/users/login", "/students/id", "/students/password").permitAll()
-                        .requestMatchers("/teachers/**").hasAnyAuthority("ROLE_TEACHER")
+                        .requestMatchers("/teachers/**", "/behavior/**").hasAnyAuthority("ROLE_TEACHER")
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
                 ;
