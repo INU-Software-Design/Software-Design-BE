@@ -56,9 +56,7 @@ public class StudentService {
     }
 
     public StudentDetailResDto getStudentDetails(Long studentId) {
-        Student student = studentRepository.findById(studentId).orElseThrow(
-                () -> new CustomException(ErrorCode.USER_NOT_FOUND)
-        );
+        Student student = getStudent(studentId);
 
         List<Parent> parents = parentRepository.findByStudent(student);
 
@@ -70,5 +68,11 @@ public class StudentService {
                 .findFirst().orElseThrow( () -> new CustomException(ErrorCode.INVALID_DATA));
 
         return StudentDetailResDto.of(student, father, mother);
+    }
+
+    public Student getStudent(Long studentId) {
+        return studentRepository.findById(studentId).orElseThrow(
+                () -> new CustomException(ErrorCode.USER_NOT_FOUND)
+        );
     }
 }
