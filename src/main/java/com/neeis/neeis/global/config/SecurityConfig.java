@@ -1,7 +1,7 @@
 package com.neeis.neeis.global.config;
 
 import com.neeis.neeis.global.jwt.JwtAuthenticationFilter;
-import com.neeis.neeis.global.jwt.JwtTokenProvider;
+import com.neeis.neeis.global.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtTokenProvider jwtTokenProvider;
+    private final JwtProvider jwtProvider;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
@@ -43,9 +43,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests((auth) -> auth
                         .requestMatchers("/swagger-ui/**","/swagger-ui/index.html#/","/v3/api-docs/**", "/swagger-resources/**").permitAll()
                         .requestMatchers("/users/login", "/students/id", "/students/password").permitAll()
-                        .requestMatchers("/teachers/**").hasAnyAuthority("ROLE_TEACHER")
+                        .requestMatchers("/teachers/**", "/behavior/**").hasAnyAuthority("ROLE_TEACHER")
                         .anyRequest().authenticated())
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
                 ;
 
         return http.build();

@@ -6,7 +6,7 @@ import com.neeis.neeis.domain.user.UserRepository;
 import com.neeis.neeis.domain.user.dto.LoginRequestDto;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
-import com.neeis.neeis.global.jwt.JwtTokenProvider;
+import com.neeis.neeis.global.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +17,7 @@ import static com.neeis.neeis.global.exception.ErrorCode.USER_NOT_FOUND;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final JwtProvider jwtProvider;
 
     public TokenResponseDto login(LoginRequestDto loginRequestDto) {
         User user = userRepository.findByUsername(loginRequestDto.getLoginId()).orElseThrow(
@@ -27,7 +27,7 @@ public class UserService {
             throw new CustomException(ErrorCode.LOGIN_INPUT_INVALID);
         }
 
-        String accessToken = jwtTokenProvider.createAccessToken(user.getUsername(), user.getRole().name());
+        String accessToken = jwtProvider.createAccessToken(user.getUsername(), user.getRole().name());
 
         return TokenResponseDto.of(accessToken);
     }

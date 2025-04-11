@@ -14,7 +14,7 @@ import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.domain.user.service.UserService;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
-import com.neeis.neeis.global.jwt.JwtTokenProvider;
+import com.neeis.neeis.global.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -30,19 +30,14 @@ public class TeacherService {
     private final ClassroomRepository classroomRepository;
     private final UserService userService;
     private final StudentService studentService;
-    private final JwtTokenProvider jwtTokenProvider;
 
     // 담당 학생들 조회
     public List<StudentResponseDto> getStudents(String username) {
         Teacher teacher = authenticate(username);
-        int year = LocalDate.now().getYear();
-
-        // 담당 학급 확인
-        Classroom classroom = classroomRepository.findByTeacherAndYear(teacher.getId(),year).orElseThrow(
-                () -> new RuntimeException("Classroom not found")
-        );
+        Classroom classroom = checkClassroom(teacher.getId());
 
         List<Student> students = studentRepository.findByClassroom(classroom);
+
         List<StudentResponseDto> studentResponseDtos = new ArrayList<>();
         if(students != null && !students.isEmpty()) {
             for (Student student : students) {
@@ -61,7 +56,7 @@ public class TeacherService {
     }
 
 
-    private Teacher authenticate(String username) {
+    public Teacher authenticate(String username) {
         // loginId -> user -> student 로
         User user = userService.getUser(username);
 
@@ -74,6 +69,15 @@ public class TeacherService {
                 () -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         return teacher;
+    }
+
+    public Classroom checkClassroom(Long teacherId) {
+        int year = LocalDate.now().getYear();
+        // 담당 학급 확인
+        return classroomRepository.findByTeacherAndYear(teacherId,year).orElseThrow(
+                () -> new RuntimeException("Classroom not found")
+        );
+
     }
 
 }
