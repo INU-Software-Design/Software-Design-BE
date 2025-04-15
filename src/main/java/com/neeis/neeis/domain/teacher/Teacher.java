@@ -1,6 +1,5 @@
 package com.neeis.neeis.domain.teacher;
 
-import com.neeis.neeis.domain.user.Role;
 import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.global.common.BaseEntity;
 import jakarta.persistence.*;

@@ -65,10 +65,8 @@ public class TeacherService {
             throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
         }
 
-        Teacher teacher = teacherRepository.findByUser(user).orElseThrow(
+        return teacherRepository.findByUser(user).orElseThrow(
                 () -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        return teacher;
     }
 
     public Classroom checkClassroom(Long teacherId) {

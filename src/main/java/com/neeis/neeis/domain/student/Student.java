@@ -4,13 +4,15 @@ import com.neeis.neeis.domain.classroom.Classroom;
 import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.global.common.BaseEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
 @Entity
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class Student extends BaseEntity {
 
@@ -42,6 +44,7 @@ public class Student extends BaseEntity {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Builder
     private Student(int num, String name, String image, String gender, String ssn, String address, String phone, LocalDate admissionDate, Classroom classroom) {
         this.num = num;
         this.name = name;
