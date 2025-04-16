@@ -2,6 +2,8 @@ package com.neeis.neeis.domain.teacher.service;
 
 import com.neeis.neeis.domain.classroom.Classroom;
 import com.neeis.neeis.domain.classroom.ClassroomRepository;
+import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
+import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
 import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.domain.student.StudentRepository;
 import com.neeis.neeis.domain.student.dto.res.StudentDetailResDto;
@@ -28,19 +30,24 @@ public class TeacherService {
     private final TeacherRepository teacherRepository;
     private final StudentRepository studentRepository;
     private final ClassroomRepository classroomRepository;
+    private final ClassroomStudentRepository classroomStudentRepository;
     private final UserService userService;
     private final StudentService studentService;
 
     // 담당 학생들 조회
-    public List<StudentResponseDto> getStudents(String username) {
+    public List<StudentResponseDto> getStudents(String username, int year) {
         Teacher teacher = authenticate(username);
-        Classroom classroom = checkClassroom(teacher.getId());
+        Classroom classroom = checkClassroom(teacher.getId(), year);
 
-        List<Student> students = studentRepository.findByClassroom(classroom);
+        List<ClassroomStudent> classroomStudentList = classroomStudentRepository.findByClassroom(classroom);
 
+        List<Student> studentList = new ArrayList<>();
+        for (ClassroomStudent classroomStudent : classroomStudentList) {
+            studentList.add(classroomStudent.getStudent());
+        }
         List<StudentResponseDto> studentResponseDtos = new ArrayList<>();
-        if(students != null && !students.isEmpty()) {
-            for (Student student : students) {
+        if(!studentList.isEmpty()) {
+            for (Student student : studentList) {
                 StudentResponseDto dto = StudentResponseDto.of(student);
                 studentResponseDtos.add(dto);
             }
@@ -48,13 +55,12 @@ public class TeacherService {
         return studentResponseDtos;
     }
 
-    public StudentDetailResDto getStudentDetail( Long studentId) {
+    public StudentDetailResDto getStudentDetail( Long studentId,int year) {
 //        Teacher teacher = authenticate(username);
-        return studentService.getStudentDetails(studentId);
+        return studentService.getStudentDetails(studentId, year);
 
 
     }
-
 
     public Teacher authenticate(String username) {
         // loginId -> user -> student 로
@@ -69,13 +75,23 @@ public class TeacherService {
                 () -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
-    public Classroom checkClassroom(Long teacherId) {
-        int year = LocalDate.now().getYear();
-        // 담당 학급 확인
-        return classroomRepository.findByTeacherAndYear(teacherId,year).orElseThrow(
-                () -> new RuntimeException("Classroom not found")
+    public Classroom checkClassroom(Long teacherId, int year) {
+        return classroomRepository.findByTeacherIdAndYear(teacherId,year).orElseThrow(
+                () -> new CustomException(ErrorCode.CLASSROOM_NOT_FOUND)
         );
+    }
 
+    // 담임 학생 체크
+    public boolean checkClassroomStudent(String username, Long studentId, int year) {
+        Teacher teacher = authenticate(username);
+
+        boolean isMyStudent = classroomStudentRepository.existsByStudentAndTeacher(studentId, teacher.getId(), year);
+
+        if (!isMyStudent){
+            throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
+        }
+
+        return true;
     }
 
 }
