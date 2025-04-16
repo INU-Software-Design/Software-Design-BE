@@ -17,6 +17,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -39,14 +42,14 @@ public class BehaviorService {
         Teacher teacher = teacherService.authenticate(username);
 
         // 담당 학급 확인
-        Classroom classroom = teacherService.checkClassroom(teacher.getId());
+       Classroom classroom = teacherService.checkClassroom(teacher.getId(), LocalDate.now().getYear());
 
         Student student = studentService.getStudent(studentId);
 
-        // 담당 학생 아닐 경우 접근 제한.
-        if(!student.getClassroom().getId().equals(classroom.getId())) {
-            throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
-        }
+//        // 담당 학생 아닐 경우 접근 제한.
+//        if(!(classroom.getTeacher() == teacher) && !(classroom.getStudent() == student)) {
+//            throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
+//        }
 
         Behavior behavior = behaviorRepository.findByStudentId(student.getId()).orElseThrow(
                 () -> new CustomException(ErrorCode.DATA_NOT_FOUND));
