@@ -1,6 +1,6 @@
 package com.neeis.neeis.domain.behavior;
 
-import com.neeis.neeis.domain.student.Student;
+import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -16,28 +16,20 @@ public class Behavior {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String behavior;
 
-    @Column(nullable = false)
-    private String beFeedback;
-
-    @Column(nullable = false)
-    private String attitude;
-
-    @Column(nullable = false)
-    private String attFeedback;
+    @Column(nullable = true)
+    private String generalComment;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id")
-    private Student student;
+    @JoinColumn(name = "classroomStudent_id")
+    private ClassroomStudent classroomStudent;
 
     @Builder
-    private Behavior(String behavior, String beFeedback, String attitude, String attFeedback, Student student) {
+    private Behavior(String behavior, String generalComment, ClassroomStudent classroomStudent) {
         this.behavior = behavior;
-        this.beFeedback = beFeedback;
-        this.attitude = attitude;
-        this.attFeedback = attFeedback;
-        this.student = student;
+        this.generalComment = generalComment;
+        this.classroomStudent = classroomStudent;
     }
 }
