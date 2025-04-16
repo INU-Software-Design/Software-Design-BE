@@ -1,5 +1,7 @@
 package com.neeis.neeis.domain.student.dto.res;
 
+import com.neeis.neeis.domain.classroom.Classroom;
+import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.parent.Parent;
 import com.neeis.neeis.domain.student.Student;
 import lombok.Builder;
@@ -14,7 +16,7 @@ public class StudentDetailResDto {
     private final int classroom;
     private final int number;
     private final String gender;
-    private final String name;
+   // private final String name;
     private final String ssn;
     private final String address;
     private final String phone;
@@ -31,7 +33,7 @@ public class StudentDetailResDto {
         this.classroom = classroom;
         this.number = number;
         this.gender = gender;
-        this.name = name;
+      //  this.name = name;
         this.ssn = ssn;
         this.address = address;
         this.phone = phone;
@@ -42,12 +44,12 @@ public class StudentDetailResDto {
         this.motherNum = motherNum;
     }
 
-    public static StudentDetailResDto of(Student student, Parent father, Parent mother) {
+    public static StudentDetailResDto of(Student student, Parent father, Parent mother, Classroom classroom, ClassroomStudent classroomStudent) {
         return StudentDetailResDto.builder()
                 .id(student.getId())
-                .grade(student.getClassroom().getGrade())
-                .classroom(student.getClassroom().getNumber())
-                .number(student.getNum())
+                .grade(classroom.getGrade())
+                .classroom(classroom.getClassNum())
+                .number(classroomStudent.getNumber())
                 .gender(student.getGender())
                 .name(student.getName())
                 .ssn(student.getSsn())
@@ -55,9 +57,9 @@ public class StudentDetailResDto {
                 .phone(student.getPhone())
                 .admissionDate(student.getAdmissionDate())
                 .fatherName(father.getName())
-                .fatherNum(father.getContact_num())
+                .fatherNum(father.getPhone())
                 .motherName(mother.getName())
-                .motherNum(mother.getContact_num())
+                .motherNum(mother.getPhone())
                 .build();
     }
 

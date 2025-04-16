@@ -1,6 +1,5 @@
 package com.neeis.neeis.domain.teacher;
 
-import com.neeis.neeis.domain.user.Role;
 import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.global.common.BaseEntity;
 import jakarta.persistence.*;
@@ -22,7 +21,7 @@ public class Teacher extends BaseEntity {
     private String name;
 
     @Column(nullable = false)
-    private String contact_number;
+    private String phone;
 
     @Column(nullable = false)
     private String email;
@@ -32,9 +31,9 @@ public class Teacher extends BaseEntity {
     private User user;
 
     @Builder
-    private Teacher(String name, String contact_number, String email, User user) {
+    private Teacher(String name, String phone, String email, User user) {
         this.name = name;
-        this.contact_number = contact_number;
+        this.phone = phone;
         this.email = email;
         this.user = user;
     }

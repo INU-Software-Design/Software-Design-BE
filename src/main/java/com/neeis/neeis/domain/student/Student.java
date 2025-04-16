@@ -1,16 +1,17 @@
 package com.neeis.neeis.domain.student;
 
-import com.neeis.neeis.domain.classroom.Classroom;
 import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.global.common.BaseEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
 @Entity
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class Student extends BaseEntity {
 
@@ -18,32 +19,33 @@ public class Student extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private int num;
-
+    @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
     private String image;
 
+    @Column(nullable = false)
     private String gender;
 
+    @Column(nullable = false)
     private String ssn;
 
+    @Column(nullable = false)
     private String address;
 
+    @Column(nullable = false)
     private String phone;
 
+    @Column(nullable = false)
     private LocalDate admissionDate;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "classroom_id")
-    private Classroom classroom;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
-    private Student(int num, String name, String image, String gender, String ssn, String address, String phone, LocalDate admissionDate, Classroom classroom) {
-        this.num = num;
+    @Builder
+    private Student( String name, String image, String gender, String ssn, String address, String phone, LocalDate admissionDate) {
         this.name = name;
         this.image = image;
         this.gender = gender;
@@ -51,6 +53,5 @@ public class Student extends BaseEntity {
         this.address = address;
         this.phone = phone;
         this.admissionDate = admissionDate;
-        this.classroom = classroom;
     }
 }
