@@ -75,6 +75,7 @@ public class TeacherService {
                 () -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
+    // 학급 확인
     public Classroom checkClassroom(Long teacherId, int year) {
         return classroomRepository.findByTeacherIdAndYear(teacherId,year).orElseThrow(
                 () -> new CustomException(ErrorCode.CLASSROOM_NOT_FOUND)
