@@ -14,11 +14,15 @@ import java.time.LocalDate;
 @Getter
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Counseling extends BaseEntity {
+public class Counsel extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private CounselCategory category;
 
     @Column(nullable = false)
     private String content;
@@ -41,7 +45,8 @@ public class Counseling extends BaseEntity {
     private Teacher teacher;
 
     @Builder
-    private Counseling(String content, LocalDate dateTime, String nextPlan, Boolean isPublic, Student student, Teacher teacher){
+    private Counsel(CounselCategory category, String content, LocalDate dateTime, String nextPlan, Boolean isPublic, Student student, Teacher teacher){
+        this.category = category;
         this.content = content;
         this.dateTime = dateTime;
         this.nextPlan = nextPlan;

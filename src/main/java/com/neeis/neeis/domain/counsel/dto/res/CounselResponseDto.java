@@ -1,6 +1,6 @@
 package com.neeis.neeis.domain.counsel.dto.res;
 
-import com.neeis.neeis.domain.counsel.Counseling;
+import com.neeis.neeis.domain.counsel.Counsel;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -13,9 +13,9 @@ public class CounselResponseDto {
         this.counselId = counselId;
     }
 
-    public static CounselResponseDto toDto(Counseling counseling){
+    public static CounselResponseDto toDto(Counsel counsel){
         return CounselResponseDto.builder()
-                .counselId(counseling.getId())
+                .counselId(counsel.getId())
                 .build();
     }
 }
