@@ -7,8 +7,9 @@ import com.neeis.neeis.domain.behavior.dto.req.BehaviorRequestDto;
 import com.neeis.neeis.domain.behavior.dto.res.BehaviorDetailResponseDto;
 import com.neeis.neeis.domain.behavior.dto.res.BehaviorResponseDto;
 import com.neeis.neeis.domain.classroom.Classroom;
-import com.neeis.neeis.domain.student.Student;
-import com.neeis.neeis.domain.student.service.StudentService;
+import com.neeis.neeis.domain.classroom.ClassroomRepository;
+import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
+import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
 import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.domain.teacher.service.TeacherService;
 import com.neeis.neeis.global.exception.CustomException;
@@ -17,45 +18,55 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class BehaviorService {
     private final BehaviorRepository behaviorRepository;
-    private final StudentService studentService;
     private final TeacherService teacherService;
+    private final ClassroomRepository classroomRepository;
+    private final ClassroomStudentRepository classroomStudentRepository;
 
     @Transactional //false
-    public BehaviorResponseDto postBehavior(Long studentId, BehaviorRequestDto behaviorRequestDto) {
-        Student student = studentService.getStudent(studentId);
+    public BehaviorResponseDto createBehavior( String username,
+                                               Integer year, Integer grade, Integer classNum,
+                                               Long studentId,
+                                               BehaviorRequestDto behaviorRequestDto) {
 
-        Behavior behavior = behaviorRepository.save(BehaviorRequestDto.of(behaviorRequestDto, student));
+        Teacher teacher = teacherService.authenticate(username);
+
+        ClassroomStudent classroomStudent = checkMyStudents(year, grade,classNum, teacher.getId(), studentId);
+
+        Behavior behavior = behaviorRepository.save(BehaviorRequestDto.of(behaviorRequestDto, classroomStudent));
 
         return BehaviorResponseDto.of(behavior);
     }
 
-    public BehaviorDetailResponseDto getBehavior(String username, Long studentId) {
+    public BehaviorDetailResponseDto getBehavior(String username, Integer year, Integer grade, Integer classNum, Long studentId ) {
         // 교사 확인
         Teacher teacher = teacherService.authenticate(username);
 
-        // 담당 학급 확인
-       Classroom classroom = teacherService.checkClassroom(teacher.getId(), LocalDate.now().getYear());
+        ClassroomStudent classroomStudent = checkMyStudents(year, grade, classNum, teacher.getId(), studentId);
 
-        Student student = studentService.getStudent(studentId);
+        Behavior behavior = behaviorRepository.findByClassroomStudentId(classroomStudent.getId()).orElseThrow(
+                () -> new CustomException(ErrorCode.BEHAVIOR_NOT_FOUND));
 
-//        // 담당 학생 아닐 경우 접근 제한.
-//        if(!(classroom.getTeacher() == teacher) && !(classroom.getStudent() == student)) {
-//            throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
-//        }
-
-        Behavior behavior = behaviorRepository.findByStudentId(student.getId()).orElseThrow(
-                () -> new CustomException(ErrorCode.DATA_NOT_FOUND));
+        // 담임학생 아니면 조회 접근 x
+        if (behavior.getClassroomStudent().getClassroom().getTeacher() != teacher) {
+            throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
+        }
 
         return BehaviorDetailResponseDto.of(behavior);
     }
+
+    private ClassroomStudent checkMyStudents(Integer year, Integer grade, Integer classNum, Long teacherId, Long studentId) {
+        Classroom classroom = classroomRepository.findByClassroomInfo(year, grade, classNum, teacherId).orElseThrow(
+                () -> new CustomException(ErrorCode.CLASSROOM_NOT_FOUND));
+
+        return classroomStudentRepository.findByStudentAndClassroom(studentId, classroom.getId()).orElseThrow(
+                () -> new CustomException(ErrorCode.CLASSROOM_NOT_FOUND));
+    }
+
 
 
 }

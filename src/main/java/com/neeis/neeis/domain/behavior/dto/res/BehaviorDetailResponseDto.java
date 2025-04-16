@@ -11,17 +11,13 @@ import lombok.Getter;
 public class BehaviorDetailResponseDto {
     private final Long behaviorId;
     private final String behavior;
-    private final String behaviorFeedback;
-    private final String attitude;
-    private final String attitudeFeedback;
+    private final String generalComment;
 
     public static BehaviorDetailResponseDto of(Behavior behavior) {
         return BehaviorDetailResponseDto.builder()
                 .behaviorId(behavior.getId())
                 .behavior(behavior.getBehavior())
-                .behaviorFeedback(behavior.getBeFeedback())
-                .attitude(behavior.getAttitude())
-                .attitudeFeedback(behavior.getAttFeedback())
+                .generalComment(behavior.getGeneralComment())
                 .build();
     }
 }
