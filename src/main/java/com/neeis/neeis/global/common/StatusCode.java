@@ -17,6 +17,7 @@ public enum StatusCode {
     SUCCESS_GET_BEHAVIOR(HttpStatus.OK, "Common-203", "행동 특성 조회에 성공하였습니다."),
 
     SUCCESS_POST_COUNSEL(HttpStatus.OK, "Common-204", "상담 내용 저장에 성공하였습니다."),
+    SUCCESS_GET_COUNSEL(HttpStatus.OK, "Common-205", "상담 조회에 성공하였습니다."),
     ;
 
     private final HttpStatus status;

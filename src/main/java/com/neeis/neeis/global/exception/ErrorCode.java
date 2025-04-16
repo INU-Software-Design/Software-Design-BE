@@ -21,7 +21,10 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.BAD_REQUEST,"Member-001", "회원정보를 찾을 수 없습니다."),
     LOGIN_INPUT_INVALID(HttpStatus.BAD_REQUEST, "Member-002", "회원정보를 찾을 수 없습니다."),
 
-    CLASSROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "Teacher-001", "담당학급이 아닙니다.");
+    CLASSROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "Teacher-001", "담당학급이 아닙니다."),
+
+    COUNSEL_NOT_FOUND(HttpStatus.NOT_FOUND, "Counsel-001", "상담이 존재하지 않습니다."),
+    COUNSEL_CATEGORY_NOT_EXIST(HttpStatus.BAD_REQUEST,"Counsel-002", "상담 종류가 존재하지 않습니다.")
     ;
 
     private final HttpStatus status;
