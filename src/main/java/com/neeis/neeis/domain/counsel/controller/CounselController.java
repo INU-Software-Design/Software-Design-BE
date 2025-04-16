@@ -20,6 +20,8 @@ public class CounselController {
 
     @PostMapping
     @Operation(summary = "상담 작성", description = "교사가 학생과의 상담 기록을 작성합니다.")
+    @Operation(summary = "상담 작성", description = "교사가 학생과의 상담 기록을 작성합니다." +
+            "상담 종류:  UNIVERSITY(대학), CAREER(취업), FAMILY(가정), ACADEMIC(학업), PERSONAL(개인), OTHER(기타) 가 존재합니다." )
     public ResponseEntity<CommonResponse<Object>> postCounsel(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(value = "studentId") Long studentId,

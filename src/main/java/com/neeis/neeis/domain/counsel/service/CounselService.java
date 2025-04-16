@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class CounselService {
-    private final CounselingRepository counselingRepository;
+    private final CounselRepository counselRepository;
     private final TeacherService teacherService;
     private final StudentService studentService;
 
@@ -25,7 +25,9 @@ public class CounselService {
         Teacher teacher = teacherService.authenticate(username);
         Student student = studentService.getStudent(studentId);
 
-        Counseling counsel = counselingRepository.save(CounselRequestDto.of(teacher,student, requestDto));
+        CounselCategory category = findCategory(requestDto.getCategory()) ;
+
+        Counsel counsel = counselRepository.save(CounselRequestDto.of(teacher,student, requestDto, category));
 
         return CounselResponseDto.toDto(counsel);
     }

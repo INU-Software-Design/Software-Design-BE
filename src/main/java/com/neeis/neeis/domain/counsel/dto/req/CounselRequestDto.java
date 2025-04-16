@@ -1,6 +1,7 @@
 package com.neeis.neeis.domain.counsel.dto.req;
 
-import com.neeis.neeis.domain.counsel.Counseling;
+import com.neeis.neeis.domain.counsel.CounselCategory;
+import com.neeis.neeis.domain.counsel.Counsel;
 import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.domain.teacher.Teacher;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -16,6 +17,10 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class CounselRequestDto {
 
+    @Schema(example = "UNIVERSITY | CAREER | FAMILY | ACADEMIC | PERSONAL | OTHER")
+    @NotBlank(message = "상담 종류는 필수 입력값입니다.")
+    private String category;
+
     @Schema(example = "상담 내용" )
     @NotBlank(message = "상담 내용은 필수 입력값입니다.")
     private String content;
@@ -23,7 +28,7 @@ public class CounselRequestDto {
     @Schema(example = "다음 상담 계획" )
     private String nextPlan;
 
-    @Schema(example = "상담 일자" )
+    @Schema(example = "2025-04-16" )
     @NotNull(message = "상담일자는 필수로 입력해주세요.")
     private LocalDate dateTime;
 
@@ -32,15 +37,17 @@ public class CounselRequestDto {
     private Boolean isPublic;
 
     @Builder
-    private CounselRequestDto(String content, String nextPlan, LocalDate dateTime, Boolean isPublic) {
+    private CounselRequestDto(String category,String content, String nextPlan, LocalDate dateTime, Boolean isPublic) {
+        this.category = category;
         this.content = content;
         this.nextPlan = nextPlan;
         this.dateTime = dateTime;
         this.isPublic = isPublic;
     }
 
-    public static Counseling of(Teacher teacher, Student student, CounselRequestDto requestDto) {
-        return Counseling.builder()
+    public static Counsel of(Teacher teacher, Student student, CounselRequestDto requestDto, CounselCategory category) {
+        return Counsel.builder()
+                .category(category)
                 .content(requestDto.getContent())
                 .nextPlan(requestDto.getNextPlan())
                 .dateTime(requestDto.getDateTime())
