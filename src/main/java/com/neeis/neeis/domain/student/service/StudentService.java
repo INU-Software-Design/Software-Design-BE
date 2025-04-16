@@ -1,5 +1,9 @@
 package com.neeis.neeis.domain.student.service;
 
+import com.neeis.neeis.domain.classroom.Classroom;
+import com.neeis.neeis.domain.classroom.ClassroomRepository;
+import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
+import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
 import com.neeis.neeis.domain.parent.Parent;
 import com.neeis.neeis.domain.parent.ParentRepository;
 import com.neeis.neeis.domain.student.Student;
@@ -17,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -25,8 +30,8 @@ import java.util.List;
 public class StudentService {
     private final StudentRepository studentRepository;
     private final ParentRepository parentRepository;
-    private final UserService userService;
-    private final JwtProvider jwtProvider;
+    private final ClassroomRepository classroomRepository;
+    private final ClassroomStudentRepository classroomStudentRepository;
 
 
     // 아이디 찾기
@@ -55,8 +60,14 @@ public class StudentService {
         return PasswordResponseDto.of(student);
     }
 
-    public StudentDetailResDto getStudentDetails(Long studentId) {
+    public StudentDetailResDto getStudentDetails(Long studentId, int year) {
         Student student = getStudent(studentId);
+
+        ClassroomStudent classroomStudent = classroomStudentRepository.findByStudentAndClassroomYear(student.getId(), year).orElseThrow(
+                () -> new CustomException(ErrorCode.USER_NOT_FOUND)
+        );
+
+        Classroom classroom = classroomStudent.getClassroom();
 
         List<Parent> parents = parentRepository.findByStudent(student);
 
@@ -67,7 +78,7 @@ public class StudentService {
                 .filter(p -> "모".equalsIgnoreCase(p.getRelationShip()))
                 .findFirst().orElseThrow( () -> new CustomException(ErrorCode.INVALID_DATA));
 
-        return StudentDetailResDto.of(student, father, mother);
+        return StudentDetailResDto.of(student, father, mother, classroom, classroomStudent);
     }
 
     public Student getStudent(Long studentId) {
