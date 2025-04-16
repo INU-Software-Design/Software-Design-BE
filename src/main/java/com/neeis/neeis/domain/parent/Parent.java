@@ -19,11 +19,11 @@ public class Parent extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(name = "relation_ship", nullable = false)
     private String relationShip;
 
     @Column(unique = true, nullable = false)
-    private String contact_num;
+    private String phone;
 
     @JoinColumn(name = "student_id")
     @ManyToOne(fetch = FetchType.LAZY)

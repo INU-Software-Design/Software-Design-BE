@@ -16,10 +16,13 @@ public class Classroom {
     @GeneratedValue ( strategy = GenerationType.IDENTITY )
     private Long id;
 
+    @Column(nullable = false)
     private int grade;
 
-    private int number;
+    @Column(nullable = false)
+    private int classNum;
 
+    @Column(nullable = false)
     private int year;
 
     @JoinColumn(name = "teacher_id")
@@ -27,9 +30,9 @@ public class Classroom {
     private Teacher teacher;
 
     @Builder
-    private Classroom(int grade, int number, int year, Teacher teacher) {
+    private Classroom(int grade, int classNum, int year, Teacher teacher) {
         this.grade = grade;
-        this.number = number;
+        this.classNum = classNum;
         this.year = year;
         this.teacher = teacher;
     }
