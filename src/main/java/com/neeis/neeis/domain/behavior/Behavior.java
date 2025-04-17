@@ -1,5 +1,6 @@
 package com.neeis.neeis.domain.behavior;
 
+import com.neeis.neeis.domain.behavior.dto.req.BehaviorRequestDto;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -31,5 +32,10 @@ public class Behavior {
         this.behavior = behavior;
         this.generalComment = generalComment;
         this.classroomStudent = classroomStudent;
+    }
+
+    public void update (BehaviorRequestDto requestDto) {
+        this.behavior = requestDto.getBehavior();
+        this.generalComment = requestDto.getGeneralComment();
     }
 }

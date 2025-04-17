@@ -6,6 +6,7 @@ import com.neeis.neeis.domain.behavior.dto.res.BehaviorResponseDto;
 import com.neeis.neeis.domain.behavior.service.BehaviorService;
 import com.neeis.neeis.global.common.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +32,7 @@ public class BehaviorController {
                                                                              @RequestParam(value = "학년(grade)") Integer grade,
                                                                              @RequestParam(value = "반(classNum)")Integer classNum,
                                                                              @RequestParam Long studentId,
-                                                                             @RequestBody BehaviorRequestDto requestDto) {
+                                                                             @Valid @RequestBody BehaviorRequestDto requestDto) {
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_POST_BEHAVIOR.getMessage(), behaviorService.createBehavior(userDetails.getUsername(), year,grade,classNum, studentId, requestDto)));
     }
 
@@ -44,5 +45,15 @@ public class BehaviorController {
                                                                                   @RequestParam Long studentId) {
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_BEHAVIOR.getMessage(), behaviorService.getBehavior(userDetails.getUsername(), year, grade, classNum, studentId)));
     }
+
+    @PutMapping("/{behaviorId}")
+    @Operation(summary = "행동 / 태도 정보 수정", description = "조회를 통해 응답받은 behaviorId 를 이용하세요. " +
+            "빈 값이면 안됩니다. ")
+    public ResponseEntity<CommonResponse<BehaviorDetailResponseDto>> updateBehavior (@AuthenticationPrincipal UserDetails userDetails,
+                                                                                     @PathVariable Long behaviorId,
+                                                                                     @Valid  @RequestBody BehaviorRequestDto requestDto) {
+        return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_BEHAVIOR.getMessage(), behaviorService.updateBehavior(userDetails.getUsername(), behaviorId, requestDto)));
+    }
+
 
 }

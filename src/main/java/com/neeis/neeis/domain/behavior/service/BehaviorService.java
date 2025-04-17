@@ -59,6 +59,21 @@ public class BehaviorService {
         return BehaviorDetailResponseDto.of(behavior);
     }
 
+    @Transactional
+    public BehaviorDetailResponseDto updateBehavior(String username, Long behaviorId, BehaviorRequestDto behaviorRequestDto) {
+        Teacher teacher = teacherService.authenticate(username);
+
+        Behavior behavior = behaviorRepository.findById(behaviorId).orElseThrow(
+                () -> new CustomException(ErrorCode.BEHAVIOR_NOT_FOUND));
+
+        if (behavior.getClassroomStudent().getClassroom().getTeacher() != teacher) {
+            throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
+        }
+        behavior.update(behaviorRequestDto);
+
+        return BehaviorDetailResponseDto.of(behaviorRepository.save(behavior));
+    }
+
     private ClassroomStudent checkMyStudents(Integer year, Integer grade, Integer classNum, Long teacherId, Long studentId) {
         Classroom classroom = classroomRepository.findByClassroomInfo(year, grade, classNum, teacherId).orElseThrow(
                 () -> new CustomException(ErrorCode.CLASSROOM_NOT_FOUND));
