@@ -1,7 +1,7 @@
 package com.neeis.neeis.domain.behavior.dto.req;
 
 import com.neeis.neeis.domain.behavior.Behavior;
-import com.neeis.neeis.domain.student.Student;
+import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
@@ -12,35 +12,27 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class BehaviorRequestDto {
 
-    @NotBlank
-    @Schema(example = "행동")
+    @NotBlank(message = "행동 특성은 필수 입력값입니다.")
+    @Schema( example = "책임감이 강하며 수업시간에 적극적으로 참여함.")
     private String behavior;
 
-    @Schema(example = "행동 피드백")
-    private String beFeedback;
 
-    @NotBlank
-    @Schema(example = "태도")
-    private String attitude;
-
-    @Schema(example = "태도 피드백")
-    private String attFeedback;
+    @NotBlank(message= "종합 의견은 필수 입력값입니다.")
+    @Schema(example = "전반적으로 성실하며, 친구들과의 관계도 원만합니다.")
+    private String generalComment;
 
     @Builder
-    private BehaviorRequestDto(String behavior, String beFeedback, String attitude, String attFeedback) {
+    private BehaviorRequestDto(String behavior, String generalComment) {
         this.behavior = behavior;
-        this.beFeedback = beFeedback;
-        this.attitude = attitude;
-        this.attFeedback = attFeedback;
+        this.generalComment = generalComment;
+
     }
 
-    public static Behavior of(BehaviorRequestDto dto, Student student ) {
+    public static Behavior of(BehaviorRequestDto dto, ClassroomStudent student) {
         return Behavior.builder()
                 .behavior(dto.getBehavior())
-                .beFeedback(dto.getBeFeedback())
-                .attitude(dto.getAttitude())
-                .attFeedback(dto.getAttFeedback())
-                .student(student)
+                .generalComment(dto.getGeneralComment())
+                .classroomStudent(student)
                 .build();
     }
 

@@ -24,16 +24,25 @@ public class BehaviorController {
     private final BehaviorService behaviorService;
 
     @PostMapping
-    @Operation(summary = "행동 / 태도 작성", description = "학생 개인의 행동, 행동피드백, 태도, 태도 피드백을 작성합니다. " )
-    public ResponseEntity<CommonResponse<BehaviorResponseDto>> postBehavior(@RequestParam Long studentId, @RequestBody BehaviorRequestDto requestDto) {
-        return ResponseEntity.ok(CommonResponse.from(SUCCESS_POST_BEHAVIOR.getMessage(), behaviorService.postBehavior(studentId, requestDto)));
+    @Operation(summary = "행동특성 / 종합의견 작성", description = "학생 개인의 행동특성 및 종합의견을 작성합니다." +
+            "studentId는 학생 고유 번호입니다. ")
+    public ResponseEntity<CommonResponse<BehaviorResponseDto>> postBehavior( @AuthenticationPrincipal UserDetails userDetails,
+                                                                             @RequestParam(value = "연도(year)", defaultValue = "2025") Integer year,
+                                                                             @RequestParam(value = "학년(grade)") Integer grade,
+                                                                             @RequestParam(value = "반(classNum)")Integer classNum,
+                                                                             @RequestParam Long studentId,
+                                                                             @RequestBody BehaviorRequestDto requestDto) {
+        return ResponseEntity.ok(CommonResponse.from(SUCCESS_POST_BEHAVIOR.getMessage(), behaviorService.createBehavior(userDetails.getUsername(), year,grade,classNum, studentId, requestDto)));
     }
 
     @GetMapping
-    @Operation(summary = "행동 / 태도 조회", description = "학생 개인의 행동, 행동피드백, 태도, 태도피드백을 조회합니다. ")
+    @Operation(summary = "행동 / 태도 조회", description = "학생 개인의 행동특성 및 종합의견을 조회합니다. ")
     public ResponseEntity<CommonResponse<BehaviorDetailResponseDto>> getBehavior( @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam Long studentId ) {
-        return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_BEHAVIOR.getMessage(), behaviorService.getBehavior(userDetails.getUsername(),studentId)));
+                                                                                  @RequestParam(value = "연도(year)", defaultValue = "2025") Integer year,
+                                                                                  @RequestParam(value = "학년(grade)") Integer grade,
+                                                                                  @RequestParam(value = "반(classNum)")Integer classNum,
+                                                                                  @RequestParam Long studentId) {
+        return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_BEHAVIOR.getMessage(), behaviorService.getBehavior(userDetails.getUsername(), year, grade, classNum, studentId)));
     }
 
 }

@@ -20,4 +20,7 @@ public interface ClassroomStudentRepository extends JpaRepository<ClassroomStude
             "WHERE cs.student_id = :studentId AND c.year = :year", nativeQuery = true)
     Optional<ClassroomStudent> findByStudentAndClassroomYear(Long studentId, int year);
 
+    @Query(value = "SELECT cs.* FROM classroom_student cs " +
+            "WHERE cs.student_id = :studentId AND cs.classroom_id = :classroomId ", nativeQuery = true)
+    Optional<ClassroomStudent> findByStudentAndClassroom(Long studentId, Long classroomId);
 }

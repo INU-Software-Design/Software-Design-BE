@@ -19,7 +19,7 @@ public class Classroom {
     @Column(nullable = false)
     private int grade;
 
-    @Column(nullable = false)
+    @Column(name = "class_num", nullable = false)
     private int classNum;
 
     @Column(nullable = false)
