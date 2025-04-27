@@ -30,7 +30,6 @@ import java.util.List;
 public class StudentService {
     private final StudentRepository studentRepository;
     private final ParentRepository parentRepository;
-    private final ClassroomRepository classroomRepository;
     private final ClassroomStudentRepository classroomStudentRepository;
 
 
