@@ -26,7 +26,10 @@ public enum ErrorCode {
     COUNSEL_NOT_FOUND(HttpStatus.NOT_FOUND, "Counsel-001", "상담이 존재하지 않습니다."),
     COUNSEL_CATEGORY_NOT_EXIST(HttpStatus.BAD_REQUEST,"Counsel-002", "상담 종류가 존재하지 않습니다."),
 
-    BEHAVIOR_NOT_FOUND(HttpStatus.NOT_FOUND, "Behavior-001", "행동 특성 데이터가 존재하지 않습니다.")
+    BEHAVIOR_NOT_FOUND(HttpStatus.NOT_FOUND, "Behavior-001", "행동 특성 데이터가 존재하지 않습니다."),
+
+    INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, "Attendance-001","조회 날짜가 학기 시작일 이전입니다.")
+
     ;
 
     private final HttpStatus status;

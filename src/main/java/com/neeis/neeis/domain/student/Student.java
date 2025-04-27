@@ -28,7 +28,7 @@ public class Student extends BaseEntity {
     @Column(nullable = false)
     private String gender;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String ssn;
 
     @Column(nullable = false)
@@ -45,7 +45,7 @@ public class Student extends BaseEntity {
     private User user;
 
     @Builder
-    private Student( String name, String image, String gender, String ssn, String address, String phone, LocalDate admissionDate) {
+    private Student( String name, String image, String gender, String ssn, String address, String phone, LocalDate admissionDate, User user) {
         this.name = name;
         this.image = image;
         this.gender = gender;
@@ -53,5 +53,6 @@ public class Student extends BaseEntity {
         this.address = address;
         this.phone = phone;
         this.admissionDate = admissionDate;
+        this.user = user;
     }
 }

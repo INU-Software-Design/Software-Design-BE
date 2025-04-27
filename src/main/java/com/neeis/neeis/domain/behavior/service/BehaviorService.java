@@ -10,6 +10,7 @@ import com.neeis.neeis.domain.classroom.Classroom;
 import com.neeis.neeis.domain.classroom.ClassroomRepository;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
+import com.neeis.neeis.domain.classroomStudent.ClassroomStudentService;
 import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.domain.teacher.service.TeacherService;
 import com.neeis.neeis.global.exception.CustomException;
@@ -24,8 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class BehaviorService {
     private final BehaviorRepository behaviorRepository;
     private final TeacherService teacherService;
-    private final ClassroomRepository classroomRepository;
-    private final ClassroomStudentRepository classroomStudentRepository;
+    private final ClassroomStudentService classroomStudentService;
 
     @Transactional //false
     public BehaviorResponseDto createBehavior( String username,
@@ -35,7 +35,7 @@ public class BehaviorService {
 
         Teacher teacher = teacherService.authenticate(username);
 
-        ClassroomStudent classroomStudent = checkMyStudents(year, grade,classNum, teacher.getId(), studentId);
+        ClassroomStudent classroomStudent = classroomStudentService.checkMyStudents(year, grade,classNum, teacher.getId(), studentId);
 
         Behavior behavior = behaviorRepository.save(BehaviorRequestDto.of(behaviorRequestDto, classroomStudent));
 
@@ -46,7 +46,7 @@ public class BehaviorService {
         // 교사 확인
         Teacher teacher = teacherService.authenticate(username);
 
-        ClassroomStudent classroomStudent = checkMyStudents(year, grade, classNum, teacher.getId(), studentId);
+        ClassroomStudent classroomStudent = classroomStudentService.checkMyStudents(year, grade, classNum, teacher.getId(), studentId);
 
         Behavior behavior = behaviorRepository.findByClassroomStudentId(classroomStudent.getId()).orElseThrow(
                 () -> new CustomException(ErrorCode.BEHAVIOR_NOT_FOUND));
@@ -73,15 +73,6 @@ public class BehaviorService {
 
         return BehaviorDetailResponseDto.of(behaviorRepository.save(behavior));
     }
-
-    private ClassroomStudent checkMyStudents(Integer year, Integer grade, Integer classNum, Long teacherId, Long studentId) {
-        Classroom classroom = classroomRepository.findByClassroomInfo(year, grade, classNum, teacherId).orElseThrow(
-                () -> new CustomException(ErrorCode.CLASSROOM_NOT_FOUND));
-
-        return classroomStudentRepository.findByStudentAndClassroom(studentId, classroom.getId()).orElseThrow(
-                () -> new CustomException(ErrorCode.CLASSROOM_NOT_FOUND));
-    }
-
 
 
 }

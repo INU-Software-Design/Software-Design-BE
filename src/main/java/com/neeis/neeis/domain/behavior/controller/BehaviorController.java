@@ -6,6 +6,7 @@ import com.neeis.neeis.domain.behavior.dto.res.BehaviorResponseDto;
 import com.neeis.neeis.domain.behavior.service.BehaviorService;
 import com.neeis.neeis.global.common.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -28,10 +29,10 @@ public class BehaviorController {
     @Operation(summary = "행동특성 / 종합의견 작성", description = "학생 개인의 행동특성 및 종합의견을 작성합니다." +
             "studentId는 학생 고유 번호입니다. ")
     public ResponseEntity<CommonResponse<BehaviorResponseDto>> postBehavior( @AuthenticationPrincipal UserDetails userDetails,
-                                                                             @RequestParam(value = "연도(year)", defaultValue = "2025") Integer year,
-                                                                             @RequestParam(value = "학년(grade)") Integer grade,
-                                                                             @RequestParam(value = "반(classNum)")Integer classNum,
-                                                                             @RequestParam Long studentId,
+                                                                             @RequestParam(value = "year", defaultValue = "2025") @Parameter(description = "연도") Integer year,
+                                                                             @RequestParam("grade") @Parameter(description = "학년") Integer grade,
+                                                                             @RequestParam("classNum") @Parameter(description = "반") Integer classNum,
+                                                                             @RequestParam("studentId") @Parameter(description = "학생 ID") Long studentId,
                                                                              @Valid @RequestBody BehaviorRequestDto requestDto) {
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_POST_BEHAVIOR.getMessage(), behaviorService.createBehavior(userDetails.getUsername(), year,grade,classNum, studentId, requestDto)));
     }
@@ -39,10 +40,10 @@ public class BehaviorController {
     @GetMapping
     @Operation(summary = "행동 / 태도 조회", description = "학생 개인의 행동특성 및 종합의견을 조회합니다. ")
     public ResponseEntity<CommonResponse<BehaviorDetailResponseDto>> getBehavior( @AuthenticationPrincipal UserDetails userDetails,
-                                                                                  @RequestParam(value = "연도(year)", defaultValue = "2025") Integer year,
-                                                                                  @RequestParam(value = "학년(grade)") Integer grade,
-                                                                                  @RequestParam(value = "반(classNum)")Integer classNum,
-                                                                                  @RequestParam Long studentId) {
+                                                                                  @RequestParam(value = "year", defaultValue = "2025") @Parameter(description = "연도") Integer year,
+                                                                                  @RequestParam("grade") @Parameter(description = "학년") Integer grade,
+                                                                                  @RequestParam("classNum") @Parameter(description = "반") Integer classNum,
+                                                                                  @RequestParam("studentId") @Parameter(description = "학생 ID") Long studentId) {
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_BEHAVIOR.getMessage(), behaviorService.getBehavior(userDetails.getUsername(), year, grade, classNum, studentId)));
     }
 
