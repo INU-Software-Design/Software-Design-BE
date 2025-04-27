@@ -220,6 +220,45 @@ public class AttendanceService {
                 .build();
     }
 
+    @Transactional
+    public AttendanceFeedbackResDto saveFeedback(String username, int year, int grade, int classNum, int number, AttendanceFeedbackReqDto requestDto) {
+        ClassroomStudent classroomStudent = checkValidate(username, year, grade, classNum, number);
+
+        AttendanceFeedback feedback = AttendanceFeedbackReqDto.of(requestDto, classroomStudent);
+        feedbackRepository.save(feedback);
+
+        return AttendanceFeedbackResDto.toDto(feedback);
+    }
+
+    @Transactional
+    public AttendanceFeedbackResDto updateFeedback(String username, Long feedBackId, AttendanceFeedbackReqDto requestDto) {
+
+        Teacher teacher = teacherService.authenticate(username);
+
+        AttendanceFeedback feedback = feedbackRepository.findById(feedBackId)
+                .orElseThrow(() -> new CustomException(ErrorCode.DATA_NOT_FOUND));
+
+        if(feedback.getClassroomStudent().getClassroom().getTeacher() != teacher){
+            throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
+        }
+        feedback.updateContent(requestDto.getFeedback());
+
+        return AttendanceFeedbackResDto.toDto(feedback);
+    }
+
+    public AttendanceFeedbackResDto getFeedback(String username, int year, int grade, int classNum, int number) {
+
+        ClassroomStudent classroomStudent = checkValidate(username, year, grade, classNum, number);
+
+        AttendanceFeedback attendanceFeedback = feedbackRepository.findByClassroomStudent(classroomStudent).orElseThrow(
+                (() -> new CustomException(ErrorCode.DATA_NOT_FOUND))
+        );
+
+        return AttendanceFeedbackResDto.builder()
+                .feedbackId(attendanceFeedback.getId())
+                .feedback(attendanceFeedback.getFeedback())
+                .build();
+    }
 
     private ClassroomStudent checkValidate(String username, int year, int grade, int classNum, int number) {
         Teacher teacher = teacherService.authenticate(username);

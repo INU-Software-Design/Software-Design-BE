@@ -89,4 +89,39 @@ public class AttendanceController {
                 attendanceService.getStudentAttendanceSummary(userDetails.getUsername(), year, semester, grade, classNum, number)));
     }
 
+    @PostMapping("/feedback")
+    @Operation(summary = "담임 학생 출결 피드백 작성", description = "로그인한 교사가 담당 학급 학생에 대해 출결 피드백을 작성합니다. <br>" +
+                    "학급의 연도, 학년, 반, 번호 정보를 입력해야 하며, 피드백은 본인 학급 학생에 대해서만 작성할 수 있습니다.")
+    public ResponseEntity<CommonResponse<AttendanceFeedbackResDto>> saveFeedback(@AuthenticationPrincipal UserDetails userdetails,
+                                                               @RequestParam(value = "2025") @Parameter(description = "연도") int year,
+                                                               @RequestParam("grade") @Parameter(description = "학년") int grade,
+                                                               @RequestParam("classNum") @Parameter(description = "반") int classNum,
+                                                               @RequestParam("number") @Parameter(description = "번호") int number,
+                                                               @Valid @RequestBody AttendanceFeedbackReqDto attendanceFeedbackDto) {
+        AttendanceFeedbackResDto dto =  attendanceService.saveFeedback(userdetails.getUsername(),  year, grade, classNum, number, attendanceFeedbackDto);
+        return ResponseEntity.ok(CommonResponse.from(SUCCESS_POST_FEEDBACK.getMessage(), dto));
+    }
+
+    @PutMapping("/feedback/{feedbackId}")
+    @Operation(summary = "담임 학생 출결 피드백 수정", description = "로그인한 교사가 작성한 학생 출결 피드백을 수정합니다. <br>" +
+                    "피드백 ID를 경로로 입력하고, 수정할 피드백 내용을 요청 본문에 작성합니다. <br>" +
+                    "본인이 작성한 피드백만 수정할 수 있습니다.")
+    public ResponseEntity<CommonResponse<Object>> updateFeedback(@AuthenticationPrincipal UserDetails userdetails,
+                                                                 @PathVariable Long feedbackId,
+                                                                 @Valid @RequestBody AttendanceFeedbackReqDto attendanceFeedbackDto) {
+        attendanceService.updateFeedback(userdetails.getUsername(), feedbackId, attendanceFeedbackDto);
+        return ResponseEntity.ok(CommonResponse.from(SUCCESS_POST_FEEDBACK.getMessage()));
+    }
+
+    @GetMapping("/feedback")
+    @Operation(summary = "담임 학생 출결 피드백 조회", description =
+            "로그인한 교사가 담당 학생의 출결 피드백을 조회합니다. <br>" +
+                    "학급의 연도, 학년, 반, 번호 정보를 입력하여 해당 학생의 피드백을 가져옵니다.")
+    public ResponseEntity<CommonResponse<AttendanceFeedbackResDto>> getFeedback(@AuthenticationPrincipal UserDetails userDetails,
+                                                                                @RequestParam(value = "2025") @Parameter(description = "연도") int year,
+                                                                                @RequestParam("grade") @Parameter(description = "학년") int grade,
+                                                                                @RequestParam("classNum") @Parameter(description = "반") int classNum,
+                                                                                @RequestParam("number") @Parameter(description = "번호") int number) {
+        return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_FEEDBACK.getMessage(), attendanceService.getFeedback(userDetails.getUsername(),year, grade, classNum, number)));
+    }
 }
