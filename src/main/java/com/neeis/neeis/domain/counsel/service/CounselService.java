@@ -39,6 +39,7 @@ public class CounselService {
         return CounselResponseDto.toDto(counsel);
     }
 
+    // 상담 개별 조회
     public CounselDetailDto getCounsel(String username, Long counselId){
         teacherService.authenticate(username);
 
@@ -49,6 +50,7 @@ public class CounselService {
         return CounselDetailDto.toDto(counsel);
     }
 
+    // 상담 목록 조회
     public List<CounselDetailDto> getCounsels(String username, Long studentId){
         teacherService.authenticate(username);
 
@@ -63,6 +65,19 @@ public class CounselService {
         }
 
         return detailDtoList;
+    }
+
+    // 상담 내용 수정
+    @Transactional
+    public CounselDetailDto updateCounsel(String username, Long counselId, CounselRequestDto requestDto) {
+        teacherService.authenticate(username);
+
+        Counsel counsel = counselRepository.findById(counselId).orElseThrow(
+                () -> new CustomException(ErrorCode.COUNSEL_NOT_FOUND)
+        );
+        counsel.update(requestDto);
+
+        return CounselDetailDto.toDto(counsel);
     }
 
     // 상담 카테고리

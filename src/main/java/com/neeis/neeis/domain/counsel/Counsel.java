@@ -1,5 +1,6 @@
 package com.neeis.neeis.domain.counsel;
 
+import com.neeis.neeis.domain.counsel.dto.req.CounselRequestDto;
 import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.global.common.BaseEntity;
@@ -53,5 +54,13 @@ public class Counsel extends BaseEntity {
         this.isPublic = isPublic;
         this.student = student;
         this.teacher = teacher;
+    }
+
+    public void update(CounselRequestDto requestDto){
+        this.category = CounselCategory.valueOf(requestDto.getCategory());
+        this.content = requestDto.getContent();
+        this.dateTime = requestDto.getDateTime();
+        this.nextPlan = requestDto.getNextPlan();
+        this.isPublic = requestDto.getIsPublic();
     }
 }
