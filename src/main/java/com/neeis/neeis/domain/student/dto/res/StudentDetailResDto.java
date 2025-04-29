@@ -4,7 +4,6 @@ import com.neeis.neeis.domain.classroom.Classroom;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.parent.Parent;
 import com.neeis.neeis.domain.student.Student;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -22,7 +21,6 @@ public class StudentDetailResDto {
     private final String ssn;
     private final String address;
     private final String phone;
-    @Schema(description = "입학일")
     private final LocalDate admissionDate;
     private final String fatherName;
     private final String fatherNum;
