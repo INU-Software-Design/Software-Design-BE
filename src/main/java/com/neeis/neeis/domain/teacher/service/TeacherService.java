@@ -22,7 +22,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -40,17 +42,19 @@ public class TeacherService {
 
         List<ClassroomStudent> classroomStudentList = classroomStudentRepository.findByClassroom(classroom);
 
-        List<Student> studentList = new ArrayList<>();
+        Map<Student, ClassroomStudent> studentList = new HashMap<>();
         for (ClassroomStudent classroomStudent : classroomStudentList) {
-            studentList.add(classroomStudent.getStudent());
+            studentList.put(classroomStudent.getStudent(), classroomStudent);
         }
         List<StudentResponseDto> studentResponseDtos = new ArrayList<>();
         if(!studentList.isEmpty()) {
-            for (Student student : studentList) {
-                StudentResponseDto dto = StudentResponseDto.of(student);
+            for (Student student : studentList.keySet()) {
+                StudentResponseDto dto = StudentResponseDto.of(student,studentList.get(student));
                 studentResponseDtos.add(dto);
             }
         }
+
+        studentResponseDtos.sort((s1, s2) -> Integer.compare(s1.getNumber(), s2.getNumber()));
         return studentResponseDtos;
     }
 
