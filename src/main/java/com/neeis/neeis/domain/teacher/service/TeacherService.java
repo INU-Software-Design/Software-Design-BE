@@ -5,22 +5,20 @@ import com.neeis.neeis.domain.classroom.ClassroomRepository;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
 import com.neeis.neeis.domain.student.Student;
-import com.neeis.neeis.domain.student.StudentRepository;
 import com.neeis.neeis.domain.student.dto.res.StudentDetailResDto;
 import com.neeis.neeis.domain.student.service.StudentService;
 import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.domain.teacher.TeacherRepository;
+import com.neeis.neeis.domain.teacher.dto.ClassroomStudentDto;
 import com.neeis.neeis.domain.teacher.dto.StudentResponseDto;
 import com.neeis.neeis.domain.user.Role;
 import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.domain.user.service.UserService;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
-import com.neeis.neeis.global.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +34,7 @@ public class TeacherService {
     private final StudentService studentService;
 
     // 담당 학생들 조회
-    public List<StudentResponseDto> getStudents(String username, int year) {
+    public ClassroomStudentDto getStudents(String username, int year) {
         Teacher teacher = authenticate(username);
         Classroom classroom = checkClassroom(teacher.getId(), year);
 
@@ -54,8 +52,10 @@ public class TeacherService {
             }
         }
 
+        // HashMap -> 순서가 없으므로, number(출석번호)로 정렬해줘야 한다.
         studentResponseDtos.sort((s1, s2) -> Integer.compare(s1.getNumber(), s2.getNumber()));
-        return studentResponseDtos;
+
+        return ClassroomStudentDto.toDto(classroom, studentResponseDtos);
     }
 
     public StudentDetailResDto getStudentDetail( Long studentId,int year) {
