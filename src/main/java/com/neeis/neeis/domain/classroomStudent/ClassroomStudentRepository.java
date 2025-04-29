@@ -1,7 +1,6 @@
 package com.neeis.neeis.domain.classroomStudent;
 
 import com.neeis.neeis.domain.classroom.Classroom;
-import com.neeis.neeis.domain.student.Student;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
