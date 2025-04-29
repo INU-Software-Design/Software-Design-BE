@@ -70,6 +70,18 @@ class CounselServiceTest {
     }
 
     @Test
+    @DisplayName("선생님 권한이 아닌 경우 - 접근 거부 예외 발생")
+    void authenticate_notTeacher() {
+        // given
+        String notTeacherUsername = "student01";
+
+        // when & then
+        assertThatThrownBy(() -> teacherService.authenticate(notTeacherUsername))
+                .isInstanceOf(CustomException.class)
+                .hasMessageContaining(ErrorCode.HANDLE_ACCESS_DENIED.getMessage());
+    }
+
+    @Test
     @DisplayName("상담 생성 성공")
     void createCounsel_success() {
         // given
@@ -140,7 +152,6 @@ class CounselServiceTest {
         // then
         assertThat(counsels).isNotEmpty();
     }
-
 
     @Test
     @DisplayName("상담 수정 성공")
