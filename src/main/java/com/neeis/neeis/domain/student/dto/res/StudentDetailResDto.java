@@ -4,6 +4,7 @@ import com.neeis.neeis.domain.classroom.Classroom;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.parent.Parent;
 import com.neeis.neeis.domain.student.Student;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -12,14 +13,16 @@ import java.time.LocalDate;
 @Getter
 public class StudentDetailResDto {
     private final Long id;
+    private final String teacherName;
     private final int grade;
     private final int classroom;
     private final int number;
     private final String gender;
-   // private final String name;
+    private final String name;
     private final String ssn;
     private final String address;
     private final String phone;
+    @Schema(description = "입학일")
     private final LocalDate admissionDate;
     private final String fatherName;
     private final String fatherNum;
@@ -27,13 +30,14 @@ public class StudentDetailResDto {
     private final String motherNum;
 
     @Builder
-    private StudentDetailResDto(Long id, int grade, int classroom, int number, String gender, String name, String ssn, String address, String phone, LocalDate admissionDate,  String fatherName, String fatherNum, String motherName, String motherNum) {
+    private StudentDetailResDto(Long id, String teacherName, int grade, int classroom, int number, String gender, String name, String ssn, String address, String phone, LocalDate admissionDate,  String fatherName, String fatherNum, String motherName, String motherNum) {
         this.id = id;
+        this.teacherName = teacherName;
         this.grade = grade;
         this.classroom = classroom;
         this.number = number;
         this.gender = gender;
-      //  this.name = name;
+        this.name = name;
         this.ssn = ssn;
         this.address = address;
         this.phone = phone;
@@ -47,6 +51,7 @@ public class StudentDetailResDto {
     public static StudentDetailResDto of(Student student, Parent father, Parent mother, Classroom classroom, ClassroomStudent classroomStudent) {
         return StudentDetailResDto.builder()
                 .id(student.getId())
+                .teacherName(classroom.getTeacher().getName())
                 .grade(classroom.getGrade())
                 .classroom(classroom.getClassNum())
                 .number(classroomStudent.getNumber())
