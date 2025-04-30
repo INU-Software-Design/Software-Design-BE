@@ -23,16 +23,29 @@ public class UserService {
     private final JwtProvider jwtProvider;
     private final PasswordEncoder passwordEncoder;
 
+    @Transactional
     public TokenResponseDto login(LoginRequestDto loginRequestDto) {
         User user = userRepository.findByUsername(loginRequestDto.getLoginId()).orElseThrow(
                 () -> new CustomException(ErrorCode.LOGIN_INPUT_INVALID));
 
-        if (!passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
-            throw new CustomException(ErrorCode.LOGIN_INPUT_INVALID);
+        String inputPw = loginRequestDto.getPassword();
+        String storedPw = user.getPassword();
+
+        if (isEncoded(storedPw)) {
+            if (!passwordEncoder.matches(inputPw, storedPw)) {
+                throw new CustomException(ErrorCode.LOGIN_INPUT_INVALID);
+            }
+        } else {
+            if (!storedPw.equals(inputPw)) {
+                throw new CustomException(ErrorCode.LOGIN_INPUT_INVALID);
+            }
+
+            // 기존 평문화 되었던 비번은 암호화 되어 저장.
+            user.updatePassword(passwordEncoder.encode(inputPw));
+            userRepository.save(user);
         }
 
         String accessToken = jwtProvider.createAccessToken(user.getUsername(), user.getRole().name());
-
         return TokenResponseDto.of(accessToken);
     }
 
@@ -49,9 +62,12 @@ public class UserService {
             throw new CustomException(ErrorCode.LOGIN_INPUT_INVALID);
         }
 
-        user.updatePassword(requestDto.getNewPassword());
+        user.updatePassword(passwordEncoder.encode(requestDto.getNewPassword()));
     }
 
+    private boolean isEncoded(String password) {
+        return password != null && password.startsWith("$2");
+    }
 
     public User getUser(String username){
         return userRepository.findByUsername(username).orElseThrow(
