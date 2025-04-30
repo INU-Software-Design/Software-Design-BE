@@ -13,6 +13,7 @@ public enum StatusCode {
 
     SUCCESS_POST_STUDENTS(HttpStatus.OK, "Common-Student", "학생 정보 저장에 성공하였습니다."),
     SUCCESS_GET_STUDENTS(HttpStatus.OK, "Common-Student", "학생 조회에 성공하였습니다."),
+    SUCCESS_UPDATE_PASSWORD(HttpStatus.OK, "Common-Student", "비밀번호 변경에 성공하였습니다."),
 
     SUCCESS_POST_BEHAVIOR(HttpStatus.OK, "Common-Behavior", "행동 특성 저장에 성공하였습니다."),
     SUCCESS_GET_BEHAVIOR(HttpStatus.OK, "Common-Behavior", "행동 특성 조회에 성공하였습니다."),
