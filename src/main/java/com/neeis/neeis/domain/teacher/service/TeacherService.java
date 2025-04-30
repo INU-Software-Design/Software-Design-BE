@@ -58,11 +58,9 @@ public class TeacherService {
         return ClassroomStudentDto.toDto(classroom, studentResponseDtos);
     }
 
-    public StudentDetailResDto getStudentDetail( Long studentId,int year) {
-//        Teacher teacher = authenticate(username);
+    public StudentDetailResDto getStudentDetail( String username, Long studentId, int year) {
+        authenticate(username);
         return studentService.getStudentDetails(studentId, year);
-
-
     }
 
     public Teacher authenticate(String username) {

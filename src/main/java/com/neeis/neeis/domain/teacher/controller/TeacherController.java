@@ -34,12 +34,14 @@ public class TeacherController {
     }
 
     @GetMapping("/students/{studentId}")
-    @Operation(summary = "학생 개개인 조회", description = "학생의 학적 조회를 합니다. " +
-            "메인페이지에 나와있는 학생의 정보를 제공합니다. ")
-    public ResponseEntity<CommonResponse<StudentDetailResDto>> getStudentDetails(@PathVariable Long studentId,
+    @Operation(summary = "학생 개별 조회", description = "학생의 학적 조회를 합니다.<br> " +
+            "메인페이지에 나와있는 학생의 정보를 제공합니다. <br>" +
+            "학적 이미지 조회시 `기본도메인(BASE_URL)/images/{파일명}`으로 조회가능합니다.")
+    public ResponseEntity<CommonResponse<StudentDetailResDto>> getStudentDetails(@AuthenticationPrincipal UserDetails userDetails,
+                                                                                 @PathVariable Long studentId,
                                                                                  @RequestParam(value = "year", required = false) @Parameter(description = "연도") Integer year) {
         int resolvedYear = (year != null) ? year : LocalDate.now().getYear();
-        return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_STUDENTS.getMessage(),teacherService.getStudentDetail(studentId, resolvedYear)));
+        return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_STUDENTS.getMessage(),teacherService.getStudentDetail(userDetails.getUsername(),studentId, resolvedYear)));
     }
 
 }
