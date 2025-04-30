@@ -1,7 +1,6 @@
 package com.neeis.neeis.domain.student.service;
 
 import com.neeis.neeis.domain.classroom.Classroom;
-import com.neeis.neeis.domain.classroom.ClassroomRepository;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
 import com.neeis.neeis.domain.parent.Parent;
@@ -10,19 +9,29 @@ import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.domain.student.StudentRepository;
 import com.neeis.neeis.domain.student.dto.req.FindIdRequestDto;
 import com.neeis.neeis.domain.student.dto.req.PasswordRequestDto;
+import com.neeis.neeis.domain.student.dto.req.StudentRequestDto;
 import com.neeis.neeis.domain.student.dto.res.PasswordResponseDto;
 import com.neeis.neeis.domain.student.dto.res.StudentDetailResDto;
 import com.neeis.neeis.domain.student.dto.res.StudentResponseDto;
-import com.neeis.neeis.domain.user.service.UserService;
+import com.neeis.neeis.domain.student.dto.res.StudentSaveResponseDto;
+import com.neeis.neeis.domain.user.Role;
+import com.neeis.neeis.domain.user.User;
+import com.neeis.neeis.domain.user.UserRepository;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
-import com.neeis.neeis.global.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +40,11 @@ public class StudentService {
     private final StudentRepository studentRepository;
     private final ParentRepository parentRepository;
     private final ClassroomStudentRepository classroomStudentRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
+    @Value("${image.path}")
+    private String uploadPath;
 
     // 아이디 찾기
     public StudentResponseDto findUsername(FindIdRequestDto findIdRequestDto) {
@@ -42,6 +55,7 @@ public class StudentService {
         !student.getUser().getSchool().equals(findIdRequestDto.getSchool())) {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
+
         return StudentResponseDto.of(student);
     }
 
@@ -59,6 +73,7 @@ public class StudentService {
         return PasswordResponseDto.of(student);
     }
 
+    // 학생 상세 정보 조회
     public StudentDetailResDto getStudentDetails(Long studentId, int year) {
         Student student = getStudent(studentId);
 
@@ -72,12 +87,73 @@ public class StudentService {
 
         Parent father = parents.stream()
                 .filter(p -> "부".equalsIgnoreCase(p.getRelationShip()))
-                .findFirst().orElseThrow( () -> new CustomException(ErrorCode.INVALID_DATA));
+                .findFirst().orElse(null);
         Parent mother = parents.stream()
                 .filter(p -> "모".equalsIgnoreCase(p.getRelationShip()))
-                .findFirst().orElseThrow( () -> new CustomException(ErrorCode.INVALID_DATA));
+                .findFirst().orElse(null);
 
         return StudentDetailResDto.of(student, father, mother, classroom, classroomStudent);
+    }
+
+    @Transactional
+    public StudentSaveResponseDto saveStudent(String username, StudentRequestDto requestDto, MultipartFile imageFile) {
+        User user = userRepository.findByUsername(username).orElseThrow(
+                () -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (user.getRole() != Role.ADMIN && user.getRole() != Role.TEACHER) {
+            throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
+        }
+
+        String imagePath = null;
+
+        if (imageFile != null && !imageFile.isEmpty()) {
+            imagePath = saveImage(imageFile);
+        }
+
+        // username : 입학년도 + user.getId
+        // password: 핸드폰 뒷자리 4자리
+        int admissionYear = requestDto.getAdmissionDate().getYear();
+        String rawPassword = getLast4Digits(requestDto.getPhone());
+        String encodedPassword = passwordEncoder.encode(rawPassword);
+
+        User newUser = userRepository.save(User.builder()
+                .role(Role.valueOf(requestDto.getRole()))
+                .school(requestDto.getSchool())
+                .username("temp") // 나중에 update -> 임시저장
+                .password(encodedPassword)
+                .build());
+
+        // username: 입학년도 + user.getId()
+        String newUsername = admissionYear + String.valueOf(newUser.getId());
+        newUser.updateUsername(newUsername);
+
+        userRepository.save(newUser);
+
+        Student student = StudentRequestDto.of(requestDto, imagePath, newUser );
+        studentRepository.save(student);
+
+        return StudentSaveResponseDto.toDto(student, rawPassword);
+    }
+
+    private String saveImage(MultipartFile file) {
+        String fileName = UUID.randomUUID().toString().replace("-","") + "_" + file.getOriginalFilename();
+
+        Path savePath = Paths.get(uploadPath).resolve(fileName);
+
+        try{
+            Files.createDirectories(savePath.getParent());
+            file.transferTo(savePath.toFile());
+        }catch(IOException e){
+            throw new CustomException(ErrorCode.IMAGE_SAVE_ERROR);
+        }
+        return fileName;
+    }
+
+    private String getLast4Digits(String phone) {
+        if (phone == null || phone.length() < 4) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        return phone.substring(phone.length() - 4);
     }
 
     public Student getStudent(Long studentId) {

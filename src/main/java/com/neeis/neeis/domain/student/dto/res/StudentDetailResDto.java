@@ -13,6 +13,7 @@ import java.time.LocalDate;
 public class StudentDetailResDto {
     private final Long id;
     private final String teacherName;
+    private final String image;
     private final int grade;
     private final int classroom;
     private final int number;
@@ -28,9 +29,10 @@ public class StudentDetailResDto {
     private final String motherNum;
 
     @Builder
-    private StudentDetailResDto(Long id, String teacherName, int grade, int classroom, int number, String gender, String name, String ssn, String address, String phone, LocalDate admissionDate,  String fatherName, String fatherNum, String motherName, String motherNum) {
+    private StudentDetailResDto(Long id, String teacherName, String image, int grade, int classroom, int number, String gender, String name, String ssn, String address, String phone, LocalDate admissionDate,  String fatherName, String fatherNum, String motherName, String motherNum) {
         this.id = id;
         this.teacherName = teacherName;
+        this.image = image;
         this.grade = grade;
         this.classroom = classroom;
         this.number = number;
@@ -50,6 +52,7 @@ public class StudentDetailResDto {
         return StudentDetailResDto.builder()
                 .id(student.getId())
                 .teacherName(classroom.getTeacher().getName())
+                .image(student.getImage())
                 .grade(classroom.getGrade())
                 .classroom(classroom.getClassNum())
                 .number(classroomStudent.getNumber())
@@ -59,10 +62,10 @@ public class StudentDetailResDto {
                 .address(student.getAddress())
                 .phone(student.getPhone())
                 .admissionDate(student.getAdmissionDate())
-                .fatherName(father.getName())
-                .fatherNum(father.getPhone())
-                .motherName(mother.getName())
-                .motherNum(mother.getPhone())
+                .fatherName(father != null ? father.getName() : "-")
+                .fatherNum(father != null ? father.getPhone() : "-")
+                .motherName(mother != null ? mother.getName() : "-")
+                .motherNum(mother != null ? mother.getPhone() : "-")
                 .build();
     }
 
