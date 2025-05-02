@@ -108,7 +108,8 @@ class SubjectServiceTest {
     }
 
     @Test
-    void 과목_전체_조회() {
+    @DisplayName("과목_전체_조회")
+    void get_subject_success() {
         List<Subject> subjects = List.of(
                 Subject.builder().name("수학").build(),
                 Subject.builder().name("영어").build()
@@ -122,7 +123,8 @@ class SubjectServiceTest {
     }
 
     @Test
-    void 과목_삭제_성공() {
+    @DisplayName("과목_삭제_성공")
+    void delete_subject_success() {
         Subject subject = Subject.builder().name("지리").build();
         setField(subject, "id", 1L);
         when(subjectRepository.findById(1L)).thenReturn(Optional.of(subject));
