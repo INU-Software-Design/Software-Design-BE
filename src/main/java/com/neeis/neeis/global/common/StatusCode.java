@@ -26,6 +26,12 @@ public enum StatusCode {
 
     SUCCESS_POST_FEEDBACK(HttpStatus.OK, "Common-Feedback", "피드백 저장에 성공하였습니다."),
     SUCCESS_GET_FEEDBACK(HttpStatus.OK, "Common-Feedback", "피드백 조회에 성공하였습니다."),
+
+    SUCCESS_POST_SUBJECT(HttpStatus.OK, "Common-Subject", "과목 저장에 성공하였습니다."),
+    SUCCESS_UPDATE_SUBJECT(HttpStatus.OK, "Common-Subject", "과목명 변경에 성공하였습니다."),
+    SUCCESS_GET_SUBJECT(HttpStatus.OK, "Common-Subject", "과목 조회에 성공하였습니다."),
+
+
     ;
 
     private final HttpStatus status;
