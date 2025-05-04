@@ -23,14 +23,20 @@ public class TeacherController {
 
     private final TeacherService teacherService;
 
+
     @GetMapping("/students")
-    @Operation(summary = "교사 담임학생 조회", description = "담임 교사가 담당 반의 학생을 조회합니다. <br>" +
-            "Default값은 당해년도(2025년)로 조회합니다. <br>" +
-            "특정, 년도의 담당 학생을 조회할 시, year을 입력하셔야 합니다.")
-    public ResponseEntity<CommonResponse<ClassroomStudentDto>> getStudents(@AuthenticationPrincipal UserDetails userDetails,
-                                                                          @RequestParam(value = "year", required = false) @Parameter(description = "연도") Integer year) {
+    @Operation(summary = "교사 학생 조회", description = """
+        담임 교사의 담당 반 또는 특정 학급의 학생을 조회합니다. <br>
+        year는 생략 시 올해 기준입니다. <br>
+        grade와 classNum이 모두 있으면 해당 반 조회, 없으면 담임 반 기준으로 조회됩니다.
+        """)
+    public ResponseEntity<CommonResponse<ClassroomStudentDto>> getStudents(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(value = "year", required = false) @Parameter(description = "연도") Integer year,
+            @RequestParam(value = "grade", required = false) @Parameter(description = "학년") Integer grade,
+            @RequestParam(value = "classNum", required = false) @Parameter(description = "반") Integer classNum){
         int resolvedYear = (year != null) ? year : LocalDate.now().getYear();
-        return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_STUDENTS.getMessage(), teacherService.getStudents(userDetails.getUsername(), resolvedYear)));
+        return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_STUDENTS.getMessage(), teacherService.getStudentsFlexible(userDetails.getUsername(), resolvedYear, grade, classNum)));
     }
 
     @GetMapping("/students/{studentId}")
