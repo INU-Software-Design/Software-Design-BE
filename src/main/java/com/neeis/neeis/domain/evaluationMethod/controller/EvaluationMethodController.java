@@ -4,6 +4,8 @@ import com.neeis.neeis.domain.evaluationMethod.dto.req.CreateEvaluationMethodDto
 import com.neeis.neeis.domain.evaluationMethod.dto.req.UpdateEvaluationMethodDto;
 import com.neeis.neeis.domain.evaluationMethod.dto.res.EvaluationMethodResponseDto;
 import com.neeis.neeis.domain.evaluationMethod.service.EvaluationMethodService;
+import com.neeis.neeis.domain.subject.Subject;
+import com.neeis.neeis.domain.subject.dto.res.SubjectResponseDto;
 import com.neeis.neeis.global.common.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
