@@ -29,9 +29,9 @@ public class ScoreSummaryController {
             @AuthenticationPrincipal UserDetails userDetails,
             @Parameter(description = "조회 연도", example = "2025") @RequestParam int year,
             @Parameter(description = "학기 (1 또는 2)", example = "1") @RequestParam int semester,
-            @Parameter(description = "학년", example = "3") @RequestParam int grade,
-            @Parameter(description = "반", example = "2") @RequestParam int classNum,
-            @Parameter(description = "출석번호", example = "12") @RequestParam int number
+            @Parameter(description = "학년", example = "1") @RequestParam int grade,
+            @Parameter(description = "반", example = "1") @RequestParam int classNum,
+            @Parameter(description = "출석번호", example = "6") @RequestParam int number
     ) {
 
         StudentScoreSummaryDto dto = scoreSummaryService.getStudentSummary(userDetails.getUsername(), year, semester, grade, classNum, number);
