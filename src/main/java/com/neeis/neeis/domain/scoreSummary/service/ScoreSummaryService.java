@@ -84,10 +84,14 @@ public class ScoreSummaryService {
         for (Subject subject : subjects) {
             List<EvaluationMethod> methods = evaluationMethodService.findAllBySubjectAndYearAndSemesterAndGrade(subject, year, semester, grade);
 
-            Map<ClassroomStudent, List<Score>> scoreMap = students.stream().collect(Collectors.toMap(
-                    student -> student,
-                    student -> scoreRepository.findAllByStudentAndEvaluationMethodIn(student, methods)
-            ));
+            // 전체 학생 중 점수가 있는 학생만 필터링
+            Map<ClassroomStudent, List<Score>> scoreMap = students.stream()
+                    .map(student -> Map.entry(student, scoreRepository.findAllByStudentAndEvaluationMethodIn(student, methods)))
+                    .filter(entry -> !entry.getValue().isEmpty()) // 점수가 아예 없는 경우 제외
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+            if (scoreMap.isEmpty()) continue; // 이 과목에 대한 점수가 아무도 없으면 summary 건너뜀
+
 
             Map<Long, Double> totalMap = scoreMap.entrySet().stream()
                     .collect(Collectors.toMap(
