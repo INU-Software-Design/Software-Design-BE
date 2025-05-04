@@ -33,28 +33,37 @@ public class TeacherService {
     private final UserService userService;
     private final StudentService studentService;
 
-    // 담당 학생들 조회
-    public ClassroomStudentDto getStudents(String username, int year) {
-        Teacher teacher = authenticate(username);
-        Classroom classroom = checkClassroom(teacher.getId(), year);
 
+    public ClassroomStudentDto getStudentsFlexible(String username, int year, Integer grade, Integer classNum) {
+        Teacher teacher = authenticate(username);
+
+        Classroom classroom;
+        if (grade != null && classNum != null) {
+            // 학년, 반 직접 지정
+            classroom = classroomRepository.findByYearAndGradeAndClassNum(year, grade, classNum)
+                    .orElseThrow(() -> new CustomException(ErrorCode.CLASSROOM_NOT_FOUND));
+        } else {
+            // 담임 반
+            classroom = checkClassroom(teacher.getId(), year);
+        }
+
+        return buildClassroomStudentDto(classroom);
+    }
+
+    private ClassroomStudentDto buildClassroomStudentDto(Classroom classroom) {
         List<ClassroomStudent> classroomStudentList = classroomStudentRepository.findByClassroom(classroom);
 
         Map<Student, ClassroomStudent> studentList = new HashMap<>();
         for (ClassroomStudent classroomStudent : classroomStudentList) {
             studentList.put(classroomStudent.getStudent(), classroomStudent);
         }
+
         List<StudentResponseDto> studentResponseDtos = new ArrayList<>();
-        if(!studentList.isEmpty()) {
-            for (Student student : studentList.keySet()) {
-                StudentResponseDto dto = StudentResponseDto.of(student,studentList.get(student));
-                studentResponseDtos.add(dto);
-            }
+        for (Student student : studentList.keySet()) {
+            studentResponseDtos.add(StudentResponseDto.of(student, studentList.get(student)));
         }
 
-        // HashMap -> 순서가 없으므로, number(출석번호)로 정렬해줘야 한다.
         studentResponseDtos.sort((s1, s2) -> Integer.compare(s1.getNumber(), s2.getNumber()));
-
         return ClassroomStudentDto.toDto(classroom, studentResponseDtos);
     }
 
@@ -74,6 +83,11 @@ public class TeacherService {
 
         return teacherRepository.findByUser(user).orElseThrow(
                 () -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    public Teacher checkTeacher(String username) {
+        return teacherRepository.findByName(username).orElseThrow(
+                () -> new CustomException(ErrorCode.TEACHER_NOT_FOUND));
     }
 
     // 학급 확인

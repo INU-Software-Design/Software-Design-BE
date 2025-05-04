@@ -26,6 +26,22 @@ public enum StatusCode {
 
     SUCCESS_POST_FEEDBACK(HttpStatus.OK, "Common-Feedback", "피드백 저장에 성공하였습니다."),
     SUCCESS_GET_FEEDBACK(HttpStatus.OK, "Common-Feedback", "피드백 조회에 성공하였습니다."),
+
+    SUCCESS_POST_SUBJECT(HttpStatus.OK, "Common-Subject", "과목 저장에 성공하였습니다."),
+    SUCCESS_UPDATE_SUBJECT(HttpStatus.OK, "Common-Subject", "과목명 변경에 성공하였습니다."),
+    SUCCESS_GET_SUBJECT(HttpStatus.OK, "Common-Subject", "과목 조회에 성공하였습니다."),
+
+    SUCCESS_POST_TEACHER_SUBJECT(HttpStatus.OK, "Common-TeacherSubject", "담당 교사 배정 저장에 성공하였습니다."),
+    SUCCESS_UPDATE_TEACHER_SUBJECT(HttpStatus.OK, "Common-TeacherSubject", "담당 교사 배정 변경에 성공하였습니다."),
+    SUCCESS_GET_TEACHER_SUBJECT(HttpStatus.OK, "Common-TeacherSubject", "담당 교사 배정 조회에 성공하였습니다."),
+
+    SUCCESS_POST_EVALUATION_METHOD(HttpStatus.OK, "EvaluationMethod", "평가 방식 저장(추가)에 성공하였습니다."),
+    SUCCESS_GET_EVALUATION_METHOD(HttpStatus.OK, "EvaluationMethod", "평가 방식 조회에 성공하였습니다."),
+    SUCCESS_UPDATE_EVALUATION_METHOD(HttpStatus.OK, "EvaluationMethod", "평가 방식 수정에 성공하였습니다."),
+
+    SUCCESS_POST_SCORE(HttpStatus.OK, "Score", "성적 저장에 성공하였습니다."),
+    SUCCESS_GET_SCORE(HttpStatus.OK, "Score", "성적 조회에 성공하였습니다."),
+    SUCCESS_UPDATE_SCORE(HttpStatus.OK, "Score", "성적 변경에 성공하였습니다."),
     ;
 
     private final HttpStatus status;
