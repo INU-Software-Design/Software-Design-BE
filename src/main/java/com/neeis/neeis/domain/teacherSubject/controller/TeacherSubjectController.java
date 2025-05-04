@@ -37,7 +37,7 @@ public class TeacherSubjectController {
 
     @GetMapping
     @Operation(
-            summary = "교사-과목 연결 전체 조회",
+            summary = "교사-과목 배정 전체 조회",
             description = "등록된 모든 교사-과목 배정 목록을 조회합니다. <br>" +
                     "해당 API는 인증 없이 접근 가능합니다.")
     public ResponseEntity<CommonResponse<List<TeacherSubjectResponseDto>>> getAlls(){
@@ -46,7 +46,7 @@ public class TeacherSubjectController {
 
     @PutMapping("/{id}")
     @Operation(
-            summary = "[관리자 및 교사 전용] 교사-과목 연결 수정",
+            summary = "[관리자 및 교사 전용] 교사-과목 배정 수정",
             description = "ID에 해당하는 교사-과목 연결 정보를 수정합니다. <br>" +
                     "교사 이름 및 과목 이름을 모두 변경할 수 있습니다.")
     public ResponseEntity<CommonResponse<Object>> update(@AuthenticationPrincipal UserDetails userDetails,
@@ -58,7 +58,7 @@ public class TeacherSubjectController {
 
     @DeleteMapping("/{id}")
     @Operation(
-            summary = "[관리자 및 교사 전용] 교사-과목 연결 삭제",
+            summary = "[관리자 및 교사 전용] 교사-과목 배정 삭제",
             description = "ID에 해당하는 교사-과목 연결 정보를 삭제합니다."
     )
     public ResponseEntity<CommonResponse<Object>> delete(
