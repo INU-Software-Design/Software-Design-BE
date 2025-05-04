@@ -15,4 +15,8 @@ public interface ClassroomRepository extends JpaRepository<Classroom, Long> {
     @Query(value = "select * from classroom " +
             "where year = :year and grade = :grade and class_num = :classNum and teacher_id = :teacherId;", nativeQuery = true)
     Optional<Classroom> findByClassroomInfo(int year, int grade, int classNum, Long teacherId);
+
+    @Query(value = "select * from classroom " +
+            "where year = :year and grade = :grade and class_num = :classNum ;", nativeQuery = true)
+    Optional<Classroom> findByYearAndGradeAndClassNum(int year, int grade, int classNum);
 }

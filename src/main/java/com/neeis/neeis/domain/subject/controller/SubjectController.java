@@ -1,5 +1,6 @@
 package com.neeis.neeis.domain.subject.controller;
 
+import com.neeis.neeis.domain.evaluationMethod.service.EvaluationMethodService;
 import com.neeis.neeis.domain.subject.dto.req.CreateSubjectRequestDto;
 import com.neeis.neeis.domain.subject.dto.res.SubjectResponseDto;
 import com.neeis.neeis.domain.subject.service.SubjectService;
@@ -21,6 +22,7 @@ import static com.neeis.neeis.global.common.StatusCode.*;
 @RequiredArgsConstructor
 public class SubjectController {
     private final SubjectService subjectService;
+    private final EvaluationMethodService evaluationMethodService;
 
     @PostMapping
     @Operation(
@@ -43,6 +45,23 @@ public class SubjectController {
     )
     public ResponseEntity<CommonResponse<List<SubjectResponseDto>>> getSubjects() {
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_SUBJECT.getMessage(), subjectService.getSubjects()));
+    }
+
+    @GetMapping("/subjects")
+    @Operation(
+            summary = "과목 목록 조회",
+            description = """
+                    입력한 연도, 학기, 학년에 개설된 평가방식이 존재하는 과목들을 반환합니다.<br><br>
+                    - 평가 방식이 1개라도 존재하는 과목만 반환됩니다.<br>
+                    - 예: `year=2025`, `semester=1`, `grade=1` 을 입력하면 해당 조건에 등록된 과목들만 조회됩니다.
+                    """
+    )
+    public ResponseEntity<CommonResponse<List<SubjectResponseDto>>> getSubjectsByEvaluation(
+            @RequestParam int year,
+            @RequestParam int semester,
+            @RequestParam int grade
+    ) {
+        return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_SUBJECT.getMessage(), evaluationMethodService.findSubjectList(year, semester, grade)));
     }
 
     @PutMapping("/{subjectId}")

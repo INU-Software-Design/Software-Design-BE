@@ -38,6 +38,10 @@ public enum StatusCode {
     SUCCESS_POST_EVALUATION_METHOD(HttpStatus.OK, "EvaluationMethod", "평가 방식 저장(추가)에 성공하였습니다."),
     SUCCESS_GET_EVALUATION_METHOD(HttpStatus.OK, "EvaluationMethod", "평가 방식 조회에 성공하였습니다."),
     SUCCESS_UPDATE_EVALUATION_METHOD(HttpStatus.OK, "EvaluationMethod", "평가 방식 수정에 성공하였습니다."),
+
+    SUCCESS_POST_SCORE(HttpStatus.OK, "Score", "성적 저장에 성공하였습니다."),
+    SUCCESS_GET_SCORE(HttpStatus.OK, "Score", "성적 조회에 성공하였습니다."),
+    SUCCESS_UPDATE_SCORE(HttpStatus.OK, "Score", "성적 변경에 성공하였습니다."),
     ;
 
     private final HttpStatus status;
