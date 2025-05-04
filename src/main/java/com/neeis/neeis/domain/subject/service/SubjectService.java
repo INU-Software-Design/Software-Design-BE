@@ -57,5 +57,11 @@ public class SubjectService {
                 .orElseThrow(() -> new CustomException(ErrorCode.DATA_NOT_FOUND));
         subjectRepository.delete(subject);
     }
+
+    public Subject getSubject(String subjectName) {
+        return subjectRepository.findByName(subjectName).orElseThrow(
+                () -> new CustomException(ErrorCode.DATA_NOT_FOUND)
+        );
+    }
 }
 

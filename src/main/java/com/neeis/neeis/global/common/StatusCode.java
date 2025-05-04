@@ -31,6 +31,10 @@ public enum StatusCode {
     SUCCESS_UPDATE_SUBJECT(HttpStatus.OK, "Common-Subject", "과목명 변경에 성공하였습니다."),
     SUCCESS_GET_SUBJECT(HttpStatus.OK, "Common-Subject", "과목 조회에 성공하였습니다."),
 
+    SUCCESS_POST_TEACHER_SUBJECT(HttpStatus.OK, "Common-TeacherSubject", "담당 교사 배정 저장에 성공하였습니다."),
+    SUCCESS_UPDATE_TEACHER_SUBJECT(HttpStatus.OK, "Common-TeacherSubject", "담당 교사 배정 변경에 성공하였습니다."),
+    SUCCESS_GET_TEACHER_SUBJECT(HttpStatus.OK, "Common-TeacherSubject", "담당 교사 배정 조회에 성공하였습니다."),
+
 
     ;
 

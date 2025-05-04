@@ -1,7 +1,7 @@
 package com.neeis.neeis.domain.subject.controller;
 
-import com.neeis.neeis.domain.subject.service.dto.req.CreateSubjectRequestDto;
-import com.neeis.neeis.domain.subject.service.dto.res.SubjectResponseDto;
+import com.neeis.neeis.domain.subject.dto.req.CreateSubjectRequestDto;
+import com.neeis.neeis.domain.subject.dto.res.SubjectResponseDto;
 import com.neeis.neeis.domain.subject.service.SubjectService;
 import com.neeis.neeis.global.common.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
