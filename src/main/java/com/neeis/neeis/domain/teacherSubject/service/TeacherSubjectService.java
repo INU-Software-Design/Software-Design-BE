@@ -74,7 +74,7 @@ public class TeacherSubjectService {
 
     public TeacherSubject findByTeacherAndSubject(Teacher teacher, Subject subject) {
         return teacherSubjectRepository.findByTeacherAndSubject(teacher, subject).orElseThrow(
-                () -> new CustomException(ErrorCode.TEACHER_SUBJECT_NOT_FOUND));
+                () -> new CustomException(ErrorCode.HANDLE_ACCESS_DENIED));
     }
 
 }
