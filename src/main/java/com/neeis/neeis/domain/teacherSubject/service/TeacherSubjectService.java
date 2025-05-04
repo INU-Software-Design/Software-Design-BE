@@ -33,7 +33,7 @@ public class TeacherSubjectService {
         // 과목 조회
         Subject subject = subjectService.getSubject(dto.getSubjectName());
         // 교사 조회
-        Teacher teacher = teacherService.authenticate(dto.getTeacherName());
+        Teacher teacher = teacherService.checkTeacher(dto.getTeacherName());
 
         if (teacherSubjectRepository.existsByTeacherAndSubject(teacher, subject)) {
             throw new CustomException(ErrorCode.TEACHER_SUBJECT_DUPLICATE);
@@ -48,7 +48,7 @@ public class TeacherSubjectService {
         TeacherSubject teacherSubject = findById(id);
 
         Subject subject = subjectService.getSubject(dto.getSubjectName());
-        Teacher teacher = teacherService.authenticate(dto.getTeacherName());
+        Teacher teacher = teacherService.checkTeacher(dto.getTeacherName());
 
         teacherSubject.update(teacher, subject);
     }

@@ -22,6 +22,7 @@ public enum ErrorCode {
     PASSWORD_EQUALS(HttpStatus.BAD_REQUEST, "Member-003", "이전 비밀번호와 일치합니다."),
 
     CLASSROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "Teacher-001", "담임 학급과 학생을 찾을 수 없습니다."),
+    TEACHER_NOT_FOUND(HttpStatus.NOT_FOUND, "Teacher-002", "해당 교사가 존재하지 않습니다."),
 
     COUNSEL_NOT_FOUND(HttpStatus.NOT_FOUND, "Counsel-001", "상담이 존재하지 않습니다."),
     COUNSEL_CATEGORY_NOT_EXIST(HttpStatus.BAD_REQUEST,"Counsel-002", "상담 종류가 존재하지 않습니다."),

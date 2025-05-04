@@ -47,6 +47,7 @@ public class ScoreController {
             @Valid @RequestBody List<ScoreRequestDto> dtoList) {
 
         scoreService.saveOrUpdateScores(userDetails.getUsername(), dtoList);
+
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_POST_SCORE.getMessage()));
     }
 

@@ -76,6 +76,11 @@ public class TeacherService {
                 () -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
+    public Teacher checkTeacher(String username) {
+        return teacherRepository.findByName(username).orElseThrow(
+                () -> new CustomException(ErrorCode.TEACHER_NOT_FOUND));
+    }
+
     // 학급 확인
     public Classroom checkClassroom(Long teacherId, int year) {
         return classroomRepository.findByTeacherIdAndYear(teacherId,year).orElseThrow(

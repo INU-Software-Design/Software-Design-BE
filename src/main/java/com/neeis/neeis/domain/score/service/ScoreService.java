@@ -10,6 +10,7 @@ import com.neeis.neeis.domain.score.Score;
 import com.neeis.neeis.domain.score.ScoreRepository;
 import com.neeis.neeis.domain.score.dto.req.ScoreRequestDto;
 import com.neeis.neeis.domain.score.dto.res.ScoreSummaryBySubjectDto;
+import com.neeis.neeis.domain.scoreSummary.service.ScoreSummaryService;
 import com.neeis.neeis.domain.subject.Subject;
 import com.neeis.neeis.domain.subject.service.SubjectService;
 import com.neeis.neeis.domain.teacher.Teacher;
@@ -21,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,6 +35,8 @@ public class ScoreService {
     private final ClassroomStudentService classroomStudentService;
     private final ClassroomService classroomService;
     private final SubjectService subjectService;
+    private final ScoreSummaryService scoreSummaryService;
+
 
     public List<ScoreSummaryBySubjectDto> getScoreSummaryBySubject(String username, int year, int semester, int grade, int classNum, String subjectName) {
         // 교사 인증
@@ -99,9 +101,10 @@ public class ScoreService {
     public void saveOrUpdateScores(String username, List<ScoreRequestDto> requestList) {
         Teacher teacher = teacherService.authenticate(username);
 
+        int targetYear = 0, targetSemester = 0, targetGrade = 0, targetClassNum = 0;
+
         for (ScoreRequestDto requestDto : requestList) {
             EvaluationMethod evaluationMethod = evaluationMethodService.findById(requestDto.getEvaluationId());
-
             Subject subject = evaluationMethod.getSubject();
             teacherSubjectService.findByTeacherAndSubject(teacher, subject); // 권한 검증
 
@@ -109,26 +112,32 @@ public class ScoreService {
                     evaluationMethod.getYear(), evaluationMethod.getGrade(), requestDto.getClassNum()
             );
 
+            targetYear = evaluationMethod.getYear();
+            targetSemester = evaluationMethod.getSemester();
+            targetGrade = evaluationMethod.getGrade();
+            targetClassNum = requestDto.getClassNum();
+
             for (ScoreRequestDto.StudentScoreDto studentDto : requestDto.getStudents()) {
                 ClassroomStudent student = classroomStudentService.findByClassroomAndNumber(classroom, studentDto.getNumber());
 
                 double raw = studentDto.getRawScore();
                 double weighted = (raw / evaluationMethod.getFullScore()) * evaluationMethod.getWeight();
 
-                Optional<Score> existing = scoreRepository.findByEvaluationMethodAndStudent(evaluationMethod, student);
-                if (existing.isPresent()) {
-                    Score score = existing.get();
-                    score.update(raw, weighted);
-                } else {
-                    Score score = Score.builder()
-                            .student(student)
-                            .evaluationMethod(evaluationMethod)
-                            .rawScore(raw)
-                            .weightedScore(weighted)
-                            .build();
-                    scoreRepository.save(score);
-                }
+                scoreRepository.findByEvaluationMethodAndStudent(evaluationMethod, student)
+                        .ifPresentOrElse(
+                                s -> s.update(raw, weighted),
+                                () -> scoreRepository.save(Score.builder()
+                                        .student(student)
+                                        .evaluationMethod(evaluationMethod)
+                                        .rawScore(raw)
+                                        .weightedScore(weighted)
+                                        .build())
+                        );
             }
         }
+
+        // 모든 점수 저장 후, summary 갱신
+        scoreSummaryService.saveSummaries(targetYear, targetSemester, targetGrade, targetClassNum);
     }
+
 }

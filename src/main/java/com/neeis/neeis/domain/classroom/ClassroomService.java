@@ -21,6 +21,6 @@ public class ClassroomService {
     // 성적 입력 용
     public Classroom findClassroom(int year, int grade, int classNum){
         return classroomRepository.findByYearAndGradeAndClassNum(year, grade, classNum).orElseThrow(
-                () -> new CustomException(ErrorCode.HANDLE_ACCESS_DENIED));
+                () -> new CustomException(ErrorCode.CLASSROOM_NOT_FOUND));
     }
 }
