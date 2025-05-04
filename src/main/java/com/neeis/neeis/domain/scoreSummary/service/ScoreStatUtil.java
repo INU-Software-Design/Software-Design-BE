@@ -6,7 +6,7 @@ import java.util.List;
 public class ScoreStatUtil {
 
     // 평균 계산
-    public static double average(List<Double> values) {
+    public static double average(Collection<Double> values) {
         if (values == null || values.isEmpty()) return 0.0;
 
         double sum = 0.0;

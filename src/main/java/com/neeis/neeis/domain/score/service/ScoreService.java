@@ -21,7 +21,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -101,43 +103,53 @@ public class ScoreService {
     public void saveOrUpdateScores(String username, List<ScoreRequestDto> requestList) {
         Teacher teacher = teacherService.authenticate(username);
 
-        int targetYear = 0, targetSemester = 0, targetGrade = 0, targetClassNum = 0;
+        Map<String, List<Score>> scoreBuffer = new HashMap<>();
 
         for (ScoreRequestDto requestDto : requestList) {
-            EvaluationMethod evaluationMethod = evaluationMethodService.findById(requestDto.getEvaluationId());
-            Subject subject = evaluationMethod.getSubject();
+            EvaluationMethod eval = evaluationMethodService.findById(requestDto.getEvaluationId());
+            Subject subject = eval.getSubject();
             teacherSubjectService.findByTeacherAndSubject(teacher, subject); // 권한 검증
 
-            Classroom classroom = classroomService.findClassroom(
-                    evaluationMethod.getYear(), evaluationMethod.getGrade(), requestDto.getClassNum()
-            );
-
-            targetYear = evaluationMethod.getYear();
-            targetSemester = evaluationMethod.getSemester();
-            targetGrade = evaluationMethod.getGrade();
-            targetClassNum = requestDto.getClassNum();
+            Classroom classroom = classroomService.findClassroom(eval.getYear(), eval.getGrade(), requestDto.getClassNum());
 
             for (ScoreRequestDto.StudentScoreDto studentDto : requestDto.getStudents()) {
                 ClassroomStudent student = classroomStudentService.findByClassroomAndNumber(classroom, studentDto.getNumber());
 
                 double raw = studentDto.getRawScore();
-                double weighted = (raw / evaluationMethod.getFullScore()) * evaluationMethod.getWeight();
+                double weighted = (raw / eval.getFullScore()) * eval.getWeight();
 
-                scoreRepository.findByEvaluationMethodAndStudent(evaluationMethod, student)
-                        .ifPresentOrElse(
-                                s -> s.update(raw, weighted),
-                                () -> scoreRepository.save(Score.builder()
+                // 점수 저장
+                Score score = scoreRepository.findByEvaluationMethodAndStudent(eval, student)
+                        .map(s -> {
+                            s.update(raw, weighted);
+                            return s;
+                        })
+                        .orElseGet(() -> scoreRepository.save(
+                                Score.builder()
                                         .student(student)
-                                        .evaluationMethod(evaluationMethod)
+                                        .evaluationMethod(eval)
                                         .rawScore(raw)
                                         .weightedScore(weighted)
-                                        .build())
-                        );
+                                        .build()
+                        ));
+
+                // 과목별 누적 요약 계산용 버퍼
+                String key = eval.getYear() + "_" + eval.getSemester() + "_" + eval.getGrade() + "_" + requestDto.getClassNum();
+                scoreBuffer.computeIfAbsent(key, k -> new ArrayList<>()).add(score);
             }
         }
 
-        // 모든 점수 저장 후, summary 갱신
-        scoreSummaryService.saveSummaries(targetYear, targetSemester, targetGrade, targetClassNum);
+        // 요약 저장 로직은 key 단위로 처리
+        for (String key : scoreBuffer.keySet()) {
+            String[] parts = key.split("_");
+            int year = Integer.parseInt(parts[0]);
+            int semester = Integer.parseInt(parts[1]);
+            int grade = Integer.parseInt(parts[2]);
+            int classNum = Integer.parseInt(parts[3]);
+
+            scoreSummaryService.updateSummaryForClass(year, semester, grade, classNum);
+        }
+
     }
 
 }
