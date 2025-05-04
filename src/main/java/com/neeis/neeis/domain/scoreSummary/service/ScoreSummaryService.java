@@ -75,24 +75,20 @@ public class ScoreSummaryService {
     }
 
     @Transactional
-    public void saveSummaries(int year, int semester, int grade, int classNum) {
+    public void updateSummaryForClass(int year, int semester, int grade, int classNum) {
         Classroom classroom = classroomService.findClassroom(year, grade, classNum);
         List<ClassroomStudent> students = classroomStudentService.findByClassroom(classroom);
 
-        Set<Subject> subjects = new HashSet<>(evaluationMethodService.findSubject(year, semester, grade));
+        List<Subject> subjects = evaluationMethodService.findSubject(year, semester, grade);
 
         for (Subject subject : subjects) {
-            List<EvaluationMethod> methods = evaluationMethodService
-                    .findAllBySubjectAndYearAndSemesterAndGrade(subject, year, semester, grade);
+            List<EvaluationMethod> methods = evaluationMethodService.findAllBySubjectAndYearAndSemesterAndGrade(subject, year, semester, grade);
 
-            // 학생별 점수 합산
-            Map<ClassroomStudent, List<Score>> scoreMap = new HashMap<>();
-            for (ClassroomStudent student : students) {
-                List<Score> scores = scoreRepository.findAllByStudentAndEvaluationMethodIn(student, methods);
-                scoreMap.put(student, scores);
-            }
+            Map<ClassroomStudent, List<Score>> scoreMap = students.stream().collect(Collectors.toMap(
+                    student -> student,
+                    student -> scoreRepository.findAllByStudentAndEvaluationMethodIn(student, methods)
+            ));
 
-            // 총점 기준으로 석차 산정 (반영 점수 기반)
             Map<Long, Double> totalMap = scoreMap.entrySet().stream()
                     .collect(Collectors.toMap(
                             e -> e.getKey().getId(),
@@ -100,27 +96,21 @@ public class ScoreSummaryService {
                     ));
 
             Map<Long, Integer> rankMap = ScoreLevelUtil.calculateRanks(totalMap);
-            double avg = totalMap.values().stream().mapToDouble(Double::doubleValue).average().orElse(0);
+            double avg = ScoreStatUtil.average(totalMap.values().stream().toList());
             double stdDev = ScoreStatUtil.standardDeviation(totalMap.values());
 
-            // 기존 요약 삭제
             scoreSummaryRepository.deleteBySubjectAndClassroomStudentIn(subject, students);
 
             for (Map.Entry<ClassroomStudent, List<Score>> entry : scoreMap.entrySet()) {
                 ClassroomStudent student = entry.getKey();
                 List<Score> scores = entry.getValue();
 
-                // 반영 점수 총합
-                double weighted = scores.stream().mapToDouble(Score::getWeightedScore).sum();
-
-                // 원점수 ( (raw / fullScore * weight) 합산 후 소수 첫째 자리 반올림)
+                double weightedSum = scores.stream().mapToDouble(Score::getWeightedScore).sum();
                 double rawScaledSum = scores.stream()
-                        .mapToDouble(s -> {
-                            EvaluationMethod e = s.getEvaluationMethod();
-                            return (s.getRawScore() / e.getFullScore()) * e.getWeight();
-                        }).sum();
-                int originalScore = Math.toIntExact(Math.round(rawScaledSum)); // 정수로 반올림
+                        .mapToDouble(s -> (s.getRawScore() / s.getEvaluationMethod().getFullScore()) * s.getEvaluationMethod().getWeight())
+                        .sum();
 
+                int originalScore = (int) Math.round(rawScaledSum);
                 int rank = rankMap.get(student.getId());
                 int gradeValue = ScoreLevelUtil.getGrade(rank, students.size());
                 String achievement = ScoreLevelUtil.toAchievementLevel(gradeValue);
@@ -129,7 +119,7 @@ public class ScoreSummaryService {
                         .classroomStudent(student)
                         .subject(subject)
                         .originalScore(originalScore)
-                        .sumScore(weighted)
+                        .sumScore(weightedSum)
                         .average(avg)
                         .stdDeviation(stdDev)
                         .rank(rank)
