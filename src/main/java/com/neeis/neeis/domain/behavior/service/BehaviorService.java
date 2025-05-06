@@ -71,7 +71,7 @@ public class BehaviorService {
         }
         behavior.update(behaviorRequestDto);
 
-        return BehaviorDetailResponseDto.of(behaviorRepository.save(behavior));
+        return BehaviorDetailResponseDto.of(behavior);
     }
 
 
