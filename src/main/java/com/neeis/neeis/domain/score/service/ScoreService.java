@@ -10,25 +10,27 @@ import com.neeis.neeis.domain.score.Score;
 import com.neeis.neeis.domain.score.ScoreRepository;
 import com.neeis.neeis.domain.score.dto.req.ScoreRequestDto;
 import com.neeis.neeis.domain.score.dto.res.ScoreSummaryBySubjectDto;
+import com.neeis.neeis.domain.scoreSummary.ScoreSummary;
 import com.neeis.neeis.domain.scoreSummary.service.ScoreSummaryService;
 import com.neeis.neeis.domain.subject.Subject;
 import com.neeis.neeis.domain.subject.service.SubjectService;
 import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.domain.teacher.service.TeacherService;
 import com.neeis.neeis.domain.teacherSubject.service.TeacherSubjectService;
+import com.neeis.neeis.global.exception.CustomException;
+import com.neeis.neeis.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class ScoreService {
     private final ScoreRepository scoreRepository;
     private final TeacherService teacherService;
@@ -63,37 +65,48 @@ public class ScoreService {
 
             if (evaluations.isEmpty()) continue;
 
-            List<ScoreSummaryBySubjectDto.EvaluationMethodScoreDto> evalList = new ArrayList<>();
+            List<ScoreSummaryBySubjectDto.EvaluationDto> evaluationDtos = evaluations.stream()
+                    .map(eval -> ScoreSummaryBySubjectDto.EvaluationDto.builder()
+                            .evaluationId(eval.getId())
+                            .title(eval.getTitle())
+                            .build())
+                    .toList();
 
-            for (EvaluationMethod eval : evaluations) {
-                List<Score> scores = scoreRepository.findAllByEvaluationMethod(eval);
+            List<ScoreSummaryBySubjectDto.StudentScoreDto> studentDtos = new ArrayList<>();
 
-                List<ScoreSummaryBySubjectDto.EvaluationMethodScoreDto.StudentScoreDto> scoreDtos = scores.stream()
-                        .filter(score -> students.contains(score.getStudent()))
-                        .map(score -> {
-                            ClassroomStudent s = score.getStudent();
-                            return ScoreSummaryBySubjectDto.EvaluationMethodScoreDto.StudentScoreDto.builder()
-                                    .studentName(s.getStudent().getName())
-                                    .number(s.getNumber())
-                                    .rawScore(score.getRawScore())
-                                    .weightedScore(score.getWeightedScore())
-                                    .build();
-                        })
-                        .collect(Collectors.toList());
+            for (ClassroomStudent cs : students) {
+                List<ScoreSummaryBySubjectDto.ScoreItemDto> scoreItems = new ArrayList<>();
 
-                evalList.add(ScoreSummaryBySubjectDto.EvaluationMethodScoreDto.builder()
-                        .evaluationId(eval.getId())
-                        .title(eval.getTitle())
-                        .examType(eval.getExamType().name())
-                        .weight(eval.getWeight())
-                        .fullScore(eval.getFullScore())
-                        .scores(scoreDtos)
+                for (EvaluationMethod eval : evaluations) {
+                    scoreRepository.findByEvaluationMethodAndStudent(eval, cs).ifPresent(score -> {
+                        scoreItems.add(ScoreSummaryBySubjectDto.ScoreItemDto.builder()
+                                .evaluationId(eval.getId())
+                                .rawScore(score.getRawScore())
+                                .weightedScore(score.getWeightedScore())
+                                .build());
+                    });
+                }
+
+                ScoreSummary summary = scoreSummaryService.findByStudentAndSubject(cs.getId(), subject.getId());
+
+                studentDtos.add(ScoreSummaryBySubjectDto.StudentScoreDto.builder()
+                        .studentName(cs.getStudent().getName())
+                        .number(cs.getNumber())
+                        .scores(scoreItems)
+                        .rawTotal(summary.getSumScore())
+                        .weightedTotal(summary.getOriginalScore())
+                        .average(summary.getAverage())
+                        .stdDev(summary.getStdDeviation())
+                        .rank(summary.getRank())
+                        .grade(summary.getGrade())
+                        .achievementLevel(summary.getAchievementLevel())
                         .build());
-            }
 
+            }
             result.add(ScoreSummaryBySubjectDto.builder()
                     .subjectName(subject.getName())
-                    .evaluations(evalList)
+                    .evaluations(evaluationDtos)
+                    .students(studentDtos)
                     .build());
         }
 

@@ -46,9 +46,11 @@ public enum ErrorCode {
     EVALUATION_METHOD_NOT_FOUND(HttpStatus.NOT_FOUND, "EvaluationMethod-002", "해당 평가 방식이 존재하지 않습니다."),
     EXCESS_TOTAL_100(HttpStatus.BAD_REQUEST,"EvaluationMethod-003", "해당 과목의 반영 비율 총합이 100을 초과합니다."),
 
-
     SCORE_OVER_FULL(HttpStatus.BAD_REQUEST, "SCORE_001", "점수가 만점을 초과했습니다."),
-    SCORE_NEGATIVE(HttpStatus.BAD_REQUEST, "SCORE_002", "점수가 0보다 작을 수 없습니다.");
+    SCORE_NEGATIVE(HttpStatus.BAD_REQUEST, "SCORE_002", "점수가 0보다 작을 수 없습니다."),
+
+    SCORE_SUMMARY_NOT_FOUND(HttpStatus.NOT_FOUND, "Score-Summary-001", "점수 통계가 존재하지 않습니다."),
+
     ;
 
     private final HttpStatus status;

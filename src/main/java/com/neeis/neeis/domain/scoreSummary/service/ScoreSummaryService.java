@@ -13,8 +13,11 @@ import com.neeis.neeis.domain.scoreSummary.ScoreSummary;
 import com.neeis.neeis.domain.scoreSummary.ScoreSummaryRepository;
 import com.neeis.neeis.domain.scoreSummary.dto.StudentScoreSummaryDto;
 import com.neeis.neeis.domain.scoreSummary.dto.SubjectScoreDto;
+import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.domain.subject.Subject;
 import com.neeis.neeis.domain.teacher.service.TeacherService;
+import com.neeis.neeis.global.exception.CustomException;
+import com.neeis.neeis.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -133,5 +136,10 @@ public class ScoreSummaryService {
                         .build());
             }
         }
+    }
+
+    public ScoreSummary findByStudentAndSubject(Long studentId, Long subjectId) {
+        return scoreSummaryRepository.findByStudentAndSubject(studentId, subjectId)
+                .orElseThrow(() -> new CustomException(ErrorCode.SCORE_SUMMARY_NOT_FOUND));
     }
 }
