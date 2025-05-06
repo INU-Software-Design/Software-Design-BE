@@ -78,7 +78,7 @@ public class TeacherService {
 
 
     // 교사 개인 정보 조회
-    public TeacherResponseDto getMyProfile(String username) {
+    public TeacherResponseDto getProfile(String username) {
         Teacher teacher = authenticate(username);
         return TeacherResponseDto.toDto(teacher);
     }

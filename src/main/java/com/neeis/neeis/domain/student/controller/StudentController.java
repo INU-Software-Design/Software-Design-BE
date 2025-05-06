@@ -2,12 +2,10 @@ package com.neeis.neeis.domain.student.controller;
 
 import com.neeis.neeis.domain.student.dto.req.FindIdRequestDto;
 import com.neeis.neeis.domain.student.dto.req.StudentRequestDto;
-import com.neeis.neeis.domain.student.dto.res.StudentSaveResponseDto;
+import com.neeis.neeis.domain.student.dto.req.StudentUpdateRequestDto;
+import com.neeis.neeis.domain.student.dto.res.*;
 import com.neeis.neeis.domain.user.dto.LoginRequestDto;
 import com.neeis.neeis.domain.student.dto.req.PasswordRequestDto;
-import com.neeis.neeis.domain.student.dto.res.PasswordResponseDto;
-import com.neeis.neeis.domain.student.dto.res.StudentResponseDto;
-import com.neeis.neeis.domain.student.dto.res.TokenResponseDto;
 import com.neeis.neeis.domain.student.service.StudentService;
 import com.neeis.neeis.domain.user.service.UserService;
 import com.neeis.neeis.global.common.CommonResponse;
@@ -57,5 +55,17 @@ public class StudentController {
             @RequestPart("info") @Valid StudentRequestDto studentRequestDto,
             @RequestPart("image") MultipartFile image) {
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_POST_STUDENTS.getMessage(), studentService.saveStudent(userDetails.getUsername(),studentRequestDto, image)));
+    }
+
+    @PatchMapping(value = "/{studentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "[관리자 및 교사 전용] 학생 정보 수정")
+    public ResponseEntity<CommonResponse<Object>> updateStudent(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long studentId,
+            @RequestPart("info") @Valid StudentUpdateRequestDto requestDto,
+            @RequestPart(value = "image", required = false) MultipartFile image) {
+
+        studentService.updateStudent(userDetails.getUsername(), studentId, requestDto, image);
+        return ResponseEntity.ok(CommonResponse.from(SUCCESS_UPDATE_STUDENTS.getMessage()));
     }
 }

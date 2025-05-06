@@ -10,6 +10,7 @@ import com.neeis.neeis.domain.student.StudentRepository;
 import com.neeis.neeis.domain.student.dto.req.FindIdRequestDto;
 import com.neeis.neeis.domain.student.dto.req.PasswordRequestDto;
 import com.neeis.neeis.domain.student.dto.req.StudentRequestDto;
+import com.neeis.neeis.domain.student.dto.req.StudentUpdateRequestDto;
 import com.neeis.neeis.domain.student.dto.res.PasswordResponseDto;
 import com.neeis.neeis.domain.student.dto.res.StudentDetailResDto;
 import com.neeis.neeis.domain.student.dto.res.StudentResponseDto;
@@ -133,6 +134,55 @@ public class StudentService {
         studentRepository.save(student);
 
         return StudentSaveResponseDto.toDto(student, rawPassword);
+    }
+
+    @Transactional
+    public void updateStudent(String username, Long studentId,
+                                            StudentUpdateRequestDto requestDto,
+                                            MultipartFile imageFile) {
+
+        User updater = userRepository.findByUsername(username)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (updater.getRole() != Role.ADMIN && updater.getRole() != Role.TEACHER) {
+            throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
+        }
+
+        Student student = getStudent(studentId);
+
+        // 이미지 변경 처리
+        String newImagePath = student.getImage();
+        if (imageFile != null && !imageFile.isEmpty()) {
+            newImagePath = saveImage(imageFile);
+        }
+
+        // 학생 정보 수정
+        student.updateInfo(
+                requestDto.getName(),
+                requestDto.getAddress(),
+                requestDto.getPhone(),
+                newImagePath
+        );
+
+        // 부모 정보 수정
+        List<Parent> parents = parentRepository.findByStudent(student);
+
+        parents.stream()
+                .filter(p -> "부".equalsIgnoreCase(p.getRelationShip()))
+                .findFirst()
+                .ifPresent(p -> {
+                    if (requestDto.getFatherName() != null) p.updateName(requestDto.getFatherName());
+                    if (requestDto.getFatherPhone() != null) p.updatePhone(requestDto.getFatherPhone());
+                });
+
+        parents.stream()
+                .filter(p -> "모".equalsIgnoreCase(p.getRelationShip()))
+                .findFirst()
+                .ifPresent(p -> {
+                    if (requestDto.getMotherName() != null) p.updateName(requestDto.getMotherName());
+                    if (requestDto.getMotherPhone() != null) p.updatePhone(requestDto.getMotherPhone());
+                });
+
     }
 
     private String saveImage(MultipartFile file) {

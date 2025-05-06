@@ -55,4 +55,11 @@ public class Student extends BaseEntity {
         this.admissionDate = admissionDate;
         this.user = user;
     }
+
+    public void updateInfo(String name, String address, String phone, String image) {
+        this.name = name;
+        this.address = address;
+        this.phone = phone;
+        this.image = image;
+    }
 }
