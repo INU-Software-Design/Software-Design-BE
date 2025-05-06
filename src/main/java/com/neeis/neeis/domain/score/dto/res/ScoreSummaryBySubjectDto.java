@@ -18,6 +18,7 @@ public class ScoreSummaryBySubjectDto {
 
     @Getter
     public static class EvaluationMethodScoreDto {
+        private final Long evaluationId;
         private final String title;
         private final String examType;
         private final double weight;
@@ -26,7 +27,8 @@ public class ScoreSummaryBySubjectDto {
         private List<StudentScoreDto> scores;
 
         @Builder
-        private EvaluationMethodScoreDto(String title, String examType, double weight, double fullScore, List<StudentScoreDto> scores) {
+        private EvaluationMethodScoreDto( Long evaluationId,String title, String examType, double weight, double fullScore, List<StudentScoreDto> scores) {
+            this.evaluationId = evaluationId;
             this.title = title;
             this.examType = examType;
             this.weight = weight;

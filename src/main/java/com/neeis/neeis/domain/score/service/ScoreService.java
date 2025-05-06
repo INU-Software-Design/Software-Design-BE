@@ -82,6 +82,7 @@ public class ScoreService {
                         .collect(Collectors.toList());
 
                 evalList.add(ScoreSummaryBySubjectDto.EvaluationMethodScoreDto.builder()
+                        .evaluationId(eval.getId())
                         .title(eval.getTitle())
                         .examType(eval.getExamType().name())
                         .weight(eval.getWeight())

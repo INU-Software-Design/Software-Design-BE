@@ -26,7 +26,7 @@ public class TeacherController {
 
     @GetMapping("/students")
     @Operation(summary = "교사 학생 조회", description = """
-        담임 교사의 담당 반 또는 특정 학급의 학생을 조회합니다. <br>
+        담임 교사의 담당 반 또는 특정 학급의 학생 출석번호와 이름을 조회합니다. <br>
         year는 생략 시 올해 기준입니다. <br>
         grade와 classNum이 모두 있으면 해당 반 조회, 없으면 담임 반 기준으로 조회됩니다.
         """)
