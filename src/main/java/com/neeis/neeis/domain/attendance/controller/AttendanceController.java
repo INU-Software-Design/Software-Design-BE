@@ -35,7 +35,7 @@ public class AttendanceController {
             "status : PRESENT(출석), ABSENT(결석), LATE(지각), EARLY(조퇴)  ")
     public ResponseEntity<CommonResponse<Object>> saveAttendance(@AuthenticationPrincipal UserDetails userDetails,
                                                            @Valid @RequestBody AttendanceBulkRequestDto attendanceBulkRequestDto){
-        attendanceService.saveAttendance(userDetails.getUsername(), attendanceBulkRequestDto);
+        attendanceService.saveOrUpdateAttendance(userDetails.getUsername(), attendanceBulkRequestDto);
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_POST_ATTENDANCE.getMessage()));
     }
 

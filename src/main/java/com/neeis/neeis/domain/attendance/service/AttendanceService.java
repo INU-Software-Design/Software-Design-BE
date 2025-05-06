@@ -43,7 +43,7 @@ public class AttendanceService {
     private final AttendanceFeedbackRepository feedbackRepository;
 
     @Transactional
-    public void saveAttendance(String username, AttendanceBulkRequestDto requestDto) {
+    public void saveOrUpdateAttendance(String username, AttendanceBulkRequestDto requestDto) {
 
         Teacher teacher = teacherService.authenticate(username);
         Classroom classroom = classroomService.findClassroom(requestDto.getYear(), requestDto.getGrade(), requestDto.getClassNumber(), teacher.getId());
@@ -57,8 +57,7 @@ public class AttendanceService {
         Map<Long, Student> studentMap = classroomStudentList.stream()
                 .collect(Collectors.toMap(
                         cs -> cs.getStudent().getId(),
-                        ClassroomStudent::getStudent
-                ));
+                        ClassroomStudent::getStudent));
 
         // 학생과 DB 확인
         for (StudentAttendanceDto dto : requestDto.getStudents()) {
@@ -76,11 +75,8 @@ public class AttendanceService {
             Student student = studentMap.get(studentDto.getStudentId());
 
             // 날짜별 출결사항 매핑
-            Map<LocalDate, AttendanceStatus> statusMap = new HashMap<>();
-            for (DailyAttendanceDto dailyDto : studentDto.getAttendances()) {
-
-                statusMap.put(dailyDto.getDate(), dailyDto.getStatus());
-            }
+            Map<LocalDate, AttendanceStatus> statusMap = studentDto.getAttendances().stream()
+                    .collect(Collectors.toMap(DailyAttendanceDto::getDate, DailyAttendanceDto::getStatus));
 
             // 한달치 모든 날짜에 대해 저장
             for (int day = 1; day <= lastDay; day++) {
@@ -89,21 +85,23 @@ public class AttendanceService {
 
                 // 특이사항만 저장
                 if (status != AttendanceStatus.PRESENT) {
-                    Attendance attendance = attendanceRepository.findByStudentAndDate(student, date)
-                            .orElse(Attendance.builder()
-                                    .student(student)
-                                    .date(date)
-                                    .status(status)
-                                    .build());
-
-                    // 상태 업데이트
-                    attendance = Attendance.builder()
-                            .student(student)
-                            .date(date)
-                            .status(status)
-                            .build();
-
-                    attendanceRepository.save(attendance);
+                    attendanceRepository.findByStudentAndDate(student, date)
+                            .ifPresentOrElse(
+                                    existing -> {
+                                        if (existing.getStatus() != status) {
+                                            existing.updateStatus(status);
+                                            attendanceRepository.save(existing);
+                                        }
+                                    },
+                                    () -> {
+                                        Attendance newAttendance = Attendance.builder()
+                                                .student(student)
+                                                .date(date)
+                                                .status(status)
+                                                .build();
+                                        attendanceRepository.save(newAttendance);
+                                    }
+                            );
                 }
             }
         }

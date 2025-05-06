@@ -35,4 +35,8 @@ public class Attendance {
         this.status = status;
         this.student = student;
     }
+
+    public void updateStatus(AttendanceStatus newStatus) {
+        this.status = newStatus;
+    }
 }

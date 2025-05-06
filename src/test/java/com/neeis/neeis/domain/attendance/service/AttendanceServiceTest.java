@@ -1,7 +1,5 @@
 package com.neeis.neeis.domain.attendance.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import com.neeis.neeis.domain.attendance.AttendanceRepository;
 import com.neeis.neeis.domain.attendance.AttendanceStatus;
 import com.neeis.neeis.domain.attendance.dto.req.AttendanceBulkRequestDto;
@@ -12,7 +10,6 @@ import com.neeis.neeis.domain.classroom.Classroom;
 import com.neeis.neeis.domain.classroom.ClassroomRepository;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
-import com.neeis.neeis.domain.classroomStudent.ClassroomStudentService;
 import com.neeis.neeis.domain.counsel.CounselRepository;
 import com.neeis.neeis.domain.parent.ParentRepository;
 import com.neeis.neeis.domain.student.Student;
@@ -157,7 +154,7 @@ class AttendanceServiceTest {
 
     @Test
     @DisplayName("출결 정상 저장 성공")
-    void saveAttendancesBulk_success() {
+    void saveOrUpdateAttendancesBulk_success() {
         AttendanceBulkRequestDto requestDto =AttendanceBulkRequestDto.builder()
                 .year(2025)
                 .month(4)
@@ -190,7 +187,7 @@ class AttendanceServiceTest {
                 )
                 .build();
 
-        attendanceService.saveAttendance(teacherUser.getUsername(), requestDto);
+        attendanceService.saveOrUpdateAttendance(teacherUser.getUsername(), requestDto);
 
         // 출결이 정상 저장되었는지 검증
         assertThat(attendanceRepository.findByStudentAndDate(students.get(0), LocalDate.of(2025,4,1)))
@@ -201,7 +198,7 @@ class AttendanceServiceTest {
 
     @Test
     @DisplayName("반 잘못 입력시 발생")
-    void saveAttendancesBulk_wrongClass() {
+    void saveOrUpdateAttendancesBulk_wrongClass() {
         // 다른 반을 요청하는 케이스
         AttendanceBulkRequestDto requestDto = AttendanceBulkRequestDto.builder()
                 .year(2025)
@@ -220,7 +217,7 @@ class AttendanceServiceTest {
                         .build()))
                 .build();
 
-        assertThatThrownBy(() -> attendanceService.saveAttendance(teacherUser.getUsername(), requestDto))
+        assertThatThrownBy(() -> attendanceService.saveOrUpdateAttendance(teacherUser.getUsername(), requestDto))
                 .isInstanceOf(CustomException.class)
                 .hasMessageContaining(ErrorCode.CLASSROOM_NOT_FOUND.getMessage());
     }
@@ -228,7 +225,7 @@ class AttendanceServiceTest {
 
     @Test
     @DisplayName("다른 반 접근 시 ACCESS_DENIED 발생")
-    void saveAttendancesBulk_accessDenied() {
+    void saveOrUpdateAttendancesBulk_accessDenied() {
 
         // 유저, 교사 생성
         User user31 = User.builder()
@@ -284,7 +281,7 @@ class AttendanceServiceTest {
                                 .build()))
                 .build();
 
-        assertThatThrownBy(() -> attendanceService.saveAttendance(userDetails.getUsername(), requestDto))
+        assertThatThrownBy(() -> attendanceService.saveOrUpdateAttendance(userDetails.getUsername(), requestDto))
                 .isInstanceOf(CustomException.class)
                 .hasMessageContaining(ErrorCode.HANDLE_ACCESS_DENIED.getMessage());
     }
