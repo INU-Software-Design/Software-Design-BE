@@ -57,7 +57,7 @@ public class StudentController {
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_POST_STUDENTS.getMessage(), studentService.saveStudent(userDetails.getUsername(),studentRequestDto, image)));
     }
 
-    @PatchMapping(value = "/{studentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/{studentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "[관리자 및 교사 전용] 학생 정보 수정")
     public ResponseEntity<CommonResponse<Object>> updateStudent(
             @AuthenticationPrincipal UserDetails userDetails,
