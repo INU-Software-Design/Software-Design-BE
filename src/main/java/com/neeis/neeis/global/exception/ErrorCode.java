@@ -12,9 +12,11 @@ public enum ErrorCode {
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "Common-001", "입력값이 유효하지 않습니다."),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "Common-002", " Invalid Http Method"),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Common-003", "Server Error"),
+    INVALID_JSON(HttpStatus.BAD_REQUEST, "COMMON-004", "요청 JSON이 유효하지 않습니다."),
     HANDLE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "Common-005", "접근이 제한됩니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "Common-006", "Token Expired"),
     DATA_NOT_FOUND(HttpStatus.NOT_FOUND, "DB-002", "데이터가 존재하지 않습니다."),
+
 
     //Member Validation
     USER_NOT_FOUND(HttpStatus.BAD_REQUEST,"Member-001", "회원정보를 찾을 수 없습니다."),
@@ -43,6 +45,10 @@ public enum ErrorCode {
     EVALUATION_METHOD_DUPLICATE(HttpStatus.BAD_REQUEST, "EvaluationMethod-001", "해당 평가 방식이 이미 존재합니다."),
     EVALUATION_METHOD_NOT_FOUND(HttpStatus.NOT_FOUND, "EvaluationMethod-002", "해당 평가 방식이 존재하지 않습니다."),
     EXCESS_TOTAL_100(HttpStatus.BAD_REQUEST,"EvaluationMethod-003", "해당 과목의 반영 비율 총합이 100을 초과합니다."),
+
+
+    SCORE_OVER_FULL(HttpStatus.BAD_REQUEST, "SCORE_001", "점수가 만점을 초과했습니다."),
+    SCORE_NEGATIVE(HttpStatus.BAD_REQUEST, "SCORE_002", "점수가 0보다 작을 수 없습니다.");
     ;
 
     private final HttpStatus status;

@@ -116,6 +116,9 @@ public class ScoreService {
                 ClassroomStudent student = classroomStudentService.findByClassroomAndNumber(classroom, studentDto.getNumber());
 
                 double raw = studentDto.getRawScore();
+
+                ScoreValidator.validateRawScore(raw, eval);
+
                 double weighted = (raw / eval.getFullScore()) * eval.getWeight();
 
                 // 점수 저장
