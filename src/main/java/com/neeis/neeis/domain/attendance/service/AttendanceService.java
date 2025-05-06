@@ -135,7 +135,7 @@ public class AttendanceService {
                                     .build())
                             .toList();
 
-                    return StudentAttendanceResDto.toDto(
+                    return StudentAttendanceResDto.toDto( cs,
                             attendances.isEmpty() ? Attendance.builder().student(student).build() : attendances.getFirst(),
                             dailyAttendanceDtos
                     );
