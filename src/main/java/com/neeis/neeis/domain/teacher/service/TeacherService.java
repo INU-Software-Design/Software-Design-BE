@@ -11,6 +11,7 @@ import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.domain.teacher.TeacherRepository;
 import com.neeis.neeis.domain.teacher.dto.ClassroomStudentDto;
 import com.neeis.neeis.domain.teacher.dto.StudentResponseDto;
+import com.neeis.neeis.domain.teacher.dto.TeacherResponseDto;
 import com.neeis.neeis.domain.user.Role;
 import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.domain.user.service.UserService;
@@ -18,6 +19,7 @@ import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,6 +28,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class TeacherService {
     private final TeacherRepository teacherRepository;
     private final ClassroomRepository classroomRepository;
@@ -67,10 +70,20 @@ public class TeacherService {
         return ClassroomStudentDto.toDto(classroom, studentResponseDtos);
     }
 
+    // 학생 학적 정보 가져오기
     public StudentDetailResDto getStudentDetail( String username, Long studentId, int year) {
         authenticate(username);
         return studentService.getStudentDetails(studentId, year);
     }
+
+
+    // 교사 개인 정보 조회
+    public TeacherResponseDto getMyProfile(String username) {
+        Teacher teacher = authenticate(username);
+        return TeacherResponseDto.toDto(teacher);
+    }
+
+
 
     public Teacher authenticate(String username) {
         // loginId -> user -> student 로

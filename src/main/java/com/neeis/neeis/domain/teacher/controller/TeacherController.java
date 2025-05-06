@@ -2,6 +2,7 @@ package com.neeis.neeis.domain.teacher.controller;
 
 import com.neeis.neeis.domain.student.dto.res.StudentDetailResDto;
 import com.neeis.neeis.domain.teacher.dto.ClassroomStudentDto;
+import com.neeis.neeis.domain.teacher.dto.TeacherResponseDto;
 import com.neeis.neeis.domain.teacher.service.TeacherService;
 import com.neeis.neeis.global.common.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,6 +49,13 @@ public class TeacherController {
                                                                                  @RequestParam(value = "year", required = false) @Parameter(description = "연도") Integer year) {
         int resolvedYear = (year != null) ? year : LocalDate.now().getYear();
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_STUDENTS.getMessage(),teacherService.getStudentDetail(userDetails.getUsername(),studentId, resolvedYear)));
+    }
+
+    @GetMapping
+    @Operation(summary = "교사 개인 정보 조회", description = "로그인한 교사의 정보를 반환합니다.")
+    public ResponseEntity<CommonResponse<TeacherResponseDto>> getMyProfile(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(CommonResponse.from("교사 정보 조회 성공", teacherService.getProfile(userDetails.getUsername())));
     }
 
 }
