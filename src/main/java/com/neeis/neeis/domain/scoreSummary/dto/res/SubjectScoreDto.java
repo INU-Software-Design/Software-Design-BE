@@ -1,4 +1,4 @@
-package com.neeis.neeis.domain.scoreSummary.dto;
+package com.neeis.neeis.domain.scoreSummary.dto.res;
 
 import com.neeis.neeis.domain.score.Score;
 import com.neeis.neeis.domain.scoreSummary.ScoreSummary;
@@ -11,8 +11,14 @@ import java.util.List;
 @Getter
 public class SubjectScoreDto {
 
+    @Schema(description = "성적 통계 ID", example = "1")
+    private final Long scoreSummaryId;
+
     @Schema(description = "과목명", example = "국어")
     private final String subjectName;
+
+    @Schema(description = "피드백", example = "과목 수행을 잘함.")
+    private final String feedback;
 
     @Schema(description = "해당 과목의 평가 방식별 점수 정보")
     private final List<EvaluationMethodScoreDto> evaluationMethods;
@@ -42,9 +48,11 @@ public class SubjectScoreDto {
     private final int totalStudentCount;
 
     @Builder
-    private SubjectScoreDto(String subjectName, List<EvaluationMethodScoreDto> evaluationMethods, double rawTotal,
+    private SubjectScoreDto(Long scoreSummaryId, String subjectName, String feedback, List<EvaluationMethodScoreDto> evaluationMethods, double rawTotal,
                             double weightedTotal, int rank, int grade, String achievementLevel, double average, double stdDev, int totalStudentCount) {
+        this.scoreSummaryId = scoreSummaryId;
         this.subjectName = subjectName;
+        this.feedback = feedback;
         this.evaluationMethods = evaluationMethods;
         this.rawTotal = rawTotal;
         this.weightedTotal = weightedTotal;
@@ -58,7 +66,9 @@ public class SubjectScoreDto {
 
     public static SubjectScoreDto toDto(ScoreSummary summary, List<Score> scores) {
         return SubjectScoreDto.builder()
+                .scoreSummaryId(summary.getId())
                 .subjectName(summary.getSubject().getName())
+                .feedback(summary.getFeedback())
                 .rawTotal(summary.getSumScore())
                 .weightedTotal(summary.getOriginalScore())
                 .rank(summary.getRank())

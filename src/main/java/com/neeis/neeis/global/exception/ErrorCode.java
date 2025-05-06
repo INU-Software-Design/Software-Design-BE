@@ -41,6 +41,7 @@ public enum ErrorCode {
     TEACHER_SUBJECT_DUPLICATE(HttpStatus.BAD_REQUEST, "TeacherSubject-001", "해당 과목에 대한 교사가 이미 배정되어 있습니다."),
     TEACHER_SUBJECT_NOT_FOUND(HttpStatus.BAD_REQUEST, "TeacherSubject-002", "해당 과목에 대한 교사가 존재하지 않습니다."),
 
+    FEEDBACK_NOT_FOUND(HttpStatus.NOT_FOUND, "Feedback-001", "해당 과목의 피드백이 존재하지 않습니다."),
 
     EVALUATION_METHOD_DUPLICATE(HttpStatus.BAD_REQUEST, "EvaluationMethod-001", "해당 평가 방식이 이미 존재합니다."),
     EVALUATION_METHOD_NOT_FOUND(HttpStatus.NOT_FOUND, "EvaluationMethod-002", "해당 평가 방식이 존재하지 않습니다."),

@@ -8,12 +8,13 @@ import com.neeis.neeis.domain.evaluationMethod.EvaluationMethod;
 import com.neeis.neeis.domain.evaluationMethod.service.EvaluationMethodService;
 import com.neeis.neeis.domain.score.Score;
 import com.neeis.neeis.domain.score.ScoreRepository;
-import com.neeis.neeis.domain.score.service.ScoreService;
 import com.neeis.neeis.domain.scoreSummary.ScoreSummary;
 import com.neeis.neeis.domain.scoreSummary.ScoreSummaryRepository;
-import com.neeis.neeis.domain.scoreSummary.dto.StudentScoreSummaryDto;
-import com.neeis.neeis.domain.scoreSummary.dto.SubjectScoreDto;
-import com.neeis.neeis.domain.student.Student;
+import com.neeis.neeis.domain.scoreSummary.dto.res.ScoreFeedbackDto;
+import com.neeis.neeis.domain.scoreSummary.dto.res.StudentScoreSummaryDto;
+import com.neeis.neeis.domain.scoreSummary.dto.res.SubjectScoreDto;
+import com.neeis.neeis.domain.scoreSummary.dto.req.ScoreFeedbackRequestDto;
+import com.neeis.neeis.domain.scoreSummary.dto.req.ScoreFeedbackUpdateDto;
 import com.neeis.neeis.domain.subject.Subject;
 import com.neeis.neeis.domain.teacher.service.TeacherService;
 import com.neeis.neeis.global.exception.CustomException;
@@ -42,26 +43,26 @@ public class ScoreSummaryService {
         Classroom classroom = classroomService.findClassroom(year, grade, classNum);
         ClassroomStudent student = classroomStudentService.findByClassroomAndNumber(classroom, number);
 
-        // 1. 해당 학기의 점수 불러오기
+        // 해당 학기의 점수 불러오기
         List<Score> scores = scoreRepository
                 .findAllByStudentAndEvaluationMethod_YearAndEvaluationMethod_Semester(student, year, semester);
 
-        // 2. 과목 이름별로 점수 분류
+        // 과목 이름별로 점수 분류
         Map<String, List<Score>> scoreBySubject = scores.stream()
                 .collect(Collectors.groupingBy(s -> s.getEvaluationMethod().getSubject().getName()));
 
-        // 3. 해당 학기 과목 리스트
+        // 해당 학기 과목 리스트
         Set<String> subjectNamesInThisSemester = scores.stream()
                 .map(s -> s.getEvaluationMethod().getSubject().getName())
                 .collect(Collectors.toSet());
 
-        // 4. 모든 ScoreSummary 중에서 해당 학기의 과목에 속한 것만 필터링
+        // 모든 ScoreSummary 중에서 해당 학기의 과목에 속한 것만 필터링
         List<ScoreSummary> allSummaries = scoreSummaryRepository.findAllByClassroomStudent(student);
         List<ScoreSummary> filteredSummaries = allSummaries.stream()
                 .filter(summary -> subjectNamesInThisSemester.contains(summary.getSubject().getName()))
                 .toList();
 
-        // 5. DTO 변환
+        // DTO 변환
         List<SubjectScoreDto> subjectScoreList = filteredSummaries.stream()
                 .map(summary -> {
                     String subjectName = summary.getSubject().getName();
@@ -137,6 +138,41 @@ public class ScoreSummaryService {
             }
         }
     }
+
+    @Transactional
+    public void saveFeedback(String username, ScoreFeedbackRequestDto requestDto) {
+        // 교사 권환 확인
+        teacherService.authenticate(username);
+
+        // 추후, 담당 과목인지 권한 확인 필요 고려
+        ScoreSummary summary = scoreSummaryRepository.findById(requestDto.getScoreSummaryId())
+                .orElseThrow(() -> new CustomException(ErrorCode.SCORE_SUMMARY_NOT_FOUND));
+
+        summary.update(requestDto.getFeedback());
+    }
+
+    @Transactional
+    public void updateFeedback(String username, Long scoreSummaryId, ScoreFeedbackUpdateDto requestDto) {
+        // 교사 권환 확인
+        teacherService.authenticate(username);
+
+        // 추후, 담당 과목인지 권한 확인 필요 고려
+        ScoreSummary summary = scoreSummaryRepository.findById(scoreSummaryId)
+                .orElseThrow(() -> new CustomException(ErrorCode.SCORE_SUMMARY_NOT_FOUND));
+
+        summary.update(requestDto.getFeedback());
+    }
+
+
+    public ScoreFeedbackDto getFeedback(Long scoreSummaryId) {
+
+        // 추후, 담당 과목인지 권한 확인 필요 고려
+        ScoreSummary summary = scoreSummaryRepository.findById(scoreSummaryId)
+                .orElseThrow(() -> new CustomException(ErrorCode.SCORE_SUMMARY_NOT_FOUND));
+
+        return ScoreFeedbackDto.toDto(summary);
+    }
+
 
     public ScoreSummary findByStudentAndSubject(Long studentId, Long subjectId) {
         return scoreSummaryRepository.findByStudentAndSubject(studentId, subjectId)

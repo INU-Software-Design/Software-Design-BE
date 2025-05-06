@@ -1,7 +1,6 @@
 package com.neeis.neeis.domain.classroomStudent;
 
 import com.neeis.neeis.domain.classroom.Classroom;
-import com.neeis.neeis.domain.classroom.ClassroomRepository;
 import com.neeis.neeis.domain.classroom.ClassroomService;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;

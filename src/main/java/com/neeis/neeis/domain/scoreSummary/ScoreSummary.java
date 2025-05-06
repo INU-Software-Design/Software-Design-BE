@@ -41,6 +41,9 @@ public class ScoreSummary {
     @Column(nullable = false)
     private String achievementLevel; // 성취도 A,B,C..
 
+    @Column(nullable = true)
+    private String feedback;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id", nullable = false)
     private Subject subject;  //과목
@@ -51,7 +54,7 @@ public class ScoreSummary {
 
     @Builder
     private ScoreSummary( Double sumScore, Integer originalScore, Double stdDeviation, Integer totalStudentCount,
-            Integer rank, Integer grade, Double average, String achievementLevel, ClassroomStudent classroomStudent, Subject subject) {
+            Integer rank, Integer grade, Double average, String achievementLevel, ClassroomStudent classroomStudent, Subject subject, String feedback) {
         this.sumScore = sumScore;
         this.originalScore = originalScore;
         this.stdDeviation = stdDeviation;
@@ -60,7 +63,12 @@ public class ScoreSummary {
         this.grade = grade;
         this.average = average;
         this.achievementLevel = achievementLevel;
+        this.feedback = feedback;
         this.classroomStudent = classroomStudent;
         this.subject = subject;
+    }
+
+    public void update(String feedback){
+        this.feedback = feedback;
     }
 }

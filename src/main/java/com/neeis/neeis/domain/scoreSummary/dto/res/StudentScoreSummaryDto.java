@@ -1,4 +1,4 @@
-package com.neeis.neeis.domain.scoreSummary.dto;
+package com.neeis.neeis.domain.scoreSummary.dto.res;
 
 import lombok.Builder;
 import lombok.Getter;
