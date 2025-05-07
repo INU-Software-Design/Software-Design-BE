@@ -1,5 +1,6 @@
 package com.neeis.neeis.domain.student.dto.req;
 
+import com.neeis.neeis.domain.student.Student;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -37,4 +38,15 @@ public class StudentUpdateRequestDto {
     @Schema(description = "모(어머니) 연락처", example = "010-3333-4444")
     @Pattern(regexp = "^010-\\d{4}-\\d{4}$", message = "전화번호 형식은 010-0000-0000입니다.")
     private String motherPhone;
+
+    @Builder
+    private StudentUpdateRequestDto(String name,String address, String phone, String fatherName, String motherName, String fatherPhone, String motherPhone) {
+        this.name = name;
+        this.address = address;
+        this.phone = phone;
+        this.fatherName = fatherName;
+        this.motherName = motherName;
+        this.fatherPhone = fatherPhone;
+        this.motherPhone = motherPhone;
+    }
 }
