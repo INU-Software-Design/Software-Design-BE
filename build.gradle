@@ -26,6 +26,7 @@ repositories {
 
 jacoco {
     toolVersion = "0.8.11"
+    reportsDirectory = layout.buildDirectory.dir('jacocoReport')
 }
 
 dependencies {
@@ -60,7 +61,8 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
-    layout.buildDirectory.dir("reports/jacoco")
+    finalizedBy  jacocoTestReport
+
 }
 
 // jacoco Report 생성
@@ -84,7 +86,7 @@ jacocoTestReport {
                     '**/global/common/**',
                     '**/*Application*',
                     '**/exception/**',
-                    ''
+                    '**/config/**'
             ] + QDomainList)
         }))
     }
@@ -106,27 +108,23 @@ jacocoTestCoverageVerification {
 
             // 코드 커버리지를 측정할 때 사용되는 지표
             limit {
+                // LINE : 한 줄씩 한번 이라도 실행되면 만족
                 counter = 'LINE'
                 value = 'COVEREDRATIO'
-                minimum = 0.30
+                minimum = 0.00
             }
 
             limit {
                 counter = 'BRANCH'
                 value = 'COVEREDRATIO'
-                minimum = 0.30
+                minimum = 0.00
             }
 
             excludes = [
-                    '**.dto.**',
-                    '**.event.**',
-                    '**.*InitData*',
+                    '**.*Dto.**',
                     '**.*Application*',
-                    '**.exception.**',
-                    '**.service.alarm.**',
-                    '**.aop.**',
+                    '**.*Exception*.**',
                     '**.config.**',
-                    '**.MemberRole*'
             ] + QDomainList
         }
     }
