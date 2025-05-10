@@ -106,7 +106,7 @@ public class AttendanceController {
                     "피드백 ID를 경로로 입력하고, 수정할 피드백 내용을 요청 본문에 작성합니다. <br>" +
                     "본인이 작성한 피드백만 수정할 수 있습니다.")
     public ResponseEntity<CommonResponse<AttendanceFeedbackResDto>> updateFeedback(@AuthenticationPrincipal UserDetails userdetails,
-                                                                 @PathVariable Long feedbackId,
+                                                                 @PathVariable("feedbackId") Long feedbackId,
                                                                  @Valid @RequestBody AttendanceFeedbackReqDto attendanceFeedbackDto) {
 
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_POST_FEEDBACK.getMessage(),attendanceService.updateFeedback(userdetails.getUsername(), feedbackId, attendanceFeedbackDto)));

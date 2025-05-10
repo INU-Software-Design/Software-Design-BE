@@ -222,9 +222,8 @@ public class AttendanceService {
         ClassroomStudent classroomStudent = checkValidate(username, year, grade, classNum, number);
 
         AttendanceFeedback feedback = AttendanceFeedbackReqDto.of(requestDto, classroomStudent);
-        feedbackRepository.save(feedback);
 
-        return AttendanceFeedbackResDto.toDto(feedback);
+        return AttendanceFeedbackResDto.toDto(feedbackRepository.save(feedback));
     }
 
     @Transactional
