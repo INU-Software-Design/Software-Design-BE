@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +27,7 @@ public class EvaluationMethodController {
 
     private final EvaluationMethodService evaluationMethodService;
 
+    @PreAuthorize("hasRole('ROLE_TEACHER')")
     @PostMapping
     @Operation(
             summary = "[교사 전용] 평가 방식 생성",

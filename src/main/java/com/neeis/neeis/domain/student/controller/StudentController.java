@@ -58,10 +58,10 @@ public class StudentController {
     }
 
     @PutMapping(value = "/{studentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "[관리자 및 교사 전용] 학생 정보 수정")
+    @Operation(summary = "[관리자 및 교사 전용] 학생 정보 수정" )
     public ResponseEntity<CommonResponse<Object>> updateStudent(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable Long studentId,
+            @PathVariable Long studentId, // 출석번호
             @RequestPart("info") @Valid StudentUpdateRequestDto requestDto,
             @RequestPart(value = "image", required = false) MultipartFile image) {
 

@@ -2,6 +2,7 @@ package com.neeis.neeis.domain.counsel.controller;
 
 import com.neeis.neeis.domain.counsel.dto.req.CounselRequestDto;
 import com.neeis.neeis.domain.counsel.dto.res.CounselDetailDto;
+import com.neeis.neeis.domain.counsel.dto.res.CounselResponseDto;
 import com.neeis.neeis.domain.counsel.service.CounselService;
 import com.neeis.neeis.domain.student.service.StudentService;
 import com.neeis.neeis.global.common.CommonResponse;
@@ -27,7 +28,7 @@ public class CounselController {
     @PostMapping
     @Operation(summary = "상담 작성", description = "교사가 학생과의 상담 기록을 작성합니다. <br>" +
             "상담 종류:  UNIVERSITY(대학), CAREER(취업), FAMILY(가정), ACADEMIC(학업), PERSONAL(개인), OTHER(기타) 가 존재합니다." )
-    public ResponseEntity<CommonResponse<Object>> postCounsel(
+    public ResponseEntity<CommonResponse<CounselResponseDto>> postCounsel(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(value = "studentId") Long studentId,
             @Valid @RequestBody CounselRequestDto requestDto){

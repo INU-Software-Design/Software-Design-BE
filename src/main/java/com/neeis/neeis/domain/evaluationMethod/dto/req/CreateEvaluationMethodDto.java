@@ -24,7 +24,7 @@ public class CreateEvaluationMethodDto {
     @NotNull(message = "학기는 필수 입력입니다.")
     @Min(value = 1, message = "학기는 1 또는 2만 입력 가능합니다.")
     @Max(value = 2, message = "학기는 1 또는 2만 입력 가능합니다.")
-    @Schema(description = "학기 (1 또는 2)", example = "1", allowableValues = {"1", "2"}, required = true)
+    @Schema(description = "학기 (1 또는 2)", example = "1", allowableValues = {"1", "2"})
     private Integer semester;
 
     @NotNull(message = "학년은 필수 입력입니다.")
