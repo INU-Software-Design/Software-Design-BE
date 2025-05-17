@@ -27,6 +27,9 @@ public class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @Column(name = "fcm_token",nullable = true)
+    private String fcmToken;
+
     @Builder
     public User(String school, String username, String password, Role role) {
         this.school = school;
@@ -41,5 +44,9 @@ public class User extends BaseEntity {
 
     public void updatePassword(String password) {
         this.password = password;
+    }
+
+    public void updateFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
     }
 }
