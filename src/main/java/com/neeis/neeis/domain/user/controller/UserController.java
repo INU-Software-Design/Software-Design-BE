@@ -1,6 +1,7 @@
 package com.neeis.neeis.domain.user.controller;
 
 import com.neeis.neeis.domain.student.dto.res.TokenResponseDto;
+import com.neeis.neeis.domain.user.dto.FcmTokenRequestDto;
 import com.neeis.neeis.domain.user.dto.LoginRequestDto;
 import com.neeis.neeis.domain.user.dto.UpdatePasswordRequestDto;
 import com.neeis.neeis.domain.user.service.UserService;
@@ -9,10 +10,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import static com.neeis.neeis.global.common.StatusCode.SUCCESS_LOGIN;
-import static com.neeis.neeis.global.common.StatusCode.SUCCESS_UPDATE_PASSWORD;
+import static com.neeis.neeis.global.common.StatusCode.*;
 
 @RestController
 @RequestMapping("/users")
@@ -45,5 +47,21 @@ public class UserController {
             @Valid @RequestBody UpdatePasswordRequestDto updatePasswordRequestDto) {
         userService.updatePassword(updatePasswordRequestDto);
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_UPDATE_PASSWORD.getMessage()));
+    }
+
+    @Operation(
+            summary = "FCM 토큰 등록",
+            description = """
+        로그인한 사용자의 디바이스 FCM 토큰을 서버에 등록합니다. <br><br>
+        이 토큰은 푸시 알림(Firebase Cloud Messaging)을 전송할 때 사용됩니다.<br><br>
+        웹 또는 모바일 앱에서 발급된 FCM 토큰을 클라이언트에서 받아<br>
+        해당 토큰을 이 API를 통해 서버에 전송하세요.<br><br>
+        동일 사용자가 기존 토큰을 등록한 상태라면 갱신 처리됩니다.
+        """)
+    @PostMapping("/fcm/register")
+    public ResponseEntity<CommonResponse<Object>> registerFcmToken(@AuthenticationPrincipal UserDetails userDetails,
+                                                                   @RequestBody FcmTokenRequestDto fcmTokenRequestDto) {
+        userService.registerToken(userDetails.getUsername(), fcmTokenRequestDto);
+        return ResponseEntity.ok(CommonResponse.from(SUCCESS_SAVE_FCM_TOKEN.getMessage()));
     }
 }

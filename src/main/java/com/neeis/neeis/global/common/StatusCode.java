@@ -11,6 +11,8 @@ public enum StatusCode {
     SUCCESS_LOGIN(HttpStatus.OK, "Common-Login", "로그인에 성공하였습니다."),
     SUCCESS_GET_USERNAME(HttpStatus.OK, "Common-Login", "아이디 찾기에 성공하였습니다."),
 
+    SUCCESS_SAVE_FCM_TOKEN(HttpStatus.OK, "Commone", "FCM 토큰 저장에 성공하였습니다."),
+
     SUCCESS_POST_STUDENTS(HttpStatus.OK, "Student", "학생 정보 저장에 성공하였습니다."),
     SUCCESS_GET_STUDENTS(HttpStatus.OK, "Student", "학생 조회에 성공하였습니다."),
     SUCCESS_UPDATE_PASSWORD(HttpStatus.OK, "Student", "비밀번호 변경에 성공하였습니다."),
