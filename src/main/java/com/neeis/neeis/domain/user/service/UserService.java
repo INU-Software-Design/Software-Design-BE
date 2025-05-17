@@ -3,6 +3,7 @@ package com.neeis.neeis.domain.user.service;
 import com.neeis.neeis.domain.student.dto.res.TokenResponseDto;
 import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.domain.user.UserRepository;
+import com.neeis.neeis.domain.user.dto.FcmTokenRequestDto;
 import com.neeis.neeis.domain.user.dto.LoginRequestDto;
 import com.neeis.neeis.domain.user.dto.UpdatePasswordRequestDto;
 import com.neeis.neeis.global.exception.CustomException;
@@ -63,6 +64,13 @@ public class UserService {
         }
 
         user.updatePassword(passwordEncoder.encode(requestDto.getNewPassword()));
+    }
+
+    @Transactional
+    public void registerToken(String username, FcmTokenRequestDto requestDto) {
+        User user = getUser(username);
+
+        user.updateFcmToken(requestDto.getToken());
     }
 
     private boolean isEncoded(String password) {

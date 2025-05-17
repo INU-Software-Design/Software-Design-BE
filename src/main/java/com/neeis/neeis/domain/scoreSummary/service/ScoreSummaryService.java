@@ -19,7 +19,9 @@ import com.neeis.neeis.domain.subject.Subject;
 import com.neeis.neeis.domain.teacher.service.TeacherService;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
+import com.neeis.neeis.global.fcm.event.SendFeedbackFcmEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +38,7 @@ public class ScoreSummaryService {
     private final EvaluationMethodService evaluationMethodService;
     private final ScoreRepository scoreRepository;
     private final TeacherService teacherService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public StudentScoreSummaryDto getStudentSummary(String username, int year, int semester, int grade, int classNum, int number) {
         teacherService.authenticate(username);
@@ -149,6 +152,8 @@ public class ScoreSummaryService {
                 .orElseThrow(() -> new CustomException(ErrorCode.SCORE_SUMMARY_NOT_FOUND));
 
         summary.update(requestDto.getFeedback());
+
+        eventPublisher.publishEvent(new SendFeedbackFcmEvent(summary));
     }
 
     @Transactional
@@ -161,6 +166,8 @@ public class ScoreSummaryService {
                 .orElseThrow(() -> new CustomException(ErrorCode.SCORE_SUMMARY_NOT_FOUND));
 
         summary.update(requestDto.getFeedback());
+
+        eventPublisher.publishEvent(new SendFeedbackFcmEvent(summary));
     }
 
 
@@ -173,9 +180,9 @@ public class ScoreSummaryService {
         return ScoreFeedbackDto.toDto(summary);
     }
 
-
     public ScoreSummary findByStudentAndSubject(Long studentId, Long subjectId) {
         return scoreSummaryRepository.findByStudentAndSubject(studentId, subjectId)
                 .orElseThrow(() -> new CustomException(ErrorCode.SCORE_SUMMARY_NOT_FOUND));
     }
+
 }

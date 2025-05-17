@@ -12,7 +12,9 @@ import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.domain.teacher.service.TeacherService;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
+import com.neeis.neeis.global.fcm.event.SendCounselFcmEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,7 @@ public class CounselService {
     private final CounselRepository counselRepository;
     private final TeacherService teacherService;
     private final StudentService studentService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public CounselResponseDto createCounsel(String username, Long studentId, CounselRequestDto requestDto) {
@@ -36,6 +39,7 @@ public class CounselService {
 
         Counsel counsel = counselRepository.save(CounselRequestDto.of(teacher,student, requestDto, category));
 
+        eventPublisher.publishEvent(new SendCounselFcmEvent(counsel));
         return CounselResponseDto.toDto(counsel);
     }
 
@@ -77,6 +81,7 @@ public class CounselService {
         );
         counsel.update(requestDto);
 
+        eventPublisher.publishEvent(new SendCounselFcmEvent(counsel));
         return CounselDetailDto.toDto(counsel);
     }
 
