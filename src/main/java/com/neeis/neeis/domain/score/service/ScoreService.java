@@ -19,13 +19,17 @@ import com.neeis.neeis.domain.teacher.service.TeacherService;
 import com.neeis.neeis.domain.teacherSubject.service.TeacherSubjectService;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
+import com.neeis.neeis.global.fcm.event.SendScoreFcmEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.springframework.data.repository.util.ClassUtils.ifPresent;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +44,7 @@ public class ScoreService {
     private final ClassroomService classroomService;
     private final SubjectService subjectService;
     private final ScoreSummaryService scoreSummaryService;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     public List<ScoreSummaryBySubjectDto> getScoreSummaryBySubject(String username, int year, int semester, int grade, int classNum, String subjectName) {
@@ -165,6 +170,27 @@ public class ScoreService {
             int classNum = Integer.parseInt(parts[3]);
 
             scoreSummaryService.updateSummaryForClass(year, semester, grade, classNum);
+
+            // FCM 용
+            Classroom classroom = classroomService.findClassroom(year, grade, classNum);
+            List<ClassroomStudent> students = classroomStudentService.findByClassroom(classroom);
+            List<Subject> subjects = evaluationMethodService.findSubject(year, semester, grade);
+
+
+            for (ClassroomStudent student : students) {
+                for (Subject subject : subjects) {
+                    try {
+                        ScoreSummary summary = scoreSummaryService.findByStudentAndSubject(student.getId(), subject.getId());
+                        eventPublisher.publishEvent(new SendScoreFcmEvent(summary));
+                    } catch (CustomException e) {
+                        if (e.getErrorCode() == ErrorCode.SCORE_SUMMARY_NOT_FOUND) {
+                            log.debug("성적 없음 → 스킵: {}, {}", student.getId(), subject.getName());
+                        } else {
+                            throw e;
+                        }
+                    }
+                }
+            }
         }
 
     }

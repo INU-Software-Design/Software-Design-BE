@@ -1,6 +1,7 @@
 package com.neeis.neeis.domain.parent;
 
 import com.neeis.neeis.domain.student.Student;
+import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -30,12 +31,17 @@ public class Parent extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     private Student student;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Builder
-    private Parent(String name, String relationShip, String phone, Student student) {
+    private Parent(String name, String relationShip, String phone, Student student, User user) {
         this.name = name;
         this.relationShip = relationShip;
         this.phone = phone;
         this.student = student;
+        this.user = user;
     }
 
     public void updateName(String name) {
