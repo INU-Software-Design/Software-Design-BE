@@ -22,7 +22,7 @@ jobs:
           touch ./src/main/resources/application.properties
           touch ./src/main/resources/firebase/firebase_service_key.json
           echo "${{ secrets.PROPERTIES }}" > ./src/main/resources/application.properties
-          echo "${{ secrets.FIREBASE_JSON }}" > ./src/main/resources/firebase/firebase_service_key.json
+          echo '${{ secrets.FIREBASE_JSON }}' > ./src/main/resources/firebase/firebase_service_key.json
           
 
       - name: Set up JDK 17
