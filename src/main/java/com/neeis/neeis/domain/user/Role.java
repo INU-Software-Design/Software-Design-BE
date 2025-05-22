@@ -7,5 +7,6 @@ import lombok.RequiredArgsConstructor;
 public enum Role {
     ADMIN,
     STUDENT,
-    TEACHER;
+    TEACHER,
+    PARENT;
 }
