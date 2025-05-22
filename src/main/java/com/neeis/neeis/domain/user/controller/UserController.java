@@ -1,6 +1,6 @@
 package com.neeis.neeis.domain.user.controller;
 
-import com.neeis.neeis.domain.student.dto.res.TokenResponseDto;
+import com.neeis.neeis.domain.user.dto.TokenResponseDto;
 import com.neeis.neeis.domain.user.dto.FcmTokenRequestDto;
 import com.neeis.neeis.domain.user.dto.LoginRequestDto;
 import com.neeis.neeis.domain.user.dto.UpdatePasswordRequestDto;
