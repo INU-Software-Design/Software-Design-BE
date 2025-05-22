@@ -1,14 +1,13 @@
 package com.neeis.neeis.domain.user.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.neeis.neeis.domain.student.dto.res.TokenResponseDto;
+import com.neeis.neeis.domain.user.dto.TokenResponseDto;
 import com.neeis.neeis.domain.user.dto.LoginRequestDto;
 import com.neeis.neeis.domain.user.dto.UpdatePasswordRequestDto;
 import com.neeis.neeis.domain.user.service.UserService;
 import com.neeis.neeis.global.config.SecurityConfig;
 import com.neeis.neeis.global.jwt.JwtAuthenticationFilter;
 import com.neeis.neeis.global.jwt.JwtProvider;
-import org.hibernate.sql.Update;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,13 +20,10 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 import static com.neeis.neeis.global.common.StatusCode.SUCCESS_LOGIN;
 import static com.neeis.neeis.global.common.StatusCode.SUCCESS_UPDATE_PASSWORD;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;

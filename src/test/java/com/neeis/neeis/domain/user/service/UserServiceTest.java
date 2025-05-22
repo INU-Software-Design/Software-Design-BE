@@ -1,6 +1,8 @@
 package com.neeis.neeis.domain.user.service;
 
-import com.neeis.neeis.domain.student.dto.res.TokenResponseDto;
+import com.neeis.neeis.domain.student.Student;
+import com.neeis.neeis.domain.student.StudentRepository;
+import com.neeis.neeis.domain.user.dto.TokenResponseDto;
 import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.domain.user.UserRepository;
 import com.neeis.neeis.domain.user.dto.LoginRequestDto;
@@ -27,9 +29,11 @@ import static org.mockito.BDDMockito.*;
 class UserServiceTest {
 
     @Mock private UserRepository userRepository;
+    @Mock private StudentRepository studentRepository;
     @Mock private JwtProvider jwtProvider;
     @Mock private PasswordEncoder passwordEncoder;
     @InjectMocks private UserService userService;
+
 
     private User user;
 
@@ -108,6 +112,28 @@ class UserServiceTest {
         then(userRepository).should().save(user);
 
         assertThat(res.getAccessToken()).isEqualTo("gotToken");
+    }
+
+    @Test
+    @DisplayName("login: 역할에 따라 이름 정상 반환")
+    void login_returnCorrectNameByRole() {
+        // GIVEN
+        ReflectionTestUtils.setField(user, "password", "$2a$10$dummyhashed");
+        given(userRepository.findByUsername("user1")).willReturn(Optional.of(user));
+        given(passwordEncoder.matches("pw", "$2a$10$dummyhashed")).willReturn(true);
+        given(jwtProvider.createAccessToken("user1", "STUDENT")).willReturn("token123");
+
+        // 역할별 이름 반환 스텁
+        Student student = Student.builder().name("김학생").user(user).build();
+        given(studentRepository.findByUser(user)).willReturn(Optional.of(student));
+
+        // WHEN
+        TokenResponseDto res = userService.login(new LoginRequestDto("user1", "pw"));
+
+        // THEN
+        assertThat(res.getName()).isEqualTo("김학생");
+        assertThat(res.getAccessToken()).isEqualTo("token123");
+        assertThat(res.getRole()).isEqualTo("STUDENT");
     }
 
     @Test
