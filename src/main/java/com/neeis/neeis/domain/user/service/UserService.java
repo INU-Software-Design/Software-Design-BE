@@ -1,7 +1,13 @@
 package com.neeis.neeis.domain.user.service;
 
+import com.neeis.neeis.domain.classroom.Classroom;
+import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
+import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
+import com.neeis.neeis.domain.parent.Parent;
 import com.neeis.neeis.domain.parent.ParentRepository;
+import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.domain.student.StudentRepository;
+import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.domain.teacher.TeacherRepository;
 import com.neeis.neeis.domain.user.dto.TokenResponseDto;
 import com.neeis.neeis.domain.user.User;
@@ -13,10 +19,14 @@ import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
 import com.neeis.neeis.global.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
+import org.antlr.v4.runtime.Token;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+
+import static com.neeis.neeis.global.exception.ErrorCode.CLASSROOM_NOT_FOUND;
 import static com.neeis.neeis.global.exception.ErrorCode.USER_NOT_FOUND;
 
 @Service
@@ -29,6 +39,7 @@ public class UserService {
     private final StudentRepository studentRepository;
     private final ParentRepository parentRepository;
     private final TeacherRepository teacherRepository;
+    private final ClassroomStudentRepository classroomStudentRepository;
 
     @Transactional
     public TokenResponseDto login(LoginRequestDto loginRequestDto) {
@@ -53,9 +64,38 @@ public class UserService {
         }
 
         String accessToken = jwtProvider.createAccessToken(user.getUsername(), user.getRole().name());
-        String name = getNameByRole(user);
 
-        return TokenResponseDto.of(accessToken,name,user.getRole().toString());
+        switch (user.getRole()) {
+            case STUDENT -> {
+                Student student = studentRepository.findByUser(user)
+                        .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+                int year = LocalDate.now().getYear();
+                ClassroomStudent classroomStudent = classroomStudentRepository.findByStudentAndClassroomYear(student.getId(), year).orElseThrow(
+                        () -> new CustomException(CLASSROOM_NOT_FOUND));
+                Classroom classroom = classroomStudent.getClassroom();
+
+                return TokenResponseDto.ofStudent(accessToken,
+                        student.getName(),
+                        user.getRole().name(),
+                        classroom.getYear(),
+                        classroom.getGrade(),
+                        classroom.getClassNum(),
+                        classroomStudent.getNumber(),
+                        student.getId());
+            }
+            case TEACHER -> {
+               Teacher teacher = teacherRepository.findByUser(user)
+                        .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+               return TokenResponseDto.ofCommon(accessToken, teacher.getName(), user.getRole().name());
+            }
+            case PARENT -> {
+                Parent parent = parentRepository.findByUser(user)
+                        .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+                return TokenResponseDto.ofCommon(accessToken, parent.getName(), user.getRole().name());
+            }
+            default -> throw new CustomException(USER_NOT_FOUND);
+        }
     }
 
     @Transactional
@@ -88,26 +128,5 @@ public class UserService {
     public User getUser(String username){
         return userRepository.findByUsername(username).orElseThrow(
                 () -> new CustomException(USER_NOT_FOUND));
-    }
-
-    private String getNameByRole(User user) {
-        switch (user.getRole()) {
-            case STUDENT -> {
-                return studentRepository.findByUser(user)
-                        .orElseThrow(() -> new CustomException(USER_NOT_FOUND))
-                        .getName();
-            }
-            case TEACHER -> {
-                return teacherRepository.findByUser(user)
-                        .orElseThrow(() -> new CustomException(USER_NOT_FOUND))
-                        .getName();
-            }
-            case PARENT -> {
-                return parentRepository.findByUser(user)
-                        .orElseThrow(() -> new CustomException(USER_NOT_FOUND))
-                        .getName();
-            }
-            default -> throw new CustomException(USER_NOT_FOUND);
-        }
     }
 }
