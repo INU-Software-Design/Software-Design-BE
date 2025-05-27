@@ -11,7 +11,6 @@ public class TokenResponseDto {
     private final String role;
 
     private final Integer year;
-    private final Integer semester;
     private final Integer grade;
     private final Integer classNum;
     private final Integer number;
@@ -19,12 +18,11 @@ public class TokenResponseDto {
 
     @Builder
     public TokenResponseDto(String accessToken,String name,String role,
-                            Integer year, Integer semester, Integer grade, Integer classNum,Integer number, Long studentId) {
+                            Integer year, Integer grade, Integer classNum,Integer number, Long studentId) {
         this.accessToken = accessToken;
         this.name = name;
         this.role = role;
         this.year = year;
-        this.semester = semester;
         this.grade = grade;
         this.classNum = classNum;
         this.number = number;
