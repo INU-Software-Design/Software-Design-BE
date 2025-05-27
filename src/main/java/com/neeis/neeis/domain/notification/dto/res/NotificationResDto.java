@@ -1,5 +1,6 @@
 package com.neeis.neeis.domain.notification.dto.res;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.neeis.neeis.domain.notification.Notification;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,6 +12,8 @@ public class NotificationResDto {
     private final Long id;
     private final String content;
     private final boolean isRead;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy.MM.dd HH:mm")
     private final LocalDateTime createdAt;
 
     @Builder
