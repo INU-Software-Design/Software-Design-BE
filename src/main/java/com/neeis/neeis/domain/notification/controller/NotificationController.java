@@ -3,6 +3,7 @@ package com.neeis.neeis.domain.notification.controller;
 import com.neeis.neeis.domain.notification.dto.res.NotificationPageResDto;
 import com.neeis.neeis.domain.notification.service.NotificationService;
 import com.neeis.neeis.global.common.CommonResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,9 +18,7 @@ import static com.neeis.neeis.global.common.StatusCode.SUCCESS_GET_NOTIFICATION;
 public class NotificationController {
     private final NotificationService notificationService;
 
-    /**
-     * 사용자 알림 목록 조회 (페이징)
-     */
+    @Operation(summary = "알림 목록 조회", description = "사용자의 알림 목록을 페이지 단위로 조회합니다.")
     @GetMapping
     public ResponseEntity<CommonResponse<NotificationPageResDto>> getNotifications(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -30,20 +29,16 @@ public class NotificationController {
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_NOTIFICATION.getMessage(), response));
     }
 
-    /**
-     * 개별 알림 읽음 처리
-     */
+    @Operation(summary = "개별 알림 읽음 처리", description = "특정 알림을 읽음 상태로 처리합니다.")
     @PatchMapping("/read/{notificationId}")
-    public ResponseEntity<Void> markAsRead(@PathVariable Long notificationId) {
+    public ResponseEntity<CommonResponse<Void>> markAsRead(@PathVariable Long notificationId) {
         notificationService.markAsRead(notificationId);
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * 전체 알림 읽음 처리
-     */
+    @Operation(summary = "전체 알림 읽음 처리", description = "현재 로그인한 사용자의 모든 알림을 읽음 상태로 처리합니다.")
     @PatchMapping("/read-all")
-    public ResponseEntity<Void> markAllAsRead(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<CommonResponse<Void>> markAllAsRead(@AuthenticationPrincipal UserDetails userDetails) {
         notificationService.markAllAsRead(userDetails.getUsername());
         return ResponseEntity.noContent().build();
     }
