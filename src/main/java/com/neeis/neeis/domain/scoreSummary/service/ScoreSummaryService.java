@@ -6,6 +6,7 @@ import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudentService;
 import com.neeis.neeis.domain.evaluationMethod.EvaluationMethod;
 import com.neeis.neeis.domain.evaluationMethod.service.EvaluationMethodService;
+import com.neeis.neeis.domain.notification.service.NotificationService;
 import com.neeis.neeis.domain.score.Score;
 import com.neeis.neeis.domain.score.ScoreRepository;
 import com.neeis.neeis.domain.scoreSummary.ScoreSummary;
@@ -17,6 +18,7 @@ import com.neeis.neeis.domain.scoreSummary.dto.req.ScoreFeedbackRequestDto;
 import com.neeis.neeis.domain.scoreSummary.dto.req.ScoreFeedbackUpdateDto;
 import com.neeis.neeis.domain.subject.Subject;
 import com.neeis.neeis.domain.teacher.service.TeacherService;
+import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
 import com.neeis.neeis.global.fcm.event.SendFeedbackFcmEvent;
@@ -39,6 +41,7 @@ public class ScoreSummaryService {
     private final ScoreRepository scoreRepository;
     private final TeacherService teacherService;
     private final ApplicationEventPublisher eventPublisher;
+    private final NotificationService notificationService;
 
     public StudentScoreSummaryDto getStudentSummary(String username, int year, int semester, int grade, int classNum, int number) {
         teacherService.authenticate(username);
@@ -153,7 +156,12 @@ public class ScoreSummaryService {
 
         summary.update(requestDto.getFeedback());
 
+        // Notification용
+        User user = summary.getClassroomStudent().getStudent().getUser();
+        String content = summary.getSubject().getName() + "과목의 피드백이 등록되었습니다.";
+
         eventPublisher.publishEvent(new SendFeedbackFcmEvent(summary));
+        notificationService.sendNotification(user, content);
     }
 
     @Transactional
@@ -167,7 +175,12 @@ public class ScoreSummaryService {
 
         summary.update(requestDto.getFeedback());
 
+        // Notification용
+        User user = summary.getClassroomStudent().getStudent().getUser();
+        String content = summary.getSubject().getName() + "과목의 피드백이 등록되었습니다.";
+
         eventPublisher.publishEvent(new SendFeedbackFcmEvent(summary));
+        notificationService.sendNotification(user, content);
     }
 
 

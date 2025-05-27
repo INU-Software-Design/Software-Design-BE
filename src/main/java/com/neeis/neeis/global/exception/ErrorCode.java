@@ -52,6 +52,7 @@ public enum ErrorCode {
 
     SCORE_SUMMARY_NOT_FOUND(HttpStatus.NOT_FOUND, "Score-Summary-001", "점수 통계가 존재하지 않습니다."),
 
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "Notification-001", "알림이 존재하지 않습니다."),
     ;
 
     private final HttpStatus status;

@@ -12,14 +12,19 @@ import com.neeis.neeis.domain.classroom.Classroom;
 import com.neeis.neeis.domain.classroom.ClassroomService;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
+import com.neeis.neeis.domain.notification.service.NotificationService;
 import com.neeis.neeis.domain.semester.Semester;
 import com.neeis.neeis.domain.semester.SemesterRepository;
 import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.domain.teacher.service.TeacherService;
+import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
+import com.neeis.neeis.global.fcm.event.SendAttendanceFeedbackFcmEvent;
+import com.neeis.neeis.global.fcm.event.SendFeedbackFcmEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +46,8 @@ public class AttendanceService {
     private final ClassroomStudentRepository classroomStudentRepository;
     private final SemesterRepository semesterRepository;
     private final AttendanceFeedbackRepository feedbackRepository;
+    private final ApplicationEventPublisher eventPublisher;
+    private final NotificationService notificationService;
 
     @Transactional
     public void saveOrUpdateAttendance(String username, AttendanceBulkRequestDto requestDto) {
@@ -223,6 +230,13 @@ public class AttendanceService {
 
         AttendanceFeedback feedback = AttendanceFeedbackReqDto.of(requestDto, classroomStudent);
 
+        // Notification용
+        User user = classroomStudent.getStudent().getUser();
+        String content = classroomStudent.getStudent().getName() + "님의 출결 피드백이 작성되었습니다. ";
+
+        eventPublisher.publishEvent(new SendAttendanceFeedbackFcmEvent(feedback));
+        notificationService.sendNotification(user, content);
+
         return AttendanceFeedbackResDto.toDto(feedbackRepository.save(feedback));
     }
 
@@ -238,6 +252,13 @@ public class AttendanceService {
             throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
         }
         feedback.updateContent(requestDto.getFeedback());
+
+        // Notification용
+        User user = feedback.getClassroomStudent().getStudent().getUser();
+        String content = feedback.getClassroomStudent().getStudent().getName() + "님의 출결 피드백이 수정되었습니다. ";
+
+        eventPublisher.publishEvent(new SendAttendanceFeedbackFcmEvent(feedback));
+        notificationService.sendNotification(user, content);
 
         return AttendanceFeedbackResDto.toDto(feedback);
     }

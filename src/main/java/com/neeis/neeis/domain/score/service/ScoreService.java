@@ -6,6 +6,7 @@ import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudentService;
 import com.neeis.neeis.domain.evaluationMethod.EvaluationMethod;
 import com.neeis.neeis.domain.evaluationMethod.service.EvaluationMethodService;
+import com.neeis.neeis.domain.notification.service.NotificationService;
 import com.neeis.neeis.domain.score.Score;
 import com.neeis.neeis.domain.score.ScoreRepository;
 import com.neeis.neeis.domain.score.dto.req.ScoreRequestDto;
@@ -17,6 +18,7 @@ import com.neeis.neeis.domain.subject.service.SubjectService;
 import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.domain.teacher.service.TeacherService;
 import com.neeis.neeis.domain.teacherSubject.service.TeacherSubjectService;
+import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
 import com.neeis.neeis.global.fcm.event.SendScoreFcmEvent;
@@ -45,6 +47,7 @@ public class ScoreService {
     private final SubjectService subjectService;
     private final ScoreSummaryService scoreSummaryService;
     private final ApplicationEventPublisher eventPublisher;
+    private final NotificationService notificationService;
 
 
     public List<ScoreSummaryBySubjectDto> getScoreSummaryBySubject(String username, int year, int semester, int grade, int classNum, String subjectName) {
@@ -182,6 +185,11 @@ public class ScoreService {
                     try {
                         ScoreSummary summary = scoreSummaryService.findByStudentAndSubject(student.getId(), subject.getId());
                         eventPublisher.publishEvent(new SendScoreFcmEvent(summary));
+
+                        // 알림 기록 저장
+                        User user = student.getStudent().getUser();
+                        String content = subject.getName() + "과목의 성적이 입력되었습니다.";
+                        notificationService.sendNotification(user, content);
                     } catch (CustomException e) {
                         if (e.getErrorCode() == ErrorCode.SCORE_SUMMARY_NOT_FOUND) {
                             log.debug("성적 없음 → 스킵: {}, {}", student.getId(), subject.getName());
