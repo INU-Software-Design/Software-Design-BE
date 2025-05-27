@@ -11,11 +11,15 @@ import com.neeis.neeis.domain.classroom.ClassroomRepository;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudentService;
+import com.neeis.neeis.domain.notification.service.NotificationService;
 import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.domain.teacher.service.TeacherService;
+import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
+import com.neeis.neeis.global.fcm.event.SendBehaviorFcmEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +30,9 @@ public class BehaviorService {
     private final BehaviorRepository behaviorRepository;
     private final TeacherService teacherService;
     private final ClassroomStudentService classroomStudentService;
+    private final ApplicationEventPublisher eventPublisher;
+    private final NotificationService notificationService;
+
 
     @Transactional //false
     public BehaviorResponseDto createBehavior( String username,
@@ -38,6 +45,12 @@ public class BehaviorService {
         ClassroomStudent classroomStudent = classroomStudentService.checkMyStudents(year, grade,classNum, teacher.getId(), studentId);
 
         Behavior behavior = behaviorRepository.save(BehaviorRequestDto.of(behaviorRequestDto, classroomStudent));
+
+        // Notification 용
+        User user = classroomStudent.getStudent().getUser();
+        String content = "행동 특성 및 종합의견이 등록되었습니다.";
+        eventPublisher.publishEvent(new SendBehaviorFcmEvent(behavior));
+        notificationService.sendNotification(user, content);
 
         return BehaviorResponseDto.of(behavior);
     }
@@ -70,6 +83,12 @@ public class BehaviorService {
             throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
         }
         behavior.update(behaviorRequestDto);
+
+        // Notification 용
+        User user = behavior.getClassroomStudent().getStudent().getUser();
+        String content = "행동 특성 및 종합의견이 수정되었습니다.";
+        eventPublisher.publishEvent(new SendBehaviorFcmEvent(behavior));
+        notificationService.sendNotification(user, content);
 
         return BehaviorDetailResponseDto.of(behavior);
     }

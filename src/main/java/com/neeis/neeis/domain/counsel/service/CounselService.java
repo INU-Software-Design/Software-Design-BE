@@ -6,10 +6,12 @@ import com.neeis.neeis.domain.counsel.CounselRepository;
 import com.neeis.neeis.domain.counsel.dto.req.CounselRequestDto;
 import com.neeis.neeis.domain.counsel.dto.res.CounselDetailDto;
 import com.neeis.neeis.domain.counsel.dto.res.CounselResponseDto;
+import com.neeis.neeis.domain.notification.service.NotificationService;
 import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.domain.student.service.StudentService;
 import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.domain.teacher.service.TeacherService;
+import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
 import com.neeis.neeis.global.fcm.event.SendCounselFcmEvent;
@@ -18,6 +20,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +32,7 @@ public class CounselService {
     private final TeacherService teacherService;
     private final StudentService studentService;
     private final ApplicationEventPublisher eventPublisher;
+    private final NotificationService notificationService;
 
     @Transactional
     public CounselResponseDto createCounsel(String username, Long studentId, CounselRequestDto requestDto) {
@@ -40,6 +44,12 @@ public class CounselService {
         Counsel counsel = counselRepository.save(CounselRequestDto.of(teacher,student, requestDto, category));
 
         eventPublisher.publishEvent(new SendCounselFcmEvent(counsel));
+
+        User user = student.getUser();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy년  MM월 dd일");
+        String content = counsel.getDateTime().format(formatter) + "자의 상담 내역이 등록되었습니다.";
+        notificationService.sendNotification(user, content);
+
         return CounselResponseDto.toDto(counsel);
     }
 
@@ -82,6 +92,12 @@ public class CounselService {
         counsel.update(requestDto);
 
         eventPublisher.publishEvent(new SendCounselFcmEvent(counsel));
+
+        User user = counsel.getStudent().getUser();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy년  MM월 dd일");
+        String content = counsel.getDateTime().format(formatter) + "자의 상담 내역이 수정되었습니다.";
+        notificationService.sendNotification(user, content);
+
         return CounselDetailDto.toDto(counsel);
     }
 
