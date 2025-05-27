@@ -46,7 +46,8 @@ public enum StatusCode {
 
     SUCCESS_POST_SCORE(HttpStatus.OK, "Score", "성적 저장에 성공하였습니다."),
     SUCCESS_GET_SCORE(HttpStatus.OK, "Score", "성적 조회에 성공하였습니다."),
-    SUCCESS_UPDATE_SCORE(HttpStatus.OK, "Score", "성적 변경에 성공하였습니다."),
+
+    SUCCESS_GET_NOTIFICATION(HttpStatus.OK, "Notice", "알림 조회에 성공하였습니다."),
     ;
 
     private final HttpStatus status;
