@@ -3,6 +3,7 @@ package com.neeis.neeis.domain.scoreSummary.service;
 import com.neeis.neeis.domain.classroom.Classroom;
 import com.neeis.neeis.domain.classroom.ClassroomService;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
+import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudentService;
 import com.neeis.neeis.domain.evaluationMethod.EvaluationMethod;
 import com.neeis.neeis.domain.evaluationMethod.service.EvaluationMethodService;
@@ -17,8 +18,10 @@ import com.neeis.neeis.domain.scoreSummary.dto.res.SubjectScoreDto;
 import com.neeis.neeis.domain.scoreSummary.dto.req.ScoreFeedbackRequestDto;
 import com.neeis.neeis.domain.scoreSummary.dto.req.ScoreFeedbackUpdateDto;
 import com.neeis.neeis.domain.subject.Subject;
+import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.domain.teacher.service.TeacherService;
 import com.neeis.neeis.domain.user.User;
+import com.neeis.neeis.domain.user.service.UserService;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
 import com.neeis.neeis.global.fcm.event.SendFeedbackFcmEvent;
@@ -30,24 +33,31 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.neeis.neeis.domain.user.Role.STUDENT;
+import static com.neeis.neeis.domain.user.Role.TEACHER;
+import static com.neeis.neeis.global.exception.ErrorCode.HANDLE_ACCESS_DENIED;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ScoreSummaryService {
     private final ScoreSummaryRepository scoreSummaryRepository;
     private final ClassroomService classroomService;
+    private final UserService userService;
     private final ClassroomStudentService classroomStudentService;
+    private final ClassroomStudentRepository classroomStudentRepository;
+
     private final EvaluationMethodService evaluationMethodService;
     private final ScoreRepository scoreRepository;
     private final TeacherService teacherService;
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationService notificationService;
 
+    // 교사 및 학생
+    // 성적 조회 (전체 과목)
     public StudentScoreSummaryDto getStudentSummary(String username, int year, int semester, int grade, int classNum, int number) {
-        teacherService.authenticate(username);
 
-        Classroom classroom = classroomService.findClassroom(year, grade, classNum);
-        ClassroomStudent student = classroomStudentService.findByClassroomAndNumber(classroom, number);
+        ClassroomStudent student = checkValidate(username, year, grade, classNum, number);
 
         // 해당 학기의 점수 불러오기
         List<Score> scores = scoreRepository
@@ -183,8 +193,9 @@ public class ScoreSummaryService {
         notificationService.sendNotification(user, content);
     }
 
-
-    public ScoreFeedbackDto getFeedback(Long scoreSummaryId) {
+    // 교사 및 학생 모두 접근 가능
+    public ScoreFeedbackDto getFeedback(String username, Long scoreSummaryId) {
+        getUserAndValidateAccess(username, scoreSummaryId);
 
         // 추후, 담당 과목인지 권한 확인 필요 고려
         ScoreSummary summary = scoreSummaryRepository.findById(scoreSummaryId)
@@ -198,4 +209,48 @@ public class ScoreSummaryService {
                 .orElseThrow(() -> new CustomException(ErrorCode.SCORE_SUMMARY_NOT_FOUND));
     }
 
+    private ClassroomStudent checkValidate(String username, int year, int grade, int classNum, int number) {
+        User user = userService.getUser(username);
+
+        switch (user.getRole()) {
+            case STUDENT -> {
+                // 본인이 요청한 게 맞는지 확인
+                ClassroomStudent cs = classroomStudentRepository.findByStudentUser(user).orElseThrow(
+                        () -> new CustomException(ErrorCode.CLASSROOM_NOT_FOUND)
+                );
+                if (cs.getNumber() != number) {
+                    throw new CustomException(HANDLE_ACCESS_DENIED);
+                }
+                return cs;
+            }
+
+            case TEACHER -> {
+                Teacher teacher = teacherService.authenticate(username);
+
+                Classroom classroom = classroomService.findClassroom(year, grade, classNum, teacher.getId());
+
+                return classroomStudentRepository.findByClassroomAndNumber(classroom, number)
+                        .orElseThrow(() -> new CustomException(HANDLE_ACCESS_DENIED));
+            }
+
+            default -> throw new CustomException(HANDLE_ACCESS_DENIED);
+        }
+    }
+
+    private void getUserAndValidateAccess(String username, Long scoreSummaryId) {
+        User user = userService.getUser(username);
+        ScoreSummary summary = scoreSummaryRepository.findById(scoreSummaryId)
+                .orElseThrow(() -> new CustomException(ErrorCode.SCORE_SUMMARY_NOT_FOUND));
+
+        // 학생 → 본인만 접근 가능
+        if (user.getRole() == STUDENT && !user.getId().equals(summary.getClassroomStudent().getStudent().getUser().getId())) {
+            throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
+        }
+
+        // 교사 → 조회 허용
+        if (user.getRole() == TEACHER) {
+            // 교사 권한만 체크
+            teacherService.authenticate(username); // 추가 보안
+        }
+    }
 }
