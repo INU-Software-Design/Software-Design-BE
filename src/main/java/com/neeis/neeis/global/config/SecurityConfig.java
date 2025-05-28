@@ -52,14 +52,14 @@ public class SecurityConfig {
                         .requestMatchers("/users/login", "/students/id", "/students/password", "/images/**", "/users/password").permitAll()
                         .requestMatchers(HttpMethod.GET, "/teacherSubjects", "/subjects").permitAll()
                         // 출결
-                        .requestMatchers(HttpMethod.GET, "/attendances/student", "/attendances/summary", "/attendances/feedback").hasAnyAuthority("ROLE_STUDENT", "ROLE_PARENT")
+                        .requestMatchers(HttpMethod.GET, "/attendances/student", "/attendances/summary", "/attendances/feedback").hasAnyAuthority("ROLE_STUDENT", "ROLE_PARENT", "ROLE_TEACHER")
                         // 행동
-                        .requestMatchers(HttpMethod.GET, "/behavior").hasAnyAuthority("ROLE_STUDENT","ROLE_PARENT")
+                        .requestMatchers(HttpMethod.GET, "/behavior").hasAnyAuthority("ROLE_STUDENT","ROLE_PARENT", "ROLE_TEACHER")
                         // 상담
-                        .requestMatchers(HttpMethod.GET, "/counsel").hasAnyAuthority("ROLE_STUDENT","ROLE_PARENT")
+                        .requestMatchers(HttpMethod.GET, "/counsel").hasAnyAuthority("ROLE_STUDENT","ROLE_PARENT", "ROLE_TEACHER")
                         // 성적
-                        .requestMatchers(HttpMethod.GET, "/evaluation-methods").hasAnyAuthority("ROLE_STUDENT", "ROLE_PARENT")
-                        .requestMatchers(HttpMethod.GET, "/score-summary").hasAnyAuthority("ROLE_STUDENT", "ROLE_PARENT")
+                        .requestMatchers(HttpMethod.GET, "/evaluation-methods").hasAnyAuthority("ROLE_STUDENT", "ROLE_PARENT", "ROLE_TEACHER")
+                        .requestMatchers(HttpMethod.GET, "/score-summary").hasAnyAuthority("ROLE_STUDENT", "ROLE_PARENT", "ROLE_TEACHER")
 
                         // 교사 권한
                         .requestMatchers("/teachers/**", "/behavior/**" , "/counsel/**", "/attendances/**", "/evaluation-methods/**","/scores/**", "/score-summary/**").hasAnyAuthority("ROLE_TEACHER")

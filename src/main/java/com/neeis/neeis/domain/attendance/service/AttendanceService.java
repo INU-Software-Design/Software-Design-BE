@@ -34,8 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.neeis.neeis.domain.user.Role.STUDENT;
-import static com.neeis.neeis.domain.user.Role.TEACHER;
 import static com.neeis.neeis.global.exception.ErrorCode.HANDLE_ACCESS_DENIED;
 
 @Service
@@ -303,7 +301,8 @@ public class AttendanceService {
 
             case TEACHER -> {
                 Teacher teacher = teacherService.authenticate(username);
-                Classroom classroom = classroomService.findClassroom(year, grade, classNum, teacher.getId());
+                // 교사임을 체크 ->
+                Classroom classroom = classroomService.findClassroom(year, grade, classNum);
 
                 return classroomStudentRepository.findByClassroomAndNumber(classroom, number)
                         .orElseThrow(() -> new CustomException(HANDLE_ACCESS_DENIED));

@@ -205,7 +205,7 @@ class ScoreSummaryServiceTest {
         assertThat(summaryA.getFeedback()).isEqualTo("Needs improvement");
 
         // getFeedback
-        ScoreFeedbackDto dto = scoreSummaryService.getFeedback(500L);
+        ScoreFeedbackDto dto = scoreSummaryService.getFeedback("tuser", 500L);
         assertThat(dto.getFeedback()).isEqualTo("Needs improvement");
     }
 
@@ -225,7 +225,7 @@ class ScoreSummaryServiceTest {
                 .isInstanceOf(CustomException.class)
                 .hasMessageContaining(ErrorCode.SCORE_SUMMARY_NOT_FOUND.getMessage());
 
-        assertThatThrownBy(() -> scoreSummaryService.getFeedback(999L))
+        assertThatThrownBy(() -> scoreSummaryService.getFeedback("tuser", 999L))
                 .isInstanceOf(CustomException.class)
                 .hasMessageContaining(ErrorCode.SCORE_SUMMARY_NOT_FOUND.getMessage());
     }

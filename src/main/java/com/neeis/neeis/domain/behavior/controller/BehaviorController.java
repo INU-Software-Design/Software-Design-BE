@@ -26,7 +26,7 @@ public class BehaviorController {
     private final BehaviorService behaviorService;
 
     @PostMapping
-    @Operation(summary = "행동특성 / 종합의견 작성", description = "학생 개인의 행동특성 및 종합의견을 작성합니다." +
+    @Operation(summary = "[교사 전용] 행동특성 / 종합의견 작성", description = "학생 개인의 행동특성 및 종합의견을 작성합니다." +
             "studentId는 학생 고유 번호입니다. ")
     public ResponseEntity<CommonResponse<BehaviorResponseDto>> postBehavior( @AuthenticationPrincipal UserDetails userDetails,
                                                                              @RequestParam(value = "year", defaultValue = "2025") @Parameter(description = "연도") Integer year,
@@ -38,7 +38,7 @@ public class BehaviorController {
     }
 
     @GetMapping
-    @Operation(summary = "[교사/학생] 행동 / 태도 조회", description = "학생 개인의 행동특성 및 종합의견을 조회합니다. ")
+    @Operation(summary = "[교사 및 학생 전용] 행동 / 태도 조회", description = "학생 개인의 행동특성 및 종합의견을 조회합니다. ")
     public ResponseEntity<CommonResponse<BehaviorDetailResponseDto>> getBehavior( @AuthenticationPrincipal UserDetails userDetails,
                                                                                   @RequestParam(value = "year", defaultValue = "2025") @Parameter(description = "연도") Integer year,
                                                                                   @RequestParam("grade") @Parameter(description = "학년") Integer grade,

@@ -26,6 +26,7 @@ import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
 import com.neeis.neeis.global.fcm.event.SendFeedbackFcmEvent;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +41,7 @@ import static com.neeis.neeis.global.exception.ErrorCode.HANDLE_ACCESS_DENIED;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class ScoreSummaryService {
     private final ScoreSummaryRepository scoreSummaryRepository;
     private final ClassroomService classroomService;
@@ -197,7 +199,6 @@ public class ScoreSummaryService {
     public ScoreFeedbackDto getFeedback(String username, Long scoreSummaryId) {
         getUserAndValidateAccess(username, scoreSummaryId);
 
-        // 추후, 담당 과목인지 권한 확인 필요 고려
         ScoreSummary summary = scoreSummaryRepository.findById(scoreSummaryId)
                 .orElseThrow(() -> new CustomException(ErrorCode.SCORE_SUMMARY_NOT_FOUND));
 
@@ -227,8 +228,10 @@ public class ScoreSummaryService {
             case TEACHER -> {
                 Teacher teacher = teacherService.authenticate(username);
 
-                Classroom classroom = classroomService.findClassroom(year, grade, classNum, teacher.getId());
+                Classroom classroom = classroomService.findClassroom(year, grade, classNum);
 
+                log.info("teacher " + teacher);
+                log.info("classroom : " + classroom.getClassNum());
                 return classroomStudentRepository.findByClassroomAndNumber(classroom, number)
                         .orElseThrow(() -> new CustomException(HANDLE_ACCESS_DENIED));
             }

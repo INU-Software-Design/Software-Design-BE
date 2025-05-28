@@ -24,7 +24,12 @@ public class ScoreSummaryController {
     private final ScoreSummaryService scoreSummaryService;
 
     @Operation(summary = "[교사 및 학생 전용] 학생 성적 학적 조회",
-            description = "출석번호 기준 단일 학생의 과목별 성적 요약을 조회합니다.")
+            description = """
+            출석번호 기준 단일 학생의 과목별 성적 요약을 조회합니다.
+            
+            - 학생은 자신의 성적 조회만 가능합니다.
+            - 교사는 담임 및 타 반 학생 성적 조회도 가능합니다.
+            """)
     @GetMapping
     public ResponseEntity<CommonResponse<StudentScoreSummaryDto>> getStudentScoreSummary(
             @AuthenticationPrincipal UserDetails userDetails,

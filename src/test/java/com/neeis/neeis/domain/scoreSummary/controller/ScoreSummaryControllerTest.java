@@ -284,7 +284,7 @@ class ScoreSummaryControllerTest {
     void getFeedbackTest() throws Exception {
         // given
         Long scoreSummaryId = 1L;
-        given(scoreSummaryService.getFeedback(anyLong())).willReturn(scoreFeedbackDto);
+        given(scoreSummaryService.getFeedback(anyString(), anyLong())).willReturn(scoreFeedbackDto);
 
         // when & then
         mockMvc.perform(get("/score-summary/feedback/{score-summary-id}", scoreSummaryId)
@@ -294,7 +294,7 @@ class ScoreSummaryControllerTest {
                 .andExpect(jsonPath("$.message").value(StatusCode.SUCCESS_GET_FEEDBACK.getMessage()))
                  .andExpect(jsonPath("$.response.feedback").value(scoreFeedbackDto.getFeedback()));
 
-        verify(scoreSummaryService).getFeedback(eq(scoreSummaryId));
+        verify(scoreSummaryService).getFeedback("testTeacher",eq(scoreSummaryId));
     }
 
     @Test
