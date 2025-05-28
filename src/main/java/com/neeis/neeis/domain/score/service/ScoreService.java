@@ -50,6 +50,7 @@ public class ScoreService {
     private final NotificationService notificationService;
 
 
+    // 교사 전용 -> 과목에 대한 해당 반 학생들의 점수 조회
     public List<ScoreSummaryBySubjectDto> getScoreSummaryBySubject(String username, int year, int semester, int grade, int classNum, String subjectName) {
         // 교사 인증
         teacherService.authenticate(username);

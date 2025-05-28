@@ -19,10 +19,10 @@ import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.domain.teacher.service.TeacherService;
 import com.neeis.neeis.domain.user.User;
+import com.neeis.neeis.domain.user.service.UserService;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
 import com.neeis.neeis.global.fcm.event.SendAttendanceFeedbackFcmEvent;
-import com.neeis.neeis.global.fcm.event.SendFeedbackFcmEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -30,10 +30,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static com.neeis.neeis.domain.user.Role.STUDENT;
+import static com.neeis.neeis.domain.user.Role.TEACHER;
+import static com.neeis.neeis.global.exception.ErrorCode.HANDLE_ACCESS_DENIED;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +44,7 @@ import java.util.stream.Collectors;
 public class AttendanceService {
 
     private final AttendanceRepository attendanceRepository;
+    private final UserService userService;
     private final TeacherService teacherService;
     private final ClassroomService classroomService;
     private final ClassroomStudentRepository classroomStudentRepository;
@@ -49,6 +53,7 @@ public class AttendanceService {
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationService notificationService;
 
+    // [교사] - 출결 저장 및 업데이트
     @Transactional
     public void saveOrUpdateAttendance(String username, AttendanceBulkRequestDto requestDto) {
 
@@ -56,7 +61,7 @@ public class AttendanceService {
         Classroom classroom = classroomService.findClassroom(requestDto.getYear(), requestDto.getGrade(), requestDto.getClassNumber(), teacher.getId());
 
         if(classroom.getTeacher() != teacher) {
-            throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
+            throw new CustomException(HANDLE_ACCESS_DENIED);
         }
 
         // 담당 학생들 확인
@@ -69,7 +74,7 @@ public class AttendanceService {
         // 학생과 DB 확인
         for (StudentAttendanceDto dto : requestDto.getStudents()) {
             if (!studentMap.containsKey(dto.getStudentId())) {
-                throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
+                throw new CustomException(HANDLE_ACCESS_DENIED);
             }
         }
 
@@ -114,12 +119,12 @@ public class AttendanceService {
         }
     }
 
-    // 학급 학생들 월별 조회
+    // [교사권한] 학급 학생들 월별 조회
     public List<StudentAttendanceResDto> getAttendances(String username, int year, int grade, int classNum, int month) {
         Teacher teacher = teacherService.authenticate(username);
         Classroom classroom = classroomService.findClassroom(year, grade, classNum, teacher.getId());
         if(classroom.getTeacher() != teacher) {
-            throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
+            throw new CustomException(HANDLE_ACCESS_DENIED);
         }
 
         List<ClassroomStudent> classroomStudentList = classroomStudentRepository.findByClassroom(classroom);
@@ -150,7 +155,7 @@ public class AttendanceService {
                 .collect(Collectors.toList());
     }
 
-    // 개인 학생 월별 조회
+    // [교사 / 학생] 개인 학생 월별 조회
     public StudentAttendanceResDto getStudentMonthlyAttendance(String username, int year, int grade, int classNum, int number, int month) {
         ClassroomStudent classroomStudent = checkValidate(username, year, grade, classNum, number);
 
@@ -178,6 +183,7 @@ public class AttendanceService {
     }
 
 
+    // [교사 / 학생] 출결 통계 조회
     public StudentAttendanceSummaryDto getStudentAttendanceSummary(String username, int year, int semester, int grade, int classNum, int number) {
         ClassroomStudent classroomStudent = checkValidate(username, year, grade, classNum, number);
 
@@ -224,6 +230,7 @@ public class AttendanceService {
                 .build();
     }
 
+    // [교사] 출결 피드백 저장
     @Transactional
     public AttendanceFeedbackResDto saveFeedback(String username, int year, int grade, int classNum, int number, AttendanceFeedbackReqDto requestDto) {
         ClassroomStudent classroomStudent = checkValidate(username, year, grade, classNum, number);
@@ -240,6 +247,7 @@ public class AttendanceService {
         return AttendanceFeedbackResDto.toDto(feedbackRepository.save(feedback));
     }
 
+    // [교사] 출결 피드백 수정
     @Transactional
     public AttendanceFeedbackResDto updateFeedback(String username, Long feedBackId, AttendanceFeedbackReqDto requestDto) {
 
@@ -249,7 +257,7 @@ public class AttendanceService {
                 .orElseThrow(() -> new CustomException(ErrorCode.DATA_NOT_FOUND));
 
         if(feedback.getClassroomStudent().getClassroom().getTeacher() != teacher){
-            throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
+            throw new CustomException(HANDLE_ACCESS_DENIED);
         }
         feedback.updateContent(requestDto.getFeedback());
 
@@ -263,6 +271,7 @@ public class AttendanceService {
         return AttendanceFeedbackResDto.toDto(feedback);
     }
 
+    // [교사 / 학생] 출결 피드백 조회
     public AttendanceFeedbackResDto getFeedback(String username, int year, int grade, int classNum, int number) {
 
         ClassroomStudent classroomStudent = checkValidate(username, year, grade, classNum, number);
@@ -278,10 +287,29 @@ public class AttendanceService {
     }
 
     private ClassroomStudent checkValidate(String username, int year, int grade, int classNum, int number) {
-        Teacher teacher = teacherService.authenticate(username);
-        Classroom classroom = classroomService.findClassroom(year, grade, classNum, teacher.getId());
+        User user = userService.getUser(username);
 
-        return classroomStudentRepository.findByClassroomAndNumber(classroom, number)
-                .orElseThrow(() -> new CustomException(ErrorCode.HANDLE_ACCESS_DENIED));
+        switch (user.getRole()) {
+            case STUDENT -> {
+                // 본인이 요청한 게 맞는지 확인
+                ClassroomStudent cs = classroomStudentRepository.findByStudentUser(user).orElseThrow(
+                        () -> new CustomException(ErrorCode.CLASSROOM_NOT_FOUND)
+                );
+                if (cs.getNumber() != number) {
+                    throw new CustomException(HANDLE_ACCESS_DENIED);
+                }
+                return cs;
+            }
+
+            case TEACHER -> {
+                Teacher teacher = teacherService.authenticate(username);
+                Classroom classroom = classroomService.findClassroom(year, grade, classNum, teacher.getId());
+
+                return classroomStudentRepository.findByClassroomAndNumber(classroom, number)
+                        .orElseThrow(() -> new CustomException(HANDLE_ACCESS_DENIED));
+            }
+
+            default -> throw new CustomException(HANDLE_ACCESS_DENIED);
+        }
     }
 }

@@ -164,7 +164,7 @@ class BehaviorServiceTest {
 
         // when & then
         assertThatThrownBy(() ->
-                behaviorService.getBehavior("t1", 2025, 1, 1, 2L))
+                behaviorService.getBehavior("t1", 2025, 1, 1, 2))
                 .isInstanceOf(CustomException.class)
                 .hasMessageContaining(ErrorCode.BEHAVIOR_NOT_FOUND.getMessage());
     }
@@ -184,7 +184,7 @@ class BehaviorServiceTest {
 
         // when & then
         assertThatThrownBy(() ->
-                behaviorService.getBehavior("t1", 2025, 1, 1, 2L))
+                behaviorService.getBehavior("t1", 2025, 1, 1, 2))
                 .isInstanceOf(CustomException.class)
                 .hasMessageContaining(ErrorCode.HANDLE_ACCESS_DENIED.getMessage());
     }
@@ -202,7 +202,7 @@ class BehaviorServiceTest {
 
         // when
         BehaviorDetailResponseDto dto =
-                behaviorService.getBehavior("t1", 2025, 1, 1, 2L);
+                behaviorService.getBehavior("t1", 2025, 1, 1, 2);
 
         // then
         assertThat(dto.getGeneralComment()).isEqualTo("initial");

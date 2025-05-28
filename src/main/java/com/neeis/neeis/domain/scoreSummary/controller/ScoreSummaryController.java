@@ -23,7 +23,7 @@ import static com.neeis.neeis.global.common.StatusCode.*;
 public class ScoreSummaryController {
     private final ScoreSummaryService scoreSummaryService;
 
-    @Operation(summary = "학생 성적 학적 조회",
+    @Operation(summary = "[교사 및 학생 전용] 학생 성적 학적 조회",
             description = "출석번호 기준 단일 학생의 과목별 성적 요약을 조회합니다.")
     @GetMapping
     public ResponseEntity<CommonResponse<StudentScoreSummaryDto>> getStudentScoreSummary(
@@ -40,7 +40,7 @@ public class ScoreSummaryController {
     }
 
     @PostMapping("/feedback")
-    @Operation(summary = "성적 피드백 등록", description =
+    @Operation(summary = "[교사 전용] 성적 피드백 등록", description =
             """
             특정 성적 요약(ScoreSummary)에 대해 피드백을 작성합니다.
             - `scoreSummaryId`는 성적 통계 ID입니다.
@@ -53,7 +53,7 @@ public class ScoreSummaryController {
     }
 
     @PostMapping("/feedback/{score-summary-id}")
-    @Operation(summary = "성적 피드백 수정", description =
+    @Operation(summary = "[교사 전용] 성적 피드백 수정", description =
             """
             특정 성적 요약에 대해 기존 피드백 내용을 수정합니다.
             - `score-summary-id`는 피드백이 연결된 성적 요약의 ID입니다.
@@ -68,14 +68,15 @@ public class ScoreSummaryController {
     }
 
     @GetMapping("/feedback/{score-summary-id}")
-    @Operation(summary = "성적 피드백 조회", description =
+    @Operation(summary = "[교사 및 학생 전용] 성적 피드백 조회", description =
             """
             특정 성적 요약에 작성된 피드백을 조회합니다.
             - `score-summary-id`는 성적 요약 ID입니다.
             """)
     public ResponseEntity<CommonResponse<ScoreFeedbackDto>> getFeedback(
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable("score-summary-id") Long scoreSummaryId){
-        return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_FEEDBACK.getMessage(), scoreSummaryService.getFeedback(scoreSummaryId)));
+        return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_FEEDBACK.getMessage(), scoreSummaryService.getFeedback(userDetails.getUsername(), scoreSummaryId)));
     }
 
 

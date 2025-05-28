@@ -1,8 +1,10 @@
 package com.neeis.neeis.domain.classroomStudent;
 
 import com.neeis.neeis.domain.classroom.Classroom;
+import com.neeis.neeis.domain.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +25,9 @@ public interface ClassroomStudentRepository extends JpaRepository<ClassroomStude
             "WHERE cs.student_id = :studentId AND cs.classroom_id = :classroomId ", nativeQuery = true)
     Optional<ClassroomStudent> findByStudentAndClassroom(Long studentId, Long classroomId);
 
-
     Optional<ClassroomStudent> findByClassroomAndNumber(Classroom classroom, int number);
 
+    @Query(value = "SELECT cs FROM ClassroomStudent cs " +
+            "WHERE cs.student.user = :user")
+    Optional<ClassroomStudent> findByStudentUser(@Param("user") User user);
 }

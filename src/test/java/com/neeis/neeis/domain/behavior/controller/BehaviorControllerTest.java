@@ -113,7 +113,7 @@ class BehaviorControllerTest {
     @DisplayName("행동특성 조회 성공 테스트")
     void getBehaviorSuccess() throws Exception {
         // given
-        given(behaviorService.getBehavior(anyString(), anyInt(), anyInt(), anyInt(), anyLong()))
+        given(behaviorService.getBehavior(anyString(), anyInt(), anyInt(), anyInt(), anyInt()))
                 .willReturn(behaviorDetailResponseDto);
 
         // when & then
@@ -130,7 +130,7 @@ class BehaviorControllerTest {
                 .andDo(print());
 
         // verify
-        verify(behaviorService).getBehavior(eq("teacher"), eq(2025), eq(1), eq(3), eq(1L));
+        verify(behaviorService).getBehavior(eq("teacher"), eq(2025), eq(1), eq(3), eq(1));
     }
 
     @Test

@@ -38,13 +38,13 @@ public class BehaviorController {
     }
 
     @GetMapping
-    @Operation(summary = "행동 / 태도 조회", description = "학생 개인의 행동특성 및 종합의견을 조회합니다. ")
+    @Operation(summary = "[교사/학생] 행동 / 태도 조회", description = "학생 개인의 행동특성 및 종합의견을 조회합니다. ")
     public ResponseEntity<CommonResponse<BehaviorDetailResponseDto>> getBehavior( @AuthenticationPrincipal UserDetails userDetails,
                                                                                   @RequestParam(value = "year", defaultValue = "2025") @Parameter(description = "연도") Integer year,
                                                                                   @RequestParam("grade") @Parameter(description = "학년") Integer grade,
                                                                                   @RequestParam("classNum") @Parameter(description = "반") Integer classNum,
-                                                                                  @RequestParam("studentId") @Parameter(description = "학생 ID") Long studentId) {
-        return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_BEHAVIOR.getMessage(), behaviorService.getBehavior(userDetails.getUsername(), year, grade, classNum, studentId)));
+                                                                                  @RequestParam("number") @Parameter(description = "출석 번호") Integer number) {
+        return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_BEHAVIOR.getMessage(), behaviorService.getBehavior(userDetails.getUsername(), year, grade, classNum, number)));
     }
 
     @PutMapping("/{behaviorId}")

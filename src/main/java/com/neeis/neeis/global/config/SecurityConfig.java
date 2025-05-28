@@ -1,5 +1,6 @@
 package com.neeis.neeis.global.config;
 
+import com.google.api.Http;
 import com.neeis.neeis.global.jwt.JwtAuthenticationFilter;
 import com.neeis.neeis.global.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
@@ -50,7 +51,17 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**","/swagger-ui/index.html#/","/v3/api-docs/**", "/swagger-resources/**").permitAll()
                         .requestMatchers("/users/login", "/students/id", "/students/password", "/images/**", "/users/password").permitAll()
                         .requestMatchers(HttpMethod.GET, "/teacherSubjects", "/subjects").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/evaluation-methods").hasRole("TEACHER")
+                        // 출결
+                        .requestMatchers(HttpMethod.GET, "/attendances/student", "/attendances/summary", "/attendances/feedback").hasAnyAuthority("ROLE_STUDENT", "ROLE_PARENT")
+                        // 행동
+                        .requestMatchers(HttpMethod.GET, "/behavior").hasAnyAuthority("ROLE_STUDENT","ROLE_PARENT")
+                        // 상담
+                        .requestMatchers(HttpMethod.GET, "/counsel").hasAnyAuthority("ROLE_STUDENT","ROLE_PARENT")
+                        // 성적
+                        .requestMatchers(HttpMethod.GET, "/evaluation-methods").hasAnyAuthority("ROLE_STUDENT", "ROLE_PARENT")
+                        .requestMatchers(HttpMethod.GET, "/score-summary").hasAnyAuthority("ROLE_STUDENT", "ROLE_PARENT")
+
+                        // 교사 권한
                         .requestMatchers("/teachers/**", "/behavior/**" , "/counsel/**", "/attendances/**", "/evaluation-methods/**","/scores/**", "/score-summary/**").hasAnyAuthority("ROLE_TEACHER")
                         .requestMatchers("/students/register","/subjects/**","/teacherSubjects/**").hasAnyAuthority("ROLE_TEACHER","ROLE_ADMIN")
                         .anyRequest().authenticated())

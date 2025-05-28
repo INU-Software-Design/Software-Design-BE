@@ -50,7 +50,7 @@ public class EvaluationMethodController {
 
     @GetMapping
     @Operation(
-            summary = "평가 방식 조회",
+            summary = "[전체 접근] 평가 방식 조회",
             description = "특정 연도/학기/학년/과목의 평가 방식 목록을 조회합니다." )
     public ResponseEntity<CommonResponse<List<EvaluationMethodResponseDto>>> getEvaluationMethods(
             @RequestParam int year, @RequestParam int semester,

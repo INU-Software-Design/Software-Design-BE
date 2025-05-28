@@ -29,7 +29,7 @@ public class AttendanceController {
     private final AttendanceService attendanceService;
 
     @PostMapping
-    @Operation(summary = "담임 학생 월별 출결 저장", description = "로그인한 교사의 월별 출결을 저장합니다. <br>" +
+    @Operation(summary = "[교사 전용] 담임 학생 월별 출결 저장", description = "로그인한 교사의 월별 출결을 저장합니다. <br>" +
             "출결은 당월 저장만 가능합니다. <br>" +
             "조회하려는 학급의 년도, 학년, 반이 필수로 입력해야합니다. <br>" +
             "status : PRESENT(출석), ABSENT(결석), LATE(지각), EARLY(조퇴)  ")
@@ -40,7 +40,7 @@ public class AttendanceController {
     }
 
     @GetMapping
-    @Operation(summary = "담임 학생 월별 출결 조회", description = "로그인한 교사의 월별 출결을 조회합니다. <br>" +
+    @Operation(summary = "[교사 전용] 담임 학생 월별 출결 조회", description = "로그인한 교사의 월별 출결을 조회합니다. <br>" +
             "조회하려는 학급의 년도, 학년, 반이 필수로 입력해야합니다. <br>" +
             "월(month)은 선택사항이며, 입력하지 않으면 당월을 기본값으로 조회합니다. <br>" +
             "(담당 학급이 아닌 경우 접근이 제한됩니다.)" )
@@ -57,7 +57,7 @@ public class AttendanceController {
     }
 
     @GetMapping("/student")
-    @Operation(summary = "담임 학생 월별 출결 개별 조회", description = "로그인한 교사의 학급 월별 출결을 개별 조회합니다. <br>" +
+    @Operation(summary = "[교사 및 학생 전용] 담임 학생 월별 출결 개별 조회", description = "로그인한 교사의 학급 월별 출결을 개별 조회합니다. <br>" +
             "조회하려는 학급의 년도, 학년, 반이 필수로 입력해야합니다. <br>" +
             "월(month)은 선택사항이며, 입력하지 않으면 당월을 기본값으로 조회합니다. <br>" +
             "(담당 학급이 아닌 경우 접근이 제한됩니다.)" )
@@ -75,8 +75,8 @@ public class AttendanceController {
     }
 
     @GetMapping("/summary")
-    @Operation(summary = "담임 학생 출결 통계 조회", description = "로그인한 교사의 학급 학생의 출결을 통계냅니다. <br>" +
-            "조회하려는 학급과 학생의 년도, 학년, 반, 번호이 필수로 입력해야합니다. <br>" +
+    @Operation(summary = "[교사 및 학생 전용] 담임 학생 출결 통계 조회", description = "로그인한 교사의 학급 학생의 출결을 통계냅니다. <br>" +
+            "조회하려는 학급과 학생의 년도, 학년, 반, 출석번호이 필수로 입력해야합니다. <br>" +
             "추가로 출석 통계는 '학기당 수업 일수'로 계산되므로, 반드시 '학기'를 입력해야 합니다.")
     public ResponseEntity<CommonResponse<StudentAttendanceSummaryDto>> getStudentAttendanceSummary( @AuthenticationPrincipal UserDetails userDetails,
                                                                                                     @RequestParam("year") @Parameter(description = "연도") int year,
@@ -89,7 +89,7 @@ public class AttendanceController {
     }
 
     @PostMapping("/feedback")
-    @Operation(summary = "담임 학생 출결 피드백 작성", description = "로그인한 교사가 담당 학급 학생에 대해 출결 피드백을 작성합니다. <br>" +
+    @Operation(summary = "[교사 전용] 담임 학생 출결 피드백 작성", description = "로그인한 교사가 담당 학급 학생에 대해 출결 피드백을 작성합니다. <br>" +
                     "학급의 연도, 학년, 반, 번호 정보를 입력해야 하며, 피드백은 본인 학급 학생에 대해서만 작성할 수 있습니다.")
     public ResponseEntity<CommonResponse<AttendanceFeedbackResDto>> saveFeedback(@AuthenticationPrincipal UserDetails userdetails,
                                                                @RequestParam("year") @Parameter(description = "연도") int year,
@@ -102,7 +102,7 @@ public class AttendanceController {
     }
 
     @PutMapping("/feedback/{feedbackId}")
-    @Operation(summary = "담임 학생 출결 피드백 수정", description = "로그인한 교사가 작성한 학생 출결 피드백을 수정합니다. <br>" +
+    @Operation(summary = "[교사 전용] 담임 학생 출결 피드백 수정", description = "로그인한 교사가 작성한 학생 출결 피드백을 수정합니다. <br>" +
                     "피드백 ID를 경로로 입력하고, 수정할 피드백 내용을 요청 본문에 작성합니다. <br>" +
                     "본인이 작성한 피드백만 수정할 수 있습니다.")
     public ResponseEntity<CommonResponse<AttendanceFeedbackResDto>> updateFeedback(@AuthenticationPrincipal UserDetails userdetails,
@@ -113,7 +113,7 @@ public class AttendanceController {
     }
 
     @GetMapping("/feedback")
-    @Operation(summary = "담임 학생 출결 피드백 조회", description =
+    @Operation(summary = "[교사 및 학생 전용] 담임 학생 출결 피드백 조회", description =
             "로그인한 교사가 담당 학생의 출결 피드백을 조회합니다. <br>" +
                     "학급의 연도, 학년, 반, 번호 정보를 입력하여 해당 학생의 피드백을 가져옵니다.")
     public ResponseEntity<CommonResponse<AttendanceFeedbackResDto>> getFeedback(@AuthenticationPrincipal UserDetails userDetails,

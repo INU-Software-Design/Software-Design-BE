@@ -37,7 +37,7 @@ public class CounselController {
     }
 
     @GetMapping("/{counselId}")
-    @Operation(summary = "상담 개별 조회", description = "권한을 가진 교사가 상담 기록을 조회합니다. <br>" +
+    @Operation(summary = "[교사 및 학셍 전용] 상담 개별 조회", description = "권한을 가진 교사가 상담 기록을 조회합니다. <br>" +
             "상담이 비공개 처리가 되었을 시, isPublic이 false 로 조회됩니다. ")
     public ResponseEntity<CommonResponse<CounselDetailDto>> getCounsel(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -46,7 +46,7 @@ public class CounselController {
     }
 
     @GetMapping
-    @Operation(summary = "학생별 상담 기록 조회", description = "권한을 가진 교사가 상담 기록을 조회합니다.<br>" +
+    @Operation(summary = "[교사 및 학생 전용] 학생별 상담 기록 조회", description = "권한을 가진 교사가 상담 기록을 조회합니다.<br>" +
             "상담이 비공개 처리가 되었을 시, isPublic이 false 로 조회됩니다. ")
     public ResponseEntity<CommonResponse<List<CounselDetailDto>>> getCounsels(
             @AuthenticationPrincipal UserDetails userDetails,

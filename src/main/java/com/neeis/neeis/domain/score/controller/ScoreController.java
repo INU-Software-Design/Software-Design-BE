@@ -53,7 +53,7 @@ public class ScoreController {
 
     @GetMapping("/summary")
     @Operation(
-            summary = "특정 반의 과목별 평가 방식 및 점수 조회",
+            summary = "[교사 전용] 특정 반의 과목별 평가 방식 및 점수 조회",
             description = """
         입력한 연도/학기/학년/반 정보에 따라, 각 과목의 평가 방식과 학생들의 점수를 반환합니다. <br><br>
         <b>선택적 필터링:</b><br>
