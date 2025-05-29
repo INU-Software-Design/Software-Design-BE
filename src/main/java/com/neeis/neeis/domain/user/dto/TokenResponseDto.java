@@ -48,12 +48,16 @@ public class TokenResponseDto {
                 .build();
     }
 
-    public static TokenResponseDto ofTeacher(String accessToken, String name, String role, String subject) {
+    public static TokenResponseDto ofTeacher(String accessToken, String name, String role, String subject,
+                                             int year, int grade, int classNum) {
         return TokenResponseDto.builder()
                 .accessToken(accessToken)
                 .name(name)
                 .role(role)
                 .subject(subject)
+                .year(year)
+                .grade(grade)
+                .classNum(classNum)
                 .build();
     }
 

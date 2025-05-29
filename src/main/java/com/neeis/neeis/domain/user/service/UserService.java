@@ -1,6 +1,8 @@
 package com.neeis.neeis.domain.user.service;
 
 import com.neeis.neeis.domain.classroom.Classroom;
+import com.neeis.neeis.domain.classroom.ClassroomRepository;
+import com.neeis.neeis.domain.classroom.ClassroomService;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
 import com.neeis.neeis.domain.parent.Parent;
@@ -11,7 +13,6 @@ import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.domain.teacher.TeacherRepository;
 import com.neeis.neeis.domain.teacherSubject.TeacherSubject;
 import com.neeis.neeis.domain.teacherSubject.TeacherSubjectRepository;
-import com.neeis.neeis.domain.teacherSubject.service.TeacherSubjectService;
 import com.neeis.neeis.domain.user.dto.TokenResponseDto;
 import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.domain.user.UserRepository;
@@ -39,6 +40,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final StudentRepository studentRepository;
     private final ParentService parentService;
+    private final ClassroomRepository classroomRepository;
     private final TeacherRepository teacherRepository;
     private final ClassroomStudentRepository classroomStudentRepository;
     private final TeacherSubjectRepository teacherSubjectRepository;
@@ -92,7 +94,12 @@ public class UserService {
                TeacherSubject subject = teacherSubjectRepository.findByTeacher(teacher).orElseThrow(
                        () -> new CustomException(ErrorCode.TEACHER_SUBJECT_NOT_FOUND));
 
-               return TokenResponseDto.ofTeacher(accessToken, teacher.getName(), user.getRole().name(), subject.getSubject().getName());
+               Classroom classroom = classroomRepository.findByTeacher(teacher).orElseThrow(
+                       ()-> new CustomException(CLASSROOM_NOT_FOUND)
+               );
+
+               return TokenResponseDto.ofTeacher(accessToken, teacher.getName(), user.getRole().name(), subject.getSubject().getName(),
+                       classroom.getYear(), classroom.getGrade(), classroom.getClassNum());
             }
             case PARENT -> {
                 Parent parent = parentService.getParentByUser(user);
