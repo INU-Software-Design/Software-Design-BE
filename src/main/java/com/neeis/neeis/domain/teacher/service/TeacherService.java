@@ -4,6 +4,8 @@ import com.neeis.neeis.domain.classroom.Classroom;
 import com.neeis.neeis.domain.classroom.ClassroomRepository;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
+import com.neeis.neeis.domain.parent.Parent;
+import com.neeis.neeis.domain.parent.ParentService;
 import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.domain.student.dto.res.StudentDetailResDto;
 import com.neeis.neeis.domain.student.service.StudentService;
@@ -26,6 +28,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.neeis.neeis.global.exception.ErrorCode.HANDLE_ACCESS_DENIED;
+import static com.neeis.neeis.global.exception.ErrorCode.USER_NOT_FOUND;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -33,10 +38,12 @@ public class TeacherService {
     private final TeacherRepository teacherRepository;
     private final ClassroomRepository classroomRepository;
     private final ClassroomStudentRepository classroomStudentRepository;
+    private final ParentService parentService;
     private final UserService userService;
     private final StudentService studentService;
 
 
+    // 교사 전용 -> 학생의 출석번호 이름 조회
     public ClassroomStudentDto getStudentsFlexible(String username, int year, Integer grade, Integer classNum) {
         Teacher teacher = authenticate(username);
 
@@ -52,6 +59,7 @@ public class TeacherService {
 
         return buildClassroomStudentDto(classroom);
     }
+
 
     private ClassroomStudentDto buildClassroomStudentDto(Classroom classroom) {
         List<ClassroomStudent> classroomStudentList = classroomStudentRepository.findByClassroom(classroom);
@@ -72,7 +80,33 @@ public class TeacherService {
 
     // 학생 학적 정보 가져오기
     public StudentDetailResDto getStudentDetail( String username, Long studentId, int year) {
-        authenticate(username);
+        User user = userService.getUser(username);
+        switch(user.getRole()) {
+            case STUDENT -> {
+                Student student = studentService.getStudent(studentId);
+
+                // 본인 아니면 정보 조회 불가
+                if (!user.getId().equals(student.getUser().getId())) {
+                    throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
+                }
+            }
+            case TEACHER -> {
+                // 교사는 권한만 가지면 학생 학적 정보는 조회 가능
+                authenticate(username);
+            }
+            case PARENT -> {
+                // 부모 체크
+                Parent parent = parentService.getParentByUser(user);
+
+                // 본인의 자녀가 맞는지 확인
+                if (!studentId.equals(parent.getStudent().getId())) {
+                    throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
+                }
+            }
+
+            default -> throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
+
+        }
         return studentService.getStudentDetails(studentId, year);
     }
 
@@ -82,8 +116,6 @@ public class TeacherService {
         Teacher teacher = authenticate(username);
         return TeacherResponseDto.toDto(teacher);
     }
-
-
 
     public Teacher authenticate(String username) {
         // loginId -> user -> student 로

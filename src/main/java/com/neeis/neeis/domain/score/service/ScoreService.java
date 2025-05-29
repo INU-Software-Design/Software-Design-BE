@@ -124,6 +124,7 @@ public class ScoreService {
 
     @Transactional
     public void saveOrUpdateScores(String username, List<ScoreRequestDto> requestList) {
+        // 교사 권한 체크
         Teacher teacher = teacherService.authenticate(username);
 
         Map<String, List<Score>> scoreBuffer = new HashMap<>();

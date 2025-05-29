@@ -23,9 +23,15 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/login")
-    @Operation(summary = "통합 로그인", description = "아이디는 유저에게 주어진 고유 ID 입니다. (변경불가능) <br>" +
-            "초기 비밀번호는 핸드폰 뒷자리 4자리이며, 추후 변경 가능합니다. <br>" +
-            "로그인은 통합로그인입니다. 권한에 따라 API 접근이 제한됩니다. <br> ")
+    @Operation(summary = "통합 로그인", description =
+            """
+            아이디는 유저에게 주어진 고유 ID 입니다. (변경불가능) <br>
+            초기 비밀번호는 핸드폰 뒷자리 4자리이며, 추후 변경 가능합니다. <br>
+            로그인은 통합로그인입니다. 권한에 따라 API 접근이 제한됩니다. <br>
+            <br>
+            name : 로그인한 본인의 이름 <br>
+            studentName : 부모 로그인 시 자녀의 이름 <br>
+            """)
     public ResponseEntity<CommonResponse<TokenResponseDto>> login( @Valid @RequestBody LoginRequestDto loginRequestDto) {
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_LOGIN.getMessage(),userService.login(loginRequestDto)));
     }
