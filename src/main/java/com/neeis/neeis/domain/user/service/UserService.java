@@ -4,11 +4,14 @@ import com.neeis.neeis.domain.classroom.Classroom;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
 import com.neeis.neeis.domain.parent.Parent;
-import com.neeis.neeis.domain.parent.ParentRepository;
+import com.neeis.neeis.domain.parent.ParentService;
 import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.domain.student.StudentRepository;
 import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.domain.teacher.TeacherRepository;
+import com.neeis.neeis.domain.teacherSubject.TeacherSubject;
+import com.neeis.neeis.domain.teacherSubject.TeacherSubjectRepository;
+import com.neeis.neeis.domain.teacherSubject.service.TeacherSubjectService;
 import com.neeis.neeis.domain.user.dto.TokenResponseDto;
 import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.domain.user.UserRepository;
@@ -19,15 +22,13 @@ import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
 import com.neeis.neeis.global.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
-import org.antlr.v4.runtime.Token;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
-import static com.neeis.neeis.global.exception.ErrorCode.CLASSROOM_NOT_FOUND;
-import static com.neeis.neeis.global.exception.ErrorCode.USER_NOT_FOUND;
+import static com.neeis.neeis.global.exception.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
@@ -37,9 +38,10 @@ public class UserService {
     private final JwtProvider jwtProvider;
     private final PasswordEncoder passwordEncoder;
     private final StudentRepository studentRepository;
-    private final ParentRepository parentRepository;
+    private final ParentService parentService;
     private final TeacherRepository teacherRepository;
     private final ClassroomStudentRepository classroomStudentRepository;
+    private final TeacherSubjectRepository teacherSubjectRepository;
 
     @Transactional
     public TokenResponseDto login(LoginRequestDto loginRequestDto) {
@@ -86,13 +88,35 @@ public class UserService {
             case TEACHER -> {
                Teacher teacher = teacherRepository.findByUser(user)
                         .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
-               return TokenResponseDto.ofCommon(accessToken, teacher.getName(), user.getRole().name());
+
+               TeacherSubject subject = teacherSubjectRepository.findByTeacher(teacher).orElseThrow(
+                       () -> new CustomException(ErrorCode.TEACHER_SUBJECT_NOT_FOUND));
+
+               return TokenResponseDto.ofTeacher(accessToken, teacher.getName(), user.getRole().name(), subject.getSubject().getName());
             }
             case PARENT -> {
-                Parent parent = parentRepository.findByUser(user)
-                        .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+                Parent parent = parentService.getParentByUser(user);
 
-                return TokenResponseDto.ofCommon(accessToken, parent.getName(), user.getRole().name());
+                Long studentId = parent.getStudent().getId();
+                Student student = studentRepository.findById(studentId).orElseThrow(
+                        () -> new CustomException(USER_NOT_FOUND)
+                );
+
+                int year = LocalDate.now().getYear();
+                ClassroomStudent classroomStudent = classroomStudentRepository.findByStudentAndClassroomYear(student.getId(), year).orElseThrow(
+                        () -> new CustomException(CLASSROOM_NOT_FOUND));
+                Classroom classroom = classroomStudent.getClassroom();
+
+                return TokenResponseDto.ofParent(accessToken,
+                        parent.getName(),
+                        user.getRole().name(),
+                        classroom.getYear(),
+                        classroom.getGrade(),
+                        classroom.getClassNum(),
+                        classroomStudent.getNumber(),
+                        student.getId(),
+                        student.getName()
+                );
             }
             default -> throw new CustomException(USER_NOT_FOUND);
         }
