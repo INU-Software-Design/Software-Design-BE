@@ -68,7 +68,7 @@ class SubjectControllerTest {
                 .build();
         String content = objectMapper.writeValueAsString(requestDto);
 
-        doNothing().when(subjectService).createSubject(anyString(), any(CreateSubjectRequestDto.class));
+        doNothing().when(subjectService).createSubject(any(CreateSubjectRequestDto.class));
 
         // when & then
         mockMvc.perform(post("/subjects")
@@ -78,7 +78,7 @@ class SubjectControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value(StatusCode.SUCCESS_POST_SUBJECT.getMessage()));
 
-        verify(subjectService, times(1)).createSubject(anyString(), any(CreateSubjectRequestDto.class));
+        verify(subjectService, times(1)).createSubject(any(CreateSubjectRequestDto.class));
     }
 
     @Test
@@ -154,7 +154,7 @@ class SubjectControllerTest {
                 .build();
         String content = objectMapper.writeValueAsString(requestDto);
 
-        doNothing().when(subjectService).updateSubject(anyString(), eq(subjectId), any(CreateSubjectRequestDto.class));
+        doNothing().when(subjectService).updateSubject(eq(subjectId), any(CreateSubjectRequestDto.class));
 
         // when & then
         mockMvc.perform(put("/subjects/{subjectId}", subjectId)
@@ -164,7 +164,7 @@ class SubjectControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value(StatusCode.SUCCESS_UPDATE_SUBJECT.getMessage()));
 
-        verify(subjectService, times(1)).updateSubject(anyString(), eq(subjectId), any(CreateSubjectRequestDto.class));
+        verify(subjectService, times(1)).updateSubject(eq(subjectId), any(CreateSubjectRequestDto.class));
     }
 
     @Test
@@ -174,14 +174,14 @@ class SubjectControllerTest {
         // given
         Long subjectId = 1L;
 
-        doNothing().when(subjectService).deleteSubject(anyString(), eq(subjectId));
+        doNothing().when(subjectService).deleteSubject(eq(subjectId));
 
         // when & then
         mockMvc.perform(delete("/subjects/{subjectId}", subjectId)
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isNoContent());
 
-        verify(subjectService, times(1)).deleteSubject(anyString(), eq(subjectId));
+        verify(subjectService, times(1)).deleteSubject(eq(subjectId));
     }
 
     @Test
@@ -201,6 +201,6 @@ class SubjectControllerTest {
                         .content(content))
                 .andExpect(status().isForbidden()); // 403 Forbidden 예상
 
-        verify(subjectService, never()).createSubject(anyString(), any(CreateSubjectRequestDto.class));
+        verify(subjectService, never()).createSubject( any(CreateSubjectRequestDto.class));
     }
 }

@@ -1,5 +1,6 @@
 package com.neeis.neeis.domain.teacherSubject.controller;
 
+import com.neeis.neeis.domain.teacher.service.TeacherService;
 import com.neeis.neeis.domain.teacherSubject.dto.req.CreateTeacherSubjectDto;
 import com.neeis.neeis.domain.teacherSubject.dto.res.TeacherSubjectResponseDto;
 import com.neeis.neeis.domain.teacherSubject.service.TeacherSubjectService;
@@ -21,6 +22,7 @@ import static com.neeis.neeis.global.common.StatusCode.*;
 @RequestMapping("/teacherSubjects")
 public class TeacherSubjectController {
     private final TeacherSubjectService teacherSubjectService;
+    private final TeacherService teacherService;
 
     @PostMapping
     @Operation(
@@ -30,7 +32,8 @@ public class TeacherSubjectController {
     public ResponseEntity<CommonResponse<Object>> save(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody CreateTeacherSubjectDto createTeacherSubjectDto ){
-        teacherSubjectService.save(userDetails.getUsername(), createTeacherSubjectDto);
+        teacherService.authenticate(userDetails.getUsername());
+        teacherSubjectService.save(createTeacherSubjectDto);
 
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_POST_TEACHER_SUBJECT.getMessage()));
     }
@@ -52,7 +55,8 @@ public class TeacherSubjectController {
     public ResponseEntity<CommonResponse<Object>> update(@AuthenticationPrincipal UserDetails userDetails,
                                                          @PathVariable Long id,
                                                          @Valid @RequestBody CreateTeacherSubjectDto createTeacherSubjectDto ){
-        teacherSubjectService.update(userDetails.getUsername(), id, createTeacherSubjectDto);
+        teacherService.authenticate(userDetails.getUsername());
+        teacherSubjectService.update(id, createTeacherSubjectDto);
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_UPDATE_TEACHER_SUBJECT.getMessage()));
     }
 
@@ -63,7 +67,8 @@ public class TeacherSubjectController {
     )
     public ResponseEntity<CommonResponse<Object>> delete(
             @AuthenticationPrincipal UserDetails userDetails, @PathVariable Long id ){
-        teacherSubjectService.delete(userDetails.getUsername(), id);
+        teacherService.authenticate(userDetails.getUsername());
+        teacherSubjectService.delete( id);
         return ResponseEntity.noContent().build();
     }
 
