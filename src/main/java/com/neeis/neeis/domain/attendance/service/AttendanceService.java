@@ -13,6 +13,8 @@ import com.neeis.neeis.domain.classroom.ClassroomService;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
 import com.neeis.neeis.domain.notification.service.NotificationService;
+import com.neeis.neeis.domain.parent.Parent;
+import com.neeis.neeis.domain.parent.ParentService;
 import com.neeis.neeis.domain.semester.Semester;
 import com.neeis.neeis.domain.semester.SemesterRepository;
 import com.neeis.neeis.domain.student.Student;
@@ -34,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.neeis.neeis.global.exception.ErrorCode.CLASSROOM_NOT_FOUND;
 import static com.neeis.neeis.global.exception.ErrorCode.HANDLE_ACCESS_DENIED;
 
 @Service
@@ -50,6 +53,7 @@ public class AttendanceService {
     private final AttendanceFeedbackRepository feedbackRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationService notificationService;
+    private final ParentService parentService;
 
     // [교사] - 출결 저장 및 업데이트
     @Transactional
@@ -300,12 +304,29 @@ public class AttendanceService {
             }
 
             case TEACHER -> {
-                Teacher teacher = teacherService.authenticate(username);
+                teacherService.authenticate(username);
                 // 교사임을 체크 ->
                 Classroom classroom = classroomService.findClassroom(year, grade, classNum);
 
                 return classroomStudentRepository.findByClassroomAndNumber(classroom, number)
                         .orElseThrow(() -> new CustomException(HANDLE_ACCESS_DENIED));
+            }
+
+            case PARENT -> {
+                Parent parent = parentService.getParentByUser(user);
+
+                Student student = parent.getStudent();
+                Classroom classroom = classroomService.findClassroom(year, grade, classNum);
+
+                ClassroomStudent classroomStudent = classroomStudentRepository.findByClassroomAndNumber(classroom, number)
+                        .orElseThrow(() -> new CustomException(CLASSROOM_NOT_FOUND));
+
+                // 자녀가 아니면 접근 불가함.
+                if(!student.getId().equals(classroomStudent.getStudent().getId())){
+                    throw new CustomException(HANDLE_ACCESS_DENIED);
+                }
+
+                return classroomStudent;
             }
 
             default -> throw new CustomException(HANDLE_ACCESS_DENIED);

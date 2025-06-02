@@ -26,7 +26,7 @@ public class TeacherController {
 
 
     @GetMapping("/students")
-    @Operation(summary = "교사 학생 조회", description = """
+    @Operation(summary = "[교사 전용] 교사 학생 조회", description = """
         담임 교사의 담당 반 또는 특정 학급의 학생 출석번호와 이름을 조회합니다. <br>
         year는 생략 시 올해 기준입니다. <br>
         grade와 classNum이 모두 있으면 해당 반 조회, 없으면 담임 반 기준으로 조회됩니다.
@@ -41,7 +41,7 @@ public class TeacherController {
     }
 
     @GetMapping("/students/{studentId}")
-    @Operation(summary = "학생 개별 조회", description = "학생의 학적 조회를 합니다.<br> " +
+    @Operation(summary = "[교사 및 학생 전용] 학생 개별 조회", description = "학생의 학적 조회를 합니다.<br> " +
             "메인페이지에 나와있는 학생의 정보를 제공합니다. <br>" +
             "학적 이미지 조회시 `기본도메인(BASE_URL)/images/{파일명}`으로 조회가능합니다.")
     public ResponseEntity<CommonResponse<StudentDetailResDto>> getStudentDetails(@AuthenticationPrincipal UserDetails userDetails,
@@ -52,7 +52,7 @@ public class TeacherController {
     }
 
     @GetMapping
-    @Operation(summary = "교사 개인 정보 조회", description = "로그인한 교사의 정보를 반환합니다.")
+    @Operation(summary = "[교사 전용] 교사 개인 정보 조회", description = "로그인한 교사의 정보를 반환합니다.")
     public ResponseEntity<CommonResponse<TeacherResponseDto>> getMyProfile(
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(CommonResponse.from("교사 정보 조회 성공", teacherService.getProfile(userDetails.getUsername())));

@@ -4,6 +4,7 @@ import com.neeis.neeis.domain.evaluationMethod.service.EvaluationMethodService;
 import com.neeis.neeis.domain.subject.dto.req.CreateSubjectRequestDto;
 import com.neeis.neeis.domain.subject.dto.res.SubjectResponseDto;
 import com.neeis.neeis.domain.subject.service.SubjectService;
+import com.neeis.neeis.domain.teacher.service.TeacherService;
 import com.neeis.neeis.global.common.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +25,7 @@ import static com.neeis.neeis.global.common.StatusCode.*;
 public class SubjectController {
     private final SubjectService subjectService;
     private final EvaluationMethodService evaluationMethodService;
+    private final TeacherService teacherService;
 
     @PostMapping
     @Operation(
@@ -33,7 +36,8 @@ public class SubjectController {
     public ResponseEntity<CommonResponse<Object>> createSubject(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody CreateSubjectRequestDto createSubjectRequestDto) {
-        subjectService.createSubject(userDetails.getUsername(), createSubjectRequestDto);
+        teacherService.authenticate(userDetails.getUsername());
+        subjectService.createSubject(createSubjectRequestDto);
 
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_POST_SUBJECT.getMessage()));
     }
@@ -73,7 +77,9 @@ public class SubjectController {
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long subjectId,
             @Valid @RequestBody CreateSubjectRequestDto dto) {
-        subjectService.updateSubject(userDetails.getUsername(), subjectId, dto);
+        teacherService.authenticate(userDetails.getUsername());
+
+        subjectService.updateSubject(subjectId, dto);
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_UPDATE_SUBJECT.getMessage()));
     }
 
@@ -85,7 +91,8 @@ public class SubjectController {
     public ResponseEntity<CommonResponse<Object>> deleteSubject(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long subjectId) {
-        subjectService.deleteSubject(userDetails.getUsername(), subjectId);
+        teacherService.authenticate(userDetails.getUsername());
+        subjectService.deleteSubject(subjectId);
         return ResponseEntity.noContent().build();
     }
 

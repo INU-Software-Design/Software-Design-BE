@@ -9,6 +9,7 @@ public class TokenResponseDto {
     private final String accessToken;
     private final String name;
     private final String role;
+    private final String subject;
 
     private final Integer year;
     private final Integer grade;
@@ -16,17 +17,21 @@ public class TokenResponseDto {
     private final Integer number;
     private final Long studentId;
 
+    private final String studentName;
+
     @Builder
-    public TokenResponseDto(String accessToken,String name,String role,
-                            Integer year, Integer grade, Integer classNum,Integer number, Long studentId) {
+    public TokenResponseDto(String accessToken,String name,String role, String subject,
+                            Integer year, Integer grade, Integer classNum,Integer number, Long studentId, String studentName) {
         this.accessToken = accessToken;
         this.name = name;
         this.role = role;
+        this.subject = subject;
         this.year = year;
         this.grade = grade;
         this.classNum = classNum;
         this.number = number;
         this.studentId = studentId;
+        this.studentName = studentName;
     }
 
     public static TokenResponseDto ofStudent(String accessToken, String name, String role,
@@ -43,11 +48,32 @@ public class TokenResponseDto {
                 .build();
     }
 
-    public static TokenResponseDto ofCommon(String accessToken, String name, String role) {
+    public static TokenResponseDto ofTeacher(String accessToken, String name, String role, String subject,
+                                             int year, int grade, int classNum) {
         return TokenResponseDto.builder()
                 .accessToken(accessToken)
                 .name(name)
                 .role(role)
+                .subject(subject)
+                .year(year)
+                .grade(grade)
+                .classNum(classNum)
                 .build();
     }
+
+    public static TokenResponseDto ofParent(String accessToken, String name, String role,
+                                             int year, int grade, int classNum, int number, Long studentId, String studentName) {
+        return TokenResponseDto.builder()
+                .accessToken(accessToken)
+                .name(name)
+                .role(role)
+                .year(year)
+                .grade(grade)
+                .classNum(classNum)
+                .number(number)
+                .studentId(studentId)
+                .studentName(studentName)
+                .build();
+    }
+
 }

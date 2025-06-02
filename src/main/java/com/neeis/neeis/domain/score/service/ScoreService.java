@@ -124,6 +124,7 @@ public class ScoreService {
 
     @Transactional
     public void saveOrUpdateScores(String username, List<ScoreRequestDto> requestList) {
+        // 교사 권한 체크
         Teacher teacher = teacherService.authenticate(username);
 
         Map<String, List<Score>> scoreBuffer = new HashMap<>();
@@ -164,6 +165,8 @@ public class ScoreService {
                 scoreBuffer.computeIfAbsent(key, k -> new ArrayList<>()).add(score);
             }
         }
+
+        scoreRepository.flush();
 
         // 요약 저장 로직은 key 단위로 처리
         for (String key : scoreBuffer.keySet()) {

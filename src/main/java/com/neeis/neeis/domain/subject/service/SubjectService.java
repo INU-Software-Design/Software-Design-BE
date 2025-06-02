@@ -4,7 +4,6 @@ import com.neeis.neeis.domain.subject.Subject;
 import com.neeis.neeis.domain.subject.SubjectRepository;
 import com.neeis.neeis.domain.subject.dto.req.CreateSubjectRequestDto;
 import com.neeis.neeis.domain.subject.dto.res.SubjectResponseDto;
-import com.neeis.neeis.domain.teacher.service.TeacherService;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -19,12 +18,9 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class SubjectService {
     private final SubjectRepository subjectRepository;
-    private final TeacherService teacherService;
 
     @Transactional
-    public void createSubject(String username, CreateSubjectRequestDto createSubjectRequestDto) {
-        teacherService.authenticate(username);
-
+    public void createSubject( CreateSubjectRequestDto createSubjectRequestDto) {
         if(subjectRepository.existsSubjectByName(createSubjectRequestDto.getName())){
             throw new CustomException(ErrorCode.SUBJECT_DUPLICATE);
         }
@@ -33,9 +29,7 @@ public class SubjectService {
     }
 
     @Transactional
-    public void updateSubject(String username, Long subjectId, CreateSubjectRequestDto createSubjectRequestDto) {
-        teacherService.authenticate(username);
-
+    public void updateSubject( Long subjectId, CreateSubjectRequestDto createSubjectRequestDto) {
         Subject subject =  subjectRepository.findById(subjectId).orElseThrow(
                 () -> new CustomException(ErrorCode.DATA_NOT_FOUND));
 
@@ -51,8 +45,7 @@ public class SubjectService {
     }
 
     @Transactional
-    public void deleteSubject(String username, Long subjectId) {
-        teacherService.authenticate(username);
+    public void deleteSubject(Long subjectId) {
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(() -> new CustomException(ErrorCode.DATA_NOT_FOUND));
         subjectRepository.delete(subject);

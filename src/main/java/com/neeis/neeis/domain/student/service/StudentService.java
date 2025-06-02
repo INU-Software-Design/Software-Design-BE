@@ -4,7 +4,7 @@ import com.neeis.neeis.domain.classroom.Classroom;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
 import com.neeis.neeis.domain.parent.Parent;
-import com.neeis.neeis.domain.parent.ParentRepository;
+import com.neeis.neeis.domain.parent.ParentService;
 import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.domain.student.StudentRepository;
 import com.neeis.neeis.domain.student.dto.req.FindIdRequestDto;
@@ -39,9 +39,9 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class StudentService {
     private final StudentRepository studentRepository;
-    private final ParentRepository parentRepository;
     private final ClassroomStudentRepository classroomStudentRepository;
     private final UserRepository userRepository;
+    private final ParentService parentService;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${image.path}")
@@ -84,7 +84,7 @@ public class StudentService {
 
         Classroom classroom = classroomStudent.getClassroom();
 
-        List<Parent> parents = parentRepository.findByStudent(student);
+        List<Parent> parents = parentService.getParents(student);
 
         Parent father = parents.stream()
                 .filter(p -> "부".equalsIgnoreCase(p.getRelationShip()))
@@ -165,7 +165,7 @@ public class StudentService {
         );
 
         // 부모 정보 수정
-        List<Parent> parents = parentRepository.findByStudent(student);
+        List<Parent> parents = parentService.getParents(student);
 
         parents.stream()
                 .filter(p -> "부".equalsIgnoreCase(p.getRelationShip()))

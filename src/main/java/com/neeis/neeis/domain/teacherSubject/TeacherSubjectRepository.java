@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface TeacherSubjectRepository extends JpaRepository<TeacherSubject, Long> {
     Boolean existsByTeacherAndSubject(Teacher teacher, Subject subject);
     Optional<TeacherSubject> findByTeacherAndSubject(Teacher teacher, Subject subject);
+    Optional<TeacherSubject> findByTeacher(Teacher teacher);
 }

@@ -27,8 +27,7 @@ public class TeacherSubjectService {
     private final TeacherService teacherService;
 
     @Transactional
-    public void save(String username, CreateTeacherSubjectDto dto) {
-        teacherService.authenticate(username);
+    public void save( CreateTeacherSubjectDto dto) {
 
         // 과목 조회
         Subject subject = subjectService.getSubject(dto.getSubjectName());
@@ -43,8 +42,7 @@ public class TeacherSubjectService {
     }
 
     @Transactional
-    public void update(String username, Long id, CreateTeacherSubjectDto dto) {
-        teacherService.authenticate(username);
+    public void update( Long id, CreateTeacherSubjectDto dto) {
         TeacherSubject teacherSubject = findById(id);
 
         Subject subject = subjectService.getSubject(dto.getSubjectName());
@@ -60,8 +58,7 @@ public class TeacherSubjectService {
     }
 
     @Transactional
-    public void delete(String username, Long id) {
-        teacherService.authenticate(username);
+    public void delete( Long id) {
         TeacherSubject teacherSubject = findById(id);
 
         teacherSubjectRepository.delete(teacherSubject);
@@ -74,7 +71,8 @@ public class TeacherSubjectService {
 
     public TeacherSubject findByTeacherAndSubject(Teacher teacher, Subject subject) {
         return teacherSubjectRepository.findByTeacherAndSubject(teacher, subject).orElseThrow(
-                () -> new CustomException(ErrorCode.HANDLE_ACCESS_DENIED));
+                () -> new CustomException(ErrorCode.TEACHER_SUBJECT_NOT_FOUND));
     }
+
 
 }

@@ -28,9 +28,6 @@ class SubjectServiceTest {
     @Mock
     private SubjectRepository subjectRepository;
 
-    @Mock
-    private TeacherService teacherService;
-
     @InjectMocks
     private SubjectService subjectService;
 
@@ -49,7 +46,7 @@ class SubjectServiceTest {
         when(subjectRepository.existsSubjectByName("국어")).thenReturn(false);
 
         // when
-        subjectService.createSubject(username, requestDto);
+        subjectService.createSubject( requestDto);
 
         // then
         ArgumentCaptor<Subject> captor = ArgumentCaptor.forClass(Subject.class);
@@ -68,7 +65,7 @@ class SubjectServiceTest {
         when(subjectRepository.existsSubjectByName("영어")).thenReturn(true);
 
         // when & then
-        assertThatThrownBy(() -> subjectService.createSubject(username, requestDto))
+        assertThatThrownBy(() -> subjectService.createSubject(requestDto))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.SUBJECT_DUPLICATE.getMessage());
     }
@@ -87,7 +84,7 @@ class SubjectServiceTest {
                 .build();
 
         // when
-        subjectService.updateSubject(username, 1L, dto);
+        subjectService.updateSubject(1L, dto);
 
         // then
         assertThat(subject.getName()).isEqualTo("고급 수학");
@@ -102,7 +99,7 @@ class SubjectServiceTest {
                 .name("영어")
                 .build();
 
-        assertThatThrownBy(() -> subjectService.updateSubject(username, 999L, dto))
+        assertThatThrownBy(() -> subjectService.updateSubject( 999L, dto))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.DATA_NOT_FOUND.getMessage());
     }
@@ -129,7 +126,7 @@ class SubjectServiceTest {
         setField(subject, "id", 1L);
         when(subjectRepository.findById(1L)).thenReturn(Optional.of(subject));
 
-        subjectService.deleteSubject(username, 1L);
+        subjectService.deleteSubject(1L);
 
         verify(subjectRepository).delete(subject);
     }

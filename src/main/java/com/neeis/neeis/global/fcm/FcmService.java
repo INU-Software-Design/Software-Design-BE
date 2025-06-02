@@ -3,7 +3,7 @@ package com.neeis.neeis.global.fcm;
 import com.google.firebase.messaging.*;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.parent.Parent;
-import com.neeis.neeis.domain.parent.ParentRepository;
+import com.neeis.neeis.domain.parent.ParentService;
 import com.neeis.neeis.domain.scoreSummary.ScoreSummary;
 import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.domain.user.User;
@@ -32,7 +32,7 @@ public class FcmService {
 
     private final FirebaseMessaging firebaseMessaging;
     private final UserRepository userRepository;
-    private final ParentRepository parentRepository;
+    private final ParentService parentService;
 
     public void sendNotification(FcmMessageRequest fcmMessageRequest) throws FirebaseMessagingException {
         if (fcmMessageRequest.getToken() == null || fcmMessageRequest.getToken().isBlank()) return;
@@ -92,7 +92,7 @@ public class FcmService {
         sendNotification(FcmMessageRequest.of(student.getUser().getFcmToken(), title, body, data));
 
         // 부모에게도 발송
-        List<Parent> parents = getParents(student);
+        List<Parent> parents = parentService.getParents(student);
         for (Parent parent : parents) {
             User parentUser = parent.getUser();
             sendNotification(FcmMessageRequest.of(parentUser.getFcmToken(), title, body, data));
@@ -120,7 +120,7 @@ public class FcmService {
 
         sendNotification(FcmMessageRequest.of(student.getUser().getFcmToken(), title, body, data));
 
-        List<Parent> parents = parentRepository.findByStudent(student);
+        List<Parent> parents = parentService.getParents(student);
         for (Parent parent : parents) {
             User parentUser = parent.getUser();
             sendNotification(FcmMessageRequest.of(parentUser.getFcmToken(), title, body, data));
@@ -153,17 +153,11 @@ public class FcmService {
 
         sendNotification(FcmMessageRequest.of(student.getUser().getFcmToken(), title, body, data));
 
-        List<Parent> parents = parentRepository.findByStudent(student);
+        List<Parent> parents = parentService.getParents(student);
         for (Parent parent : parents) {
             User parentUser = parent.getUser();
             sendNotification(FcmMessageRequest.of(parentUser.getFcmToken(), title, body, data));
         }
-    }
-
-
-
-    private List<Parent>  getParents(Student student) {
-        return parentRepository.findByStudent(student);
     }
 
     @Recover

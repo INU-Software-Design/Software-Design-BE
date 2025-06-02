@@ -7,6 +7,8 @@ import com.neeis.neeis.domain.counsel.dto.req.CounselRequestDto;
 import com.neeis.neeis.domain.counsel.dto.res.CounselDetailDto;
 import com.neeis.neeis.domain.counsel.dto.res.CounselResponseDto;
 import com.neeis.neeis.domain.notification.service.NotificationService;
+import com.neeis.neeis.domain.parent.Parent;
+import com.neeis.neeis.domain.parent.ParentService;
 import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.domain.student.service.StudentService;
 import com.neeis.neeis.domain.teacher.Teacher;
@@ -25,8 +27,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.neeis.neeis.domain.user.Role.STUDENT;
-import static com.neeis.neeis.domain.user.Role.TEACHER;
+import static com.neeis.neeis.domain.user.Role.*;
+import static com.neeis.neeis.global.exception.ErrorCode.USER_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +37,7 @@ public class CounselService {
     private final CounselRepository counselRepository;
     private final UserService userService;
     private final TeacherService teacherService;
+    private final ParentService parentService;
     private final StudentService studentService;
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationService notificationService;
@@ -137,6 +140,13 @@ public class CounselService {
         // 교사 → 조회 허용
         if (user.getRole() == TEACHER) {
             teacherService.authenticate(username); // 추가 보안
+        }
+
+        // 부모 -> 조회 허용
+        if (user.getRole() == PARENT) {
+            // 부모 체크
+            Parent parent = parentService.getParentByUser(user);
+
         }
     }
 }
