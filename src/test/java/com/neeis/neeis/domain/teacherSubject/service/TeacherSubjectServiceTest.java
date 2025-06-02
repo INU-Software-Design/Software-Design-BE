@@ -70,13 +70,12 @@ class TeacherSubjectServiceTest {
     @DisplayName("save: 정상 저장")
     void save_success() {
         // given
-        given(teacherService.authenticate("u")).willReturn(teacher);
         given(subjectService.getSubject("Math")).willReturn(subject);
         given(teacherService.checkTeacher("kim")).willReturn(teacher);
         given(repo.existsByTeacherAndSubject(teacher, subject)).willReturn(false);
 
         // when
-        service.save("u", dto);
+        service.save(dto);
 
         // then
         then(repo).should().save(any(TeacherSubject.class));
@@ -86,13 +85,12 @@ class TeacherSubjectServiceTest {
     @DisplayName("save: 중복이면 TEACHER_SUBJECT_DUPLICATE")
     void save_duplicate() {
         // given
-        given(teacherService.authenticate("u")).willReturn(teacher);
         given(subjectService.getSubject("Math")).willReturn(subject);
         given(teacherService.checkTeacher("kim")).willReturn(teacher);
         given(repo.existsByTeacherAndSubject(teacher, subject)).willReturn(true);
 
         // when & then
-        assertThatThrownBy(() -> service.save("u", dto))
+        assertThatThrownBy(() -> service.save( dto))
                 .isInstanceOf(CustomException.class)
                 .hasMessageContaining(ErrorCode.TEACHER_SUBJECT_DUPLICATE.getMessage());
     }
@@ -101,13 +99,12 @@ class TeacherSubjectServiceTest {
     @DisplayName("update: 정상 수정")
     void update_success() {
         // given
-        given(teacherService.authenticate("u")).willReturn(teacher);
         given(repo.findById(1L)).willReturn(Optional.of(entity));
         given(subjectService.getSubject("Math")).willReturn(subject);
         given(teacherService.checkTeacher("kim")).willReturn(teacher);
 
         // when
-        service.update("u", 1L, dto);
+        service.update( 1L, dto);
 
         // then
         // entity.update(...) 내부 로직이 호출돼야 하므로 변경 후 확인
@@ -118,10 +115,9 @@ class TeacherSubjectServiceTest {
     @Test
     @DisplayName("update: id 없으면 TEACHER_SUBJECT_NOT_FOUND")
     void update_notFound() {
-        given(teacherService.authenticate("u")).willReturn(teacher);
         given(repo.findById(1L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.update("u", 1L, dto))
+        assertThatThrownBy(() -> service.update( 1L, dto))
                 .isInstanceOf(CustomException.class)
                 .hasMessageContaining(ErrorCode.TEACHER_SUBJECT_NOT_FOUND.getMessage());
     }
@@ -149,11 +145,10 @@ class TeacherSubjectServiceTest {
     @DisplayName("delete: 정상 삭제")
     void delete_success() {
         // given
-        given(teacherService.authenticate("u")).willReturn(teacher);
         given(repo.findById(1L)).willReturn(Optional.of(entity));
 
         // when
-        service.delete("u", 1L);
+        service.delete( 1L);
 
         // then
         then(repo).should().delete(entity);
@@ -162,10 +157,9 @@ class TeacherSubjectServiceTest {
     @Test
     @DisplayName("delete: id 없으면 TEACHER_SUBJECT_NOT_FOUND")
     void delete_notFound() {
-        given(teacherService.authenticate("u")).willReturn(teacher);
         given(repo.findById(1L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.delete("u", 1L))
+        assertThatThrownBy(() -> service.delete( 1L))
                 .isInstanceOf(CustomException.class)
                 .hasMessageContaining(ErrorCode.TEACHER_SUBJECT_NOT_FOUND.getMessage());
     }
@@ -188,6 +182,6 @@ class TeacherSubjectServiceTest {
 
         assertThatThrownBy(() -> service.findByTeacherAndSubject(teacher, subject))
                 .isInstanceOf(CustomException.class)
-                .hasMessageContaining(ErrorCode.HANDLE_ACCESS_DENIED.getMessage());
+                .hasMessageContaining(ErrorCode.TEACHER_SUBJECT_NOT_FOUND.getMessage());
     }
 }
