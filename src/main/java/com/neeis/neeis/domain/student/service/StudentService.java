@@ -21,6 +21,7 @@ import com.neeis.neeis.domain.user.UserRepository;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class StudentService {
@@ -189,6 +191,8 @@ public class StudentService {
         String fileName = UUID.randomUUID().toString().replace("-","") + "_" + file.getOriginalFilename();
 
         Path savePath = Paths.get(uploadPath).resolve(fileName);
+        log.info(">>> uploadPath: {}", uploadPath);
+        log.info(">>> savePath: {}", savePath);
 
         try{
             Files.createDirectories(savePath.getParent());
