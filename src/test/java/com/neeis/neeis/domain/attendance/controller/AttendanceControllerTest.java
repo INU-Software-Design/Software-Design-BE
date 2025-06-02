@@ -217,7 +217,12 @@ class AttendanceControllerTest {
                 .feedbackId(999L)
                 .feedback("수정된 피드백")
                 .build();
-        given(attendanceService.updateFeedback(eq("teacher1"),eq(999L), any(AttendanceFeedbackReqDto.class)))
+        given(attendanceService.updateFeedback(eq("teacher1"),
+                eq(2025),
+                eq(2),
+                eq(1),
+                eq(5),
+                any(AttendanceFeedbackReqDto.class)))
                 .willReturn(resDto);
 
         mockMvc.perform(put("/attendances/feedback/999")
@@ -229,7 +234,12 @@ class AttendanceControllerTest {
                 .andExpect(jsonPath("$.response.feedback").value("수정된 피드백"));
 
         then(attendanceService).should()
-                .updateFeedback(eq("teacher1"), eq(999L),any(AttendanceFeedbackReqDto.class));
+                .updateFeedback(eq("teacher1"),
+                        eq(2025),
+                        eq(2),
+                        eq(1),
+                        eq(5),
+                        any(AttendanceFeedbackReqDto.class));
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.neeis.neeis.domain.teacherSubject.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.neeis.neeis.domain.teacher.service.TeacherService;
 import com.neeis.neeis.domain.teacherSubject.dto.req.CreateTeacherSubjectDto;
 import com.neeis.neeis.domain.teacherSubject.dto.res.TeacherSubjectResponseDto;
 import com.neeis.neeis.domain.teacherSubject.service.TeacherSubjectService;
@@ -51,6 +52,9 @@ class TeacherSubjectControllerTest {
     @MockBean
     private TeacherSubjectService teacherSubjectService;
 
+    @MockBean
+    private TeacherService teacherService;
+
     // ArgumentCaptor를 사용하여 서비스 메소드에 전달된 정확한 파라미터 값 검증 가능
     private ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
     private ArgumentCaptor<Long> idCaptor = ArgumentCaptor.forClass(Long.class);
@@ -98,7 +102,7 @@ class TeacherSubjectControllerTest {
     void saveTest() throws Exception {
         // given
         String username = "testUser";
-        doNothing().when(teacherSubjectService).save(anyString(), any(CreateTeacherSubjectDto.class));
+        doNothing().when(teacherSubjectService).save( any(CreateTeacherSubjectDto.class));
 
         // when
         ResultActions resultActions = mockMvc.perform(
@@ -114,8 +118,7 @@ class TeacherSubjectControllerTest {
                 .andExpect(jsonPath("$.message").value(SUCCESS_POST_TEACHER_SUBJECT.getMessage()))
                 .andExpect(jsonPath("$.response").doesNotExist());
 
-        verify(teacherSubjectService).save(usernameCaptor.capture(), dtoCaptor.capture());
-        assertThat(usernameCaptor.getValue()).isEqualTo(username);
+        verify(teacherSubjectService).save( dtoCaptor.capture());
         assertThat(dtoCaptor.getValue().getSubjectName()).isEqualTo("수학");
         assertThat(dtoCaptor.getValue().getTeacherName()).isEqualTo("김철수");
     }
@@ -156,7 +159,7 @@ class TeacherSubjectControllerTest {
         // given
         Long id = 1L;
         String username = "testUser";
-        doNothing().when(teacherSubjectService).delete(anyString(), anyLong());
+        doNothing().when(teacherSubjectService).delete( anyLong());
 
         // when
         ResultActions resultActions = mockMvc.perform(
@@ -169,7 +172,7 @@ class TeacherSubjectControllerTest {
                 .andDo(print())
                 .andExpect(status().isNoContent());
 
-        verify(teacherSubjectService).delete(username, id);
+        verify(teacherSubjectService).delete( id);
     }
 
     @Test

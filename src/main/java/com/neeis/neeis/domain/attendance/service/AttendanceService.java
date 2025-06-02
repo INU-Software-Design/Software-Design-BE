@@ -62,7 +62,7 @@ public class AttendanceService {
         Teacher teacher = teacherService.authenticate(username);
         Classroom classroom = classroomService.findClassroom(requestDto.getYear(), requestDto.getGrade(), requestDto.getClassNumber(), teacher.getId());
 
-        if(classroom.getTeacher() != teacher) {
+        if (classroom.getTeacher() != teacher) {
             throw new CustomException(HANDLE_ACCESS_DENIED);
         }
 
@@ -123,11 +123,8 @@ public class AttendanceService {
 
     // [교사권한] 학급 학생들 월별 조회
     public List<StudentAttendanceResDto> getAttendances(String username, int year, int grade, int classNum, int month) {
-        Teacher teacher = teacherService.authenticate(username);
-        Classroom classroom = classroomService.findClassroom(year, grade, classNum, teacher.getId());
-        if(classroom.getTeacher() != teacher) {
-            throw new CustomException(HANDLE_ACCESS_DENIED);
-        }
+        teacherService.authenticate(username);
+        Classroom classroom = classroomService.findClassroom(year, grade, classNum);
 
         List<ClassroomStudent> classroomStudentList = classroomStudentRepository.findByClassroom(classroom);
 
@@ -149,7 +146,7 @@ public class AttendanceService {
                                     .build())
                             .toList();
 
-                    return StudentAttendanceResDto.toDto( cs,
+                    return StudentAttendanceResDto.toDto(cs,
                             attendances.isEmpty() ? Attendance.builder().student(student).build() : attendances.getFirst(),
                             dailyAttendanceDtos
                     );
@@ -251,14 +248,17 @@ public class AttendanceService {
 
     // [교사] 출결 피드백 수정
     @Transactional
-    public AttendanceFeedbackResDto updateFeedback(String username, Long feedBackId, AttendanceFeedbackReqDto requestDto) {
+    public AttendanceFeedbackResDto updateFeedback(String username, int year, int grade, int classNum, int number, AttendanceFeedbackReqDto requestDto) {
 
         Teacher teacher = teacherService.authenticate(username);
 
-        AttendanceFeedback feedback = feedbackRepository.findById(feedBackId)
-                .orElseThrow(() -> new CustomException(ErrorCode.DATA_NOT_FOUND));
+        ClassroomStudent classroomStudent = checkValidate(username, year, grade, classNum, number);
 
-        if(feedback.getClassroomStudent().getClassroom().getTeacher() != teacher){
+        AttendanceFeedback feedback = feedbackRepository.findByClassroomStudent(classroomStudent).orElseThrow(
+                () -> new CustomException(ErrorCode.DATA_NOT_FOUND)
+        );
+
+        if (feedback.getClassroomStudent().getClassroom().getTeacher() != teacher) {
             throw new CustomException(HANDLE_ACCESS_DENIED);
         }
         feedback.updateContent(requestDto.getFeedback());
@@ -322,7 +322,7 @@ public class AttendanceService {
                         .orElseThrow(() -> new CustomException(CLASSROOM_NOT_FOUND));
 
                 // 자녀가 아니면 접근 불가함.
-                if(!student.getId().equals(classroomStudent.getStudent().getId())){
+                if (!student.getId().equals(classroomStudent.getStudent().getId())) {
                     throw new CustomException(HANDLE_ACCESS_DENIED);
                 }
 
