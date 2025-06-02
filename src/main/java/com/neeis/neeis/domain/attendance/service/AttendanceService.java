@@ -123,11 +123,8 @@ public class AttendanceService {
 
     // [교사권한] 학급 학생들 월별 조회
     public List<StudentAttendanceResDto> getAttendances(String username, int year, int grade, int classNum, int month) {
-        Teacher teacher = teacherService.authenticate(username);
-        Classroom classroom = classroomService.findClassroom(year, grade, classNum, teacher.getId());
-        if(classroom.getTeacher() != teacher) {
-            throw new CustomException(HANDLE_ACCESS_DENIED);
-        }
+        teacherService.authenticate(username);
+        Classroom classroom = classroomService.findClassroom(year, grade, classNum);
 
         List<ClassroomStudent> classroomStudentList = classroomStudentRepository.findByClassroom(classroom);
 

@@ -40,7 +40,7 @@ public class AttendanceController {
     }
 
     @GetMapping
-    @Operation(summary = "[교사 전용] 담임 학생 월별 출결 조회", description = "로그인한 교사의 월별 출결을 조회합니다. <br>" +
+    @Operation(summary = "[교사 전용] 학급별 월별 출결 조회", description = "로그인한 교사의 월별 출결을 조회합니다. <br>" +
             "조회하려는 학급의 년도, 학년, 반이 필수로 입력해야합니다. <br>" +
             "월(month)은 선택사항이며, 입력하지 않으면 당월을 기본값으로 조회합니다. <br>" +
             "(담당 학급이 아닌 경우 접근이 제한됩니다.)" )
