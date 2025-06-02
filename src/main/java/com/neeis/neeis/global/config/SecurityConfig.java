@@ -64,7 +64,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/score-summary", "/score-summary/feedback/**").hasAnyAuthority("ROLE_STUDENT", "ROLE_PARENT", "ROLE_TEACHER")
 
                         // 교사 권한
-                        .requestMatchers("/teachers/**", "/attendances/**", "/behavior/**" , "/counsel/**", "/evaluation-methods/**","/scores/**", "/score-summary/**").hasAnyAuthority("ROLE_TEACHER")
+                        .requestMatchers("/teachers/**", "/attendances/**", "/behavior/**" , "/counsel/**", "/evaluation-methods/**","/scores","/scores/**", "/score-summary/**").hasAnyAuthority("ROLE_TEACHER")
                         .requestMatchers("/students/register","/students/**","/subjects/**","/teacherSubjects/**").hasAnyAuthority("ROLE_TEACHER","ROLE_ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
