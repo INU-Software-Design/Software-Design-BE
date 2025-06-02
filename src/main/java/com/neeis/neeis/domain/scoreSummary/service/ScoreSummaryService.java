@@ -54,12 +54,13 @@ public class ScoreSummaryService {
     private final TeacherService teacherService;
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationService notificationService;
-
+    
     // 교사 및 학생
     // 성적 조회 (전체 과목)
     public StudentScoreSummaryDto getStudentSummary(String username, int year, int semester, int grade, int classNum, int number) {
 
         ClassroomStudent student = checkValidate(username, year, grade, classNum, number);
+
 
         // 해당 학기의 점수 불러오기
         List<Score> scores = scoreRepository

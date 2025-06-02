@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>학생 상담 이력 보고서</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 5mm;
+    }
+
+    body {
+      font-family: 'Nanum Gothic', sans-serif;
+      font-size: 12pt;
+      line-height: 1.5;
+      color: #333;
+    }
+
+    .header {
+      text-align: center;
+      border-bottom: 2px solid #333;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 24pt;
+      font-weight: 900;
+      margin: 0;
+      color: #2c5aa0;
+    }
+
+    .header .subtitle {
+      font-size: 14pt;
+      color: #666;
+      margin-top: 10px;
+    }
+
+    .summary-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 25px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+    }
+
+    .summary-item {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+
+      border: 2px solid rgba(255, 255, 255, 0.4); /* ✅ 반투명 흰색 선 */
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2); /* 내부 라인 강조용 */
+    }
+
+    .summary-number {
+      font-size: 28pt;
+      font-weight: 900;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .summary-label {
+      font-size: 12pt;
+      font-weight: bold;
+      opacity: 0.9;
+    }
+
+    .period-info {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .period-text {
+      font-size: 14pt;
+      color: #495057;
+    }
+
+    .period-dates {
+      font-weight: bold;
+      color: #2c5aa0;
+    }
+
+    .stats-section {
+      margin-bottom: 30px;
+    }
+
+    .section-title {
+      font-size: 16pt;
+      font-weight: 800;
+      color: #2c5aa0;
+      border-bottom: 2px solid #2c5aa0;
+      padding-bottom: 8px;
+      margin-bottom: 20px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .stat-card {
+      background: white;
+      border: 1px solid #dee2e6;
+      border-left: 4px solid #28a745;
+      padding: 15px;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .stat-card:nth-child(2) { border-left-color: #ffc107; }
+    .stat-card:nth-child(3) { border-left-color: #dc3545; }
+    .stat-card:nth-child(4) { border-left-color: #6f42c1; }
+
+    .stat-category {
+      font-weight: 800;
+      color: #495057;
+      margin-bottom: 5px;
+    }
+
+    .stat-count {
+      font-size: 20pt;
+      font-weight: bold;
+      color: #2c5aa0;
+    }
+
+    .counsels-section {
+      margin-bottom: 30px;
+    }
+
+    .counsel-item {
+      background: white;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      page-break-inside: avoid;
+    }
+
+    .counsel-header {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      padding: 15px 20px;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .counsel-content {
+      padding: 20px;
+    }
+
+    .counsel-text {
+      line-height: 1.7;
+      margin-bottom: 15px;
+    }
+
+    .counsel-outcome {
+      background: #f8f9fa;
+      border-left: 4px solid #28a745;
+      padding: 15px;
+      border-radius: 0 6px 6px 0;
+      margin-top: 15px;
+    }
+
+    .outcome-title {
+      font-weight: bold;
+      color: #495057;
+      margin-bottom: 8px;
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 9pt;
+      color: #6c757d;
+      border-top: 1px solid #dee2e6;
+      padding-top: 10px;
+      background-color: white;
+    }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    /* 프린트 최적화 */
+    @media print {
+      .footer {
+        position: fixed;
+        bottom: 0;
+      }
+
+      .counsel-item {
+        page-break-inside: avoid;
+      }
+    }
+
+    /* 빈 데이터 처리 */
+    .no-data {
+      text-align: center;
+      padding: 40px;
+      color: #6c757d;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+<!-- 헤더 -->
+<div class="header">
+  <h1>학생 상담 이력 보고서</h1>
+  <div class="subtitle">Student Counseling History Report</div>
+</div>
+
+<!-- 요약 정보 -->
+<!-- 요약 정보: table로 3칸 배치 보장 -->
+<div class="summary-section">
+  <table style="width: 100%; text-align: center;">
+    <tr>
+      <td>
+        <div class="summary-number" th:text="${totalCounselCount}">12</div>
+        <div class="summary-label">총 상담 횟수</div>
+      </td>
+      <td>
+        <div class="summary-number" th:text="${#maps.size(categoryStats)}">4</div>
+        <div class="summary-label">상담 유형 수</div>
+      </td>
+      <td>
+        <div class="summary-number" th:text="${studentName}">홍길동</div>
+        <div class="summary-label">학생명</div>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<!-- 기간 정보 -->
+<div class="period-info">
+  <div class="period-text">
+    상담 기간:
+    <span class="period-dates" th:text="${periodStart}">2025년 03월 01일</span> ~
+    <span class="period-dates" th:text="${periodEnd}">2025년 06월 02일</span>
+  </div>
+</div>
+
+<!-- 카테고리별 통계 -->
+<div class="stats-section">
+  <div class="section-title">상담 유형별 통계</div>
+  <div class="stats-grid">
+    <div class="stat-card" th:each="stat : ${categoryStats}">
+      <div class="stat-category" th:text="${stat.key}">학습상담</div>
+      <div class="stat-count" th:text="${stat.value} + '회'">5회</div>
+    </div>
+  </div>
+</div>
+
+<!-- 상담 이력 상세 -->
+<div class="counsels-section">
+  <div class="section-title">상담 이력 상세</div>
+
+  <!-- 상담 데이터가 있는 경우 -->
+  <div th:if="${counsels != null and #lists.size(counsels) > 0}">
+    <div class="counsel-item" th:each="counsel, iterStat : ${counsels}">
+      <div class="counsel-header">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="font-size: 14pt; font-weight: bold; color: #2c5aa0;">
+              [[${#temporals.format(counsel.dateTime, 'yyyy년 MM월 dd일')}]]
+            </td>
+            <td style="text-align: center;">
+      <span style="background: #e3f2fd; color: #1976d2; padding: 5px 12px; border-radius: 20px; font-weight: bold;">
+        [[${counsel.category}]]
+      </span>
+            </td>
+            <td style="text-align: right; color: #495057; font-size: 10pt;">
+              담당: [[${counsel.teacher.name}]]
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="counsel-content">
+        <div class="counsel-text" th:text="${counsel.content}">
+          학생이 최근 수학 과목에서 어려움을 겪고 있어 상담을 진행하였습니다.
+          구체적으로 함수 단원에서 이해도가 떨어지는 것으로 파악되었습니다.
+        </div>
+
+        <div class="counsel-outcome" th:if="${counsel.nextPlan != null and counsel.nextPlan != ''}">
+          <div class="outcome-title"> 상담 결과 및 계획</div>
+          <div th:text="${counsel.nextPlan}">
+            방과후 수학 보충학습 참여를 권장하며, 주 2회 개별 학습 점검을 실시할 예정입니다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 상담 데이터가 없는 경우 -->
+  <div th:if="${counsels == null or #lists.size(counsels) == 0}" class="no-data">
+    <h3>📋 상담 이력이 없습니다</h3>
+    <p>현재 등록된 상담 내역이 없습니다.</p>
+  </div>
+</div>
+
+<!-- 푸터 -->
+<div class="footer">
+  <div>본 문서는 <span th:text="${generatedDate}">2025년 06월 02일 15시 30분</span>에 전자적으로 생성된 상담 이력 보고서입니다.</div>
+  <div>문의사항이 있으시면 담당교사에게 연락주시기 바랍니다.</div>
+</div>
+</body>
+</html>
