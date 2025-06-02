@@ -76,7 +76,7 @@ public class AttendanceController {
 
     @GetMapping("/summary")
     @Operation(summary = "[교사 및 학생 전용] 담임 학생 출결 통계 조회", description = "로그인한 교사의 학급 학생의 출결을 통계냅니다. <br>" +
-            "조회하려는 학급과 학생의 년도, 학년, 반, 출석번호이 필수로 입력해야합니다. <br>" +
+            "조회하려는 학급과 학생의 년도, 학년, 반, 출석번호가 필수로 입력해야합니다. <br>" +
             "추가로 출석 통계는 '학기당 수업 일수'로 계산되므로, 반드시 '학기'를 입력해야 합니다.")
     public ResponseEntity<CommonResponse<StudentAttendanceSummaryDto>> getStudentAttendanceSummary( @AuthenticationPrincipal UserDetails userDetails,
                                                                                                     @RequestParam("year") @Parameter(description = "연도") int year,
@@ -101,15 +101,18 @@ public class AttendanceController {
         return ResponseEntity.ok(CommonResponse.from(SUCCESS_POST_FEEDBACK.getMessage(), dto));
     }
 
-    @PutMapping("/feedback/{feedbackId}")
+    @PutMapping("/feedback")
     @Operation(summary = "[교사 전용] 담임 학생 출결 피드백 수정", description = "로그인한 교사가 작성한 학생 출결 피드백을 수정합니다. <br>" +
-                    "피드백 ID를 경로로 입력하고, 수정할 피드백 내용을 요청 본문에 작성합니다. <br>" +
+                    "수정하려는 학생의 년도, 학년, 반, 출석번호가 필수로 입력해야합니다. <br>" +
                     "본인이 작성한 피드백만 수정할 수 있습니다.")
     public ResponseEntity<CommonResponse<AttendanceFeedbackResDto>> updateFeedback(@AuthenticationPrincipal UserDetails userdetails,
-                                                                 @PathVariable("feedbackId") Long feedbackId,
+                                                               @RequestParam("year") @Parameter(description = "연도") int year,
+                                                               @RequestParam("grade") @Parameter(description = "학년") int grade,
+                                                               @RequestParam("classNum") @Parameter(description = "반") int classNum,
+                                                               @RequestParam("number") @Parameter(description = "번호") int number,
                                                                  @Valid @RequestBody AttendanceFeedbackReqDto attendanceFeedbackDto) {
 
-        return ResponseEntity.ok(CommonResponse.from(SUCCESS_POST_FEEDBACK.getMessage(),attendanceService.updateFeedback(userdetails.getUsername(), feedbackId, attendanceFeedbackDto)));
+        return ResponseEntity.ok(CommonResponse.from(SUCCESS_POST_FEEDBACK.getMessage(),attendanceService.updateFeedback(userdetails.getUsername(),year, grade, classNum, number, attendanceFeedbackDto)));
     }
 
     @GetMapping("/feedback")
