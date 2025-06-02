@@ -166,6 +166,8 @@ public class ScoreService {
             }
         }
 
+        scoreRepository.flush();
+
         // 요약 저장 로직은 key 단위로 처리
         for (String key : scoreBuffer.keySet()) {
             String[] parts = key.split("_");
