@@ -26,7 +26,7 @@ public class CounselController {
     private final CounselService counselService;
 
     @PostMapping
-    @Operation(summary = "상담 작성", description = "교사가 학생과의 상담 기록을 작성합니다. <br>" +
+    @Operation(summary = "[교사 전용] 상담 작성", description = "교사가 학생과의 상담 기록을 작성합니다. <br>" +
             "상담 종류:  UNIVERSITY(대학), CAREER(취업), FAMILY(가정), ACADEMIC(학업), PERSONAL(개인), OTHER(기타) 가 존재합니다." )
     public ResponseEntity<CommonResponse<CounselResponseDto>> postCounsel(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -55,7 +55,7 @@ public class CounselController {
     }
 
     @PutMapping("/{counselId}")
-    @Operation(summary = "상담 수정", description = "상담 내용을 수정합니다.<br> " +
+    @Operation(summary = "[교사 전용] 상담 수정", description = "상담 내용을 수정합니다.<br> " +
             "조회시 제공받은 counselId를 path parameter로 입력해주세요.")
     public ResponseEntity<CommonResponse<CounselDetailDto>> updateCounsel(
             @AuthenticationPrincipal UserDetails userDetails,

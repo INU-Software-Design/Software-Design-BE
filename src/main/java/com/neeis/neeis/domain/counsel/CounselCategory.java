@@ -1,23 +1,21 @@
 package com.neeis.neeis.domain.counsel;
 
+import lombok.Getter;
+
+@Getter
 public enum CounselCategory {
-    // 대학
-    UNIVERSITY,
+    UNIVERSITY("대학"),
+    CAREER("취업"),
+    FAMILY("가정"),
+    ACADEMIC("학업"),
+    PERSONAL("개인"),
+    OTHER("기타");
 
-    // 취업
-    CAREER,
+    private final String displayName;
 
-    // 가정
-    FAMILY,
-
-    // 학업
-    ACADEMIC,
-
-    // 개인
-    PERSONAL,
-
-    // 기타
-    OTHER;
+    CounselCategory(String displayName) {
+        this.displayName = displayName;
+    }
 
     public static boolean exists(String value) {
         for(CounselCategory c : CounselCategory.values()) {

@@ -62,7 +62,8 @@ public class SecurityConfig {
                         // 성적
                         .requestMatchers(HttpMethod.GET, "/evaluation-methods").hasAnyAuthority("ROLE_STUDENT", "ROLE_PARENT", "ROLE_TEACHER")
                         .requestMatchers(HttpMethod.GET, "/score-summary", "/score-summary/feedback/**").hasAnyAuthority("ROLE_STUDENT", "ROLE_PARENT", "ROLE_TEACHER")
-
+                        // 보고서
+                        .requestMatchers(HttpMethod.GET, "/reports/counsels/**").hasAnyAuthority("ROLE_STUDENT", "ROLE_PARENT", "ROLE_TEACHER")
                         // 교사 권한
                         .requestMatchers("/teachers/**", "/attendances/**", "/behavior/**" , "/counsel/**", "/evaluation-methods/**","/scores","/scores/**", "/score-summary/**").hasAnyAuthority("ROLE_TEACHER")
                         .requestMatchers("/students/register","/students/**","/subjects/**","/teacherSubjects/**").hasAnyAuthority("ROLE_TEACHER","ROLE_ADMIN")
