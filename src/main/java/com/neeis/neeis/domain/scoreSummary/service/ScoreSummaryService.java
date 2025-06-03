@@ -17,6 +17,7 @@ import com.neeis.neeis.domain.scoreSummary.dto.res.StudentScoreSummaryDto;
 import com.neeis.neeis.domain.scoreSummary.dto.res.SubjectScoreDto;
 import com.neeis.neeis.domain.scoreSummary.dto.req.ScoreFeedbackRequestDto;
 import com.neeis.neeis.domain.scoreSummary.dto.req.ScoreFeedbackUpdateDto;
+import com.neeis.neeis.domain.student.dto.report.SubjectFeedbackDto;
 import com.neeis.neeis.domain.subject.Subject;
 import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.domain.teacher.service.TeacherService;
@@ -241,6 +242,49 @@ public class ScoreSummaryService {
         return ScoreFeedbackDto.toDto(summary);
     }
 
+    /**
+     * 특정 학생에 대해 “해당 학기(연도, 학기, 학년, 반, 번호)”에 속한 과목들의 피드백을
+     * SubjectFeedbackDto 형태로 반환한다.
+     */
+    public List<SubjectFeedbackDto> getSubjectFeedbacks(
+            String username,
+            int year,
+            int semester,
+            int grade,
+            int classNum,
+            int number
+    ) {
+
+        ClassroomStudent classroomStudent = checkValidate(username, year, grade, classNum, number);
+
+        // 2. 해당 학기(연도, 학기, 학년)에 속한 “과목 목록” 조회
+        List<Subject> subjectsInThisTerm = evaluationMethodService
+                .findSubject(year, semester, grade);
+
+        // 과목 이름만 모아서 필터링용 Set으로 준비
+        Set<String> subjectNamesInThisTerm = subjectsInThisTerm.stream()
+                .map(Subject::getName)
+                .collect(Collectors.toSet());
+
+        // 3. DB에서 이 학생의 모든 ScoreSummary(과목별 요약)를 조회
+        List<ScoreSummary> allSummaries = scoreSummaryRepository
+                .findAllByClassroomStudent(classroomStudent);
+
+        // 4. “이 학기에 속한 과목(subjectNamesInThisTerm)에 해당하는” ScoreSummary만 필터링
+        return allSummaries.stream()
+                .filter(summary -> subjectNamesInThisTerm.contains(
+                        summary.getSubject().getName()
+                ))
+                .map(summary -> {
+                    // 5. SubjectFeedbackDto로 변환: (과목명, 피드백 내용)
+                    return SubjectFeedbackDto.builder()
+                            .subjectName(summary.getSubject().getName())
+                            .feedback(summary.getFeedback())
+                            .build();
+                })
+                .toList();
+    }
+  
 
     /**
      * 예외를 던지는 기존 메서드 (하위 호환성 유지)
