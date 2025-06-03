@@ -43,7 +43,6 @@ class BehaviorServiceTest {
     @InjectMocks
     private BehaviorService behaviorService;
 
-
     private User teacherUser;
     private Teacher teacher;
     private Classroom classroom;
