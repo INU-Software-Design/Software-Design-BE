@@ -188,18 +188,30 @@ public class StudentService {
     }
 
     private String saveImage(MultipartFile file) {
-        String fileName = UUID.randomUUID().toString().replace("-","") + "_" + file.getOriginalFilename();
+        // 원본 파일명에서 확장자 추출
+        String originalFilename = file.getOriginalFilename();
+        String extension = "";
+
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+
+        // UUID + 확장자로만 파일명 생성 (한글 제거)
+        String fileName = UUID.randomUUID().toString().replace("-", "") + extension;
 
         Path savePath = Paths.get(uploadPath).resolve(fileName);
         log.info(">>> uploadPath: {}", uploadPath);
         log.info(">>> savePath: {}", savePath);
 
-        try{
+        try {
             Files.createDirectories(savePath.getParent());
             file.transferTo(savePath.toFile());
-        }catch(IOException e){
+            log.info("이미지 저장 완료: {}", fileName);
+        } catch (IOException e) {
+            log.error("이미지 저장 실패: {}", e.getMessage());
             throw new CustomException(ErrorCode.IMAGE_SAVE_ERROR);
         }
+
         return fileName;
     }
 
@@ -211,7 +223,6 @@ public class StudentService {
     }
 
     public Student getStudent(Long studentId) {
-        log.info(">>> getStudent: {}", studentId);
         return studentRepository.findById(studentId).orElseThrow(
                 () -> new CustomException(ErrorCode.USER_NOT_FOUND)
         );

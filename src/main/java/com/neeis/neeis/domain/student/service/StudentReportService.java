@@ -1,5 +1,10 @@
 package com.neeis.neeis.domain.student.service;
 
+import com.neeis.neeis.domain.attendance.service.AttendanceService;
+import com.neeis.neeis.domain.behavior.service.BehaviorService;
+import com.neeis.neeis.domain.counsel.dto.res.CounselDetailDto;
+import com.neeis.neeis.domain.counsel.service.CounselService;
+import com.neeis.neeis.domain.parent.ParentService;
 import com.neeis.neeis.domain.student.dto.report.AttendanceReportDto;
 import com.neeis.neeis.domain.student.dto.report.BehaviorReportDto;
 import com.neeis.neeis.domain.student.dto.report.CounselingReportDto;
@@ -47,13 +52,13 @@ public class StudentReportService {
     private final StudentService studentService; // StudentService 추가
 
     // TODO: 필요시 추가할 서비스들 (기존 서비스가 있다면 주입)
-    // private final AttendanceService attendanceService;
-    // private final CounselService counselService;
-    // private final BehaviorService behaviorService;
-    // private final ParentService parentService;
+    private final AttendanceService attendanceService;
+    private final CounselService counselService;
+    private final BehaviorService behaviorService;
+    private final ParentService parentService;
 
     /**
-     * 학생 보고서 생성 (studentId 기반)
+     * TODO: 학생 보고서 생성 (studentId 기반)
      */
     public StudentReportResponseDto generateStudentReport(StudentReportRequestDto requestDto) {
         log.info("학생 보고서 생성 시작 - 학생ID: {}, 년도: {}, 학기: {}",
@@ -69,22 +74,22 @@ public class StudentReportService {
         // 1. 학생 정보 (필수) - 기존 DTO 활용
         builder.studentInfo(createStudentInfo(classroomStudent));
 
-        // 2. 성적 정보 (기본 포함) - 기존 ScoreSummaryService 활용
+        // 2. 성적 정보 (기본 포함)
         if (requestDto.isIncludeGrades()) {
             builder.grades(createGradesReport(classroomStudent, requestDto));
         }
 
-        // 3. 출결 정보 (선택) - 기존 AttendanceService 활용
+        // 3. 출결 정보 (선택)
         if (requestDto.isIncludeAttendance()) {
             builder.attendance(createAttendanceReport(classroomStudent, requestDto));
         }
 
-        // 4. 상담 정보 (선택) - 기존 CounselService 활용
+        // 4. 상담 정보 (선택)
         if (requestDto.isIncludeCounseling()) {
             builder.counseling(createCounselingReport(classroomStudent, requestDto));
         }
 
-        // 5. 행동평가 정보 (선택) - 기존 BehaviorService 활용
+        // 5. 행동평가 정보 (선택)
         if (requestDto.isIncludeBehavior()) {
             builder.behavior(createBehaviorReport(classroomStudent, requestDto));
         }
@@ -99,7 +104,7 @@ public class StudentReportService {
     }
 
     /**
-     * 현재 로그인한 학생의 보고서 생성 (인증된 사용자용)
+     * TODO: 현재 로그인한 학생의 보고서 생성 (인증된 사용자용)
      */
     public StudentReportResponseDto generateMyStudentReport(String username, StudentReportRequestDto requestDto) {
         log.info("본인 학생 보고서 생성 - 사용자: {}", username);
@@ -115,7 +120,7 @@ public class StudentReportService {
     }
 
     /**
-     * 교사가 특정 학생 보고서 조회
+     * TODO: 교사가 특정 학생 보고서 조회
      */
     public StudentReportResponseDto generateStudentReportByTeacher(String teacherUsername,
                                                                    StudentReportRequestDto requestDto) {
@@ -131,7 +136,7 @@ public class StudentReportService {
     }
 
     /**
-     * 반 전체 학생 보고서 일괄 생성 (비동기 처리 권장)
+     * TODO: 반 전체 학생 보고서 일괄 생성 (비동기 처리 권장)
      */
     @Transactional
     public String generateBulkClassReports(String teacherUsername, int year, int semester,
@@ -157,15 +162,6 @@ public class StudentReportService {
         return jobId;
     }
 
-    // ========== private 헬퍼 메서드들 ==========
-
-    /**
-     * Student 객체로 ClassroomStudent 조회
-     */
-    private ClassroomStudent getClassroomStudent(Student student) {
-        return classroomStudentService.findByStudentId(student.getId())
-                .orElseThrow(() -> new CustomException(ErrorCode.CLASSROOM_NOT_FOUND));
-    }
 
     /**
      * 특정 연도의 ClassroomStudent 조회
@@ -177,61 +173,70 @@ public class StudentReportService {
     }
 
     /**
-     * 학생 정보 생성 - 기존 StudentDetailResDto.of() 메서드 활용
+     * TODO: 학생 정보 생성
      */
     private StudentDetailResDto createStudentInfo(ClassroomStudent classroomStudent) {
         Student student = classroomStudent.getStudent();
         Classroom classroom = classroomStudent.getClassroom();
 
-        // TODO: ParentService에서 부모 정보 조회
-        // Parent father = parentService.findFatherByStudentId(student.getId());
-        // Parent mother = parentService.findMotherByStudentId(student.getId());
+        // TODO: ParentService 에서 부모 정보 조회
+        List<Parent> parents = parentService.getParents(student);
 
-        // 임시로 null 처리 (부모 정보 서비스가 구현되면 실제 데이터 사용)
-        Parent father = null;
-        Parent mother = null;
+        // 부모 정보에서 아버지/어머니 구분
+        Parent father = findFatherFromParents(parents);
+        Parent mother = findMotherFromParents(parents);
 
         return StudentDetailResDto.of(student, father, mother, classroom, classroomStudent);
     }
 
     /**
-     * 성적 정보 생성 - 기존 ScoreSummaryService 활용
+     * TODO: 성적 정보 생성
      */
     private GradesReportDto createGradesReport(ClassroomStudent classroomStudent,
                                                StudentReportRequestDto requestDto) {
         log.debug("성적 정보 생성 중 - 학생: {}", classroomStudent.getStudent().getName());
 
         try {
-            // 기존 ScoreSummaryService 활용 (username 대신 studentId 사용)
+            Student student = classroomStudent.getStudent();
+            Classroom classroom = classroomStudent.getClassroom();
+
+            // ScoreSummaryService를 통해 성적 데이터 조회
             StudentScoreSummaryDto scoreSummary = scoreSummaryService.getStudentSummary(
-                    classroomStudent.getStudent().getUser().getUsername(), // 내부적으로는 username 필요
-                    requestDto.getYear(),
-                    requestDto.getSemester(),
-                    classroomStudent.getClassroom().getGrade(),
-                    classroomStudent.getClassroom().getClassNum(),
-                    classroomStudent.getNumber()
+                    student.getUser().getUsername(),  // 학생 loginId
+                    requestDto.getYear(),             // 연도
+                    requestDto.getSemester(),         // 학기
+                    classroom.getGrade(),             // 학년
+                    classroom.getClassNum(),          // 반
+                    classroomStudent.getNumber()      // 번호
             );
 
             // GradesReportDto로 변환
-            return GradesReportDto.from(scoreSummary);
+            GradesReportDto grades = GradesReportDto.from(scoreSummary);
+
+            log.debug("성적 정보 생성 완료 - 학생: {}, 과목 수: {}, 평균: {}",
+                    student.getName(),
+                    grades.getSubjects() != null ? grades.getSubjects().size() : 0,
+                    grades.getGpa());
+
+            return grades;
 
         } catch (Exception e) {
-            log.warn("성적 정보 조회 실패 - 학생: {}, 오류: {}",
+            log.warn("성적 정보 조회 실패, 기본값 반환 - 학생: {}, 오류: {}",
                     classroomStudent.getStudent().getName(), e.getMessage());
 
-            // 성적 정보가 없는 경우 빈 데이터 반환
+            // 성적 정보가 없는 경우 기본 빈 데이터 반환
             return GradesReportDto.builder()
                     .gpa(0.0)
-                    .totalCredits(0)
-                    .subjects(List.of())
+                    .totalSubjects(0)
                     .classRank(0)
-                    .gradeRank(0)
+                    .totalStudents(0)
+                    .subjects(List.of())
                     .build();
         }
     }
 
     /**
-     * 출결 정보 생성 - 기존 AttendanceService 활용 (구현 필요)
+     * 출결 정보 생성
      */
     private AttendanceReportDto createAttendanceReport(ClassroomStudent classroomStudent,
                                                        StudentReportRequestDto requestDto) {
@@ -239,22 +244,15 @@ public class StudentReportService {
 
         try {
             // TODO: 실제 AttendanceService 구현 후 사용
-            // StudentAttendanceSummaryDto attendanceSummary = attendanceService.getStudentAttendanceSummary(
-            //     classroomStudent.getStudent().getId(), requestDto.getYear(), requestDto.getSemester());
-            // return AttendanceReportDto.from(attendanceSummary);
+             StudentAttendanceSummaryDto attendanceSummary = attendanceService.getStudentAttendanceSummary(
+                     classroomStudent.getStudent().getUser().getUsername(),
+                     requestDto.getYear(),
+                     requestDto.getSemester(),
+                     classroomStudent.getClassroom().getGrade(),
+                     classroomStudent.getClassroom().getClassNum(),
+                     classroomStudent.getNumber());
 
-            // 임시 더미 데이터
-            StudentAttendanceSummaryDto dummyAttendance = StudentAttendanceSummaryDto.builder()
-                    .studentId(classroomStudent.getStudent().getId())
-                    .studentName(classroomStudent.getStudent().getName())
-                    .totalSchoolDays(180)
-                    .presentDays(175)
-                    .absentDays(3)
-                    .lateDays(2)
-                    .leaveEarlyDays(0)
-                    .build();
-
-            return AttendanceReportDto.from(dummyAttendance);
+             return AttendanceReportDto.from(attendanceSummary);
 
         } catch (Exception e) {
             log.warn("출결 정보 조회 실패 - 학생: {}, 오류: {}",
@@ -273,7 +271,7 @@ public class StudentReportService {
     }
 
     /**
-     * 상담 정보 생성 - 기존 CounselService 활용 (구현 필요)
+     * 상담 정보 생성
      */
     private CounselingReportDto createCounselingReport(ClassroomStudent classroomStudent,
                                                        StudentReportRequestDto requestDto) {
@@ -281,15 +279,13 @@ public class StudentReportService {
 
         try {
             // TODO: 실제 CounselService 구현 후 사용
-            // List<CounselDetailDto> counsels = counselService.findByStudentId(
-            //     classroomStudent.getStudent().getId(), requestDto.getYear(), requestDto.getSemester());
-            // return CounselingReportDto.from(counsels);
 
-            // 임시 빈 데이터
-            return CounselingReportDto.builder()
-                    .totalSessions(0)
-                    .records(List.of())
-                    .build();
+             List<CounselDetailDto> counsels = counselService.getCounsels(
+                    classroomStudent.getStudent().getUser().getUsername(),
+                     classroomStudent.getStudent().getId());
+
+             return CounselingReportDto.from(counsels);
+
 
         } catch (Exception e) {
             log.warn("상담 정보 조회 실패 - 학생: {}, 오류: {}",
@@ -303,7 +299,7 @@ public class StudentReportService {
     }
 
     /**
-     * 행동평가 정보 생성 - 기존 BehaviorService 활용 (구현 필요)
+     * 행동평가 정보 생성
      */
     private BehaviorReportDto createBehaviorReport(ClassroomStudent classroomStudent,
                                                    StudentReportRequestDto requestDto) {
@@ -311,23 +307,15 @@ public class StudentReportService {
 
         try {
             // TODO: 실제 BehaviorService 구현 후 사용
-            // BehaviorDetailResponseDto behavior = behaviorService.findByStudentId(
-            //     classroomStudent.getStudent().getId(), requestDto.getYear(), requestDto.getSemester());
-            // List<String> specialActivities = activityService.findByStudentId(...);
-            // List<String> awards = awardService.findByStudentId(...);
-            // return BehaviorReportDto.from(behavior, specialActivities, awards);
+             BehaviorDetailResponseDto behavior = behaviorService.getBehavior(
+                     classroomStudent.getStudent().getUser().getUsername(),
+                     requestDto.getYear(),
+                     classroomStudent.getClassroom().getGrade(),
+                     classroomStudent.getClassroom().getClassNum(),
+                     classroomStudent.getNumber());
 
-            // 임시 더미 데이터
-            BehaviorDetailResponseDto dummyBehavior = BehaviorDetailResponseDto.builder()
-                    .behaviorId(1L)
-                    .behavior("우수")
-                    .generalComment("성실하고 적극적인 학습 태도를 보입니다.")
-                    .build();
+             return BehaviorReportDto.from(behavior);
 
-            List<String> dummyActivities = List.of("학급 반장", "과학 동아리", "토론대회 참가");
-            List<String> dummyAwards = List.of("모범상", "학업우수상", "과학탐구대회 우수상");
-
-            return BehaviorReportDto.from(dummyBehavior, dummyActivities, dummyAwards);
 
         } catch (Exception e) {
             log.warn("행동평가 정보 조회 실패 - 학생: {}, 오류: {}",
@@ -336,8 +324,6 @@ public class StudentReportService {
             return BehaviorReportDto.builder()
                     .behaviorGrade("")
                     .comprehensiveOpinion("")
-                    .specialActivities(List.of())
-                    .awards(List.of())
                     .build();
         }
     }
@@ -348,5 +334,49 @@ public class StudentReportService {
     private void validateTeacherStudentAccess(String teacherUsername, Long studentId) {
         // TODO: 교사가 해당 학생의 담당교사이거나 과목교사인지 확인
         // 예: 담당 학급 확인, 담당 과목 확인 등
+    }
+
+    /**
+     * 부모 리스트에서 아버지 찾기
+     */
+    private Parent findFatherFromParents(List<Parent> parents) {
+        if (parents == null || parents.isEmpty()) {
+            return null;
+        }
+
+        return parents.stream()
+                .filter(parent -> {
+                    String relationship = parent.getRelationShip();
+                    return relationship != null && (
+                            "부".equals(relationship) ||
+                                    "아버지".equals(relationship) ||
+                                    "FATHER".equalsIgnoreCase(relationship) ||
+                                    "DAD".equalsIgnoreCase(relationship)
+                    );
+                })
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * 부모 리스트에서 어머니 찾기
+     */
+    private Parent findMotherFromParents(List<Parent> parents) {
+        if (parents == null || parents.isEmpty()) {
+            return null;
+        }
+
+        return parents.stream()
+                .filter(parent -> {
+                    String relationship = parent.getRelationShip();
+                    return relationship != null && (
+                            "모".equals(relationship) ||
+                                    "어머니".equals(relationship) ||
+                                    "MOTHER".equalsIgnoreCase(relationship) ||
+                                    "MOM".equalsIgnoreCase(relationship)
+                    );
+                })
+                .findFirst()
+                .orElse(null);
     }
 }

@@ -1,9 +1,6 @@
 package com.neeis.neeis.domain.student.dto.res;
 
-import com.neeis.neeis.domain.student.dto.report.AttendanceReportDto;
-import com.neeis.neeis.domain.student.dto.report.BehaviorReportDto;
-import com.neeis.neeis.domain.student.dto.report.CounselingReportDto;
-import com.neeis.neeis.domain.student.dto.report.GradesReportDto;
+import com.neeis.neeis.domain.student.dto.report.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,4 +16,5 @@ public class StudentReportResponseDto {
     private CounselingReportDto counseling;            // 새로 생성
     private BehaviorReportDto behavior;                // 새로 생성
     private LocalDateTime generatedAt;
+    private ParentReportDto parents;
 }
