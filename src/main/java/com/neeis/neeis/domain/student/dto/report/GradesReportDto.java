@@ -6,42 +6,41 @@ import lombok.Builder;
 import lombok.Getter;
 import java.util.List;
 
+
 @Getter
 @Builder
 public class GradesReportDto {
-    private double gpa;                           // 전체 평균 성적
-    private int totalCredits;                     // 총 이수 학점
-    private List<SubjectGradeDto> subjects;       // 과목별 성적 (PDF용 간소화)
-    private int classRank;                        // 반 석차
-    private int gradeRank;                        // 학년 석차 (계산 필요)
+    private double gpa;                    // 전체 평균
+    private int totalSubjects;            // 총 이수과목 수
+    private int classRank;                // 학급 순위
+    private int totalStudents;            // 전체 학생 수
+    private List<SubjectScoreDto> subjects; // 과목별 상세 성적
 
-    // 기존 StudentScoreSummaryDto에서 변환
+    // StudentScoreSummaryDto에서 GradesReportDto로 변환하는 메서드
     public static GradesReportDto from(StudentScoreSummaryDto summary) {
-        // GPA 계산 (가중평균)
-        double gpa = summary.getSubjects().stream()
-                .mapToDouble(SubjectScoreDto::getWeightedTotal)
+        List<SubjectScoreDto> subjects = summary.getSubjects();
+
+        // 전체 평균 계산
+        double totalWeighted = subjects.stream()
+                .mapToDouble(s -> s.getWeightedTotal())
                 .average()
                 .orElse(0.0);
 
-        // 과목별 성적을 PDF용으로 간소화
-        List<SubjectGradeDto> subjects = summary.getSubjects().stream()
-                .map(SubjectGradeDto::from)
-                .toList();
+        // 학급 순위 계산 (평균 순위로 근사)
+        int avgRank = (int) subjects.stream()
+                .mapToInt(s -> s.getRank())
+                .average()
+                .orElse(0);
+
+        // 전체 학생 수 (첫 번째 과목 기준)
+        int totalStudents = subjects.isEmpty() ? 0 : subjects.get(0).getTotalStudentCount();
 
         return GradesReportDto.builder()
-                .gpa(Math.round(gpa * 100) / 100.0) // 소수점 2자리
-                .totalCredits(summary.getSubjects().size() * 3) // 임시: 과목당 3학점
+                .gpa(totalWeighted)
+                .totalSubjects(subjects.size())
+                .classRank(avgRank)
+                .totalStudents(totalStudents)
                 .subjects(subjects)
-                .classRank(calculateClassRank(summary.getSubjects()))
-                .gradeRank(0) // 별도 계산 필요
                 .build();
-    }
-
-    // 반 석차 계산 (가장 높은 석차 기준)
-    private static int calculateClassRank(List<SubjectScoreDto> subjects) {
-        return subjects.stream()
-                .mapToInt(SubjectScoreDto::getRank)
-                .min()
-                .orElse(0);
     }
 }
