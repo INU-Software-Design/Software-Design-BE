@@ -17,6 +17,7 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.retry.annotation.Recover;
 
@@ -28,6 +29,7 @@ import static org.springframework.transaction.event.TransactionPhase.AFTER_COMMI
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class FcmService {
 
     private final FirebaseMessaging firebaseMessaging;
