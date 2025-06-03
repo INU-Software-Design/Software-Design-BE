@@ -26,6 +26,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.neeis.neeis.global.common.StatusCode.SUCCESS_GET_PDF;
 
@@ -120,7 +122,7 @@ public class StudentReportController {
             StudentReportResponseDto reportData = studentReportService.generateMyStudentReport(userDetails.getUsername(), requestDto);
 
             // PDF 생성
-            byte[] pdfBytes = pdfGeneratorService.generateStudentReportPdf(reportData);
+            byte[] pdfBytes = pdfGeneratorService.generateStudentReportPdf(reportData, userDetails.getUsername());
 
             // 파일명 생성
             String fileName = generateFileName(reportData.getStudentInfo().getName());
@@ -224,7 +226,7 @@ public class StudentReportController {
         try {
             StudentReportResponseDto reportData = studentReportService.generateStudentReportByTeacher(userDetails.getUsername(), requestDto);
 
-            byte[] pdfBytes = pdfGeneratorService.generateStudentReportPdf(reportData);
+            byte[] pdfBytes = pdfGeneratorService.generateStudentReportPdf(reportData, userDetails.getUsername());
 
             String fileName = generateFileName(reportData.getStudentInfo().getName());
             String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8);
@@ -239,6 +241,50 @@ public class StudentReportController {
         } catch (Exception e) {
             log.error("교사용 PDF 생성 중 오류 발생 - 교사: {}", userDetails.getUsername(), e);
             throw e;
+        }
+    }
+
+    @GetMapping("/password-info")
+    public ResponseEntity<Map<String, String>> getPasswordInfo(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        try {
+            String username = userDetails.getUsername();
+            String userRole = pdfGeneratorService.getUserRoleByUsername(username);
+            Map<String, String> response = new HashMap<>();
+
+            switch (userRole.toUpperCase()) {
+                case "STUDENT":
+                    response.put("message", "PDF 문서의 암호는 본인의 생년월일 6자리입니다.");
+                    response.put("format", "YYMMDD (예: 051225)");
+                    response.put("example", "2005년 12월 25일생 → 051225");
+                    break;
+
+                case "PARENT":
+                    response.put("message", "PDF 문서의 암호는 자녀의 생년월일 6자리입니다.");
+                    response.put("format", "YYMMDD (예: 051225)");
+                    response.put("example", "자녀가 2005년 12월 25일생 → 051225");
+                    break;
+
+                case "TEACHER":
+                    response.put("message", "PDF 문서의 암호는 선생님의 핸드폰 번호 뒷자리 4자리입니다.");
+                    response.put("format", "핸드폰 뒷자리 4자리 (예: 1234)");
+                    response.put("example", "010-1234-5678 → 5678");
+                    break;
+
+                default:
+                    response.put("message", "패스워드 정보를 확인할 수 없습니다.");
+                    response.put("format", "관리자에게 문의하세요.");
+            }
+
+            response.put("role", userRole);
+            response.put("username", username);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "패스워드 정보를 조회할 수 없습니다.");
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 

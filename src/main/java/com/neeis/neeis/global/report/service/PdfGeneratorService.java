@@ -3,6 +3,7 @@ package com.neeis.neeis.global.report.service;
 // iText 7 imports
 import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.geom.PageSize;
+import com.itextpdf.kernel.pdf.EncryptionConstants;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.font.PdfFont;
@@ -11,6 +12,7 @@ import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.colors.DeviceRgb;
 import com.itextpdf.io.font.constants.StandardFonts;
 
+import com.itextpdf.kernel.pdf.WriterProperties;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.*;
 import com.itextpdf.layout.element.Image;
@@ -20,10 +22,16 @@ import com.itextpdf.layout.properties.UnitValue;
 import com.neeis.neeis.domain.attendance.dto.res.AttendanceFeedbackResDto;
 import com.neeis.neeis.domain.scoreSummary.dto.res.SubjectScoreDto;
 import com.neeis.neeis.domain.student.dto.report.*;
+import com.neeis.neeis.domain.teacher.Teacher;
+import com.neeis.neeis.domain.teacher.service.TeacherService;
+import com.neeis.neeis.domain.user.User;
+import com.neeis.neeis.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
@@ -51,17 +59,34 @@ public class PdfGeneratorService {
     @Value("${image.path}")
     private String uploadPath;
 
+    private final UserService userService;
+    private final TeacherService teacherService;
+
     // 폰트 경로만 캐싱하고, 실제 PdfFont 객체는 매번 새로 생성
     private String cachedFontPath = null;
     private Boolean isKoreanFontSupported = null;
 
-    public byte[] generateStudentReportPdf(StudentReportResponseDto report) {
+    public byte[] generateStudentReportPdf(StudentReportResponseDto report, String username) {
         ByteArrayOutputStream outputStream = null;
         Document document = null;
 
         try {
+            // 사용자명으로 역할과 패스워드 생성
+            String userRole = getUserRoleByUsername(username);
+            String password = generatePasswordByUserRole(report, username, userRole);
+
             outputStream = new ByteArrayOutputStream();
-            PdfWriter writer = new PdfWriter(outputStream);
+
+            // 생년월일 6자리 패스워드로 암호화 설정
+            WriterProperties writerProperties = new WriterProperties()
+                    .setStandardEncryption(
+                            password.getBytes(),  // 사용자 패스워드 (역할별 생년월일 6자리)
+                            password.getBytes(),  // 소유자 패스워드 (동일하게 설정)
+                            EncryptionConstants.ALLOW_PRINTING | EncryptionConstants.ALLOW_COPY,  // 인쇄, 복사 허용
+                            EncryptionConstants.ENCRYPTION_AES_128  // AES 128bit 암호화
+                    );
+
+            PdfWriter writer = new PdfWriter(outputStream, writerProperties);
             PdfDocument pdfDocument = new PdfDocument(writer);
             document = new Document(pdfDocument, PageSize.A4);
 
@@ -69,7 +94,8 @@ public class PdfGeneratorService {
             PdfFont font = createNewFont();
             boolean isKorean = checkKoreanFontSupport(font);
 
-            log.info("PDF 생성 시작 - 한글 폰트 지원: {}", isKorean);
+            log.info("역할별 생년월일 패스워드로 PDF 생성 시작 - 사용자: {}, 역할: {}, 한글 폰트 지원: {}",
+                    username, userRole, isKorean);
 
             // 제목
             addTitle(document, font, isKorean);
@@ -111,6 +137,11 @@ public class PdfGeneratorService {
                 addAttendanceFeedbackSection(document, report.getAttendanceFeedback(), font, isKorean, sectionNumber.getAndIncrement());
             }
 
+            // 역할별 패스워드 안내 추가
+            addPasswordNoticeByRole(document, font, isKorean, userRole);
+
+            addDataSecurityNotice(document, font, isKorean);
+
             // Document 닫기
             document.close();
             document = null; // null로 설정하여 finally에서 중복 close 방지
@@ -124,7 +155,7 @@ public class PdfGeneratorService {
             return pdfData;
 
         } catch (Exception e) {
-            log.error("PDF 생성 중 오류", e);
+            log.error("역할별 패스워드 PDF 생성 중 오류 - 사용자: {}", username, e);
             throw new CustomException(ErrorCode.PDF_GENERATION_ERROR);
         } finally {
             // 리소스 정리
@@ -144,6 +175,156 @@ public class PdfGeneratorService {
             }
         }
     }
+
+    // 사용자 역할 조회
+    public String getUserRoleByUsername(String username) {
+        try {
+
+            User user = userService.getUser(username);
+            return user.getRole().name();
+
+
+        } catch (Exception e) {
+            log.error("사용자 역할 조회 실패 - 사용자: {}", username, e);
+            return "UNKNOWN";
+        }
+    }
+
+    private String generatePasswordByUserRole(StudentReportResponseDto report, String username, String userRole) {
+        try {
+            switch (userRole) {
+                case "STUDENT":
+                case "PARENT":
+                    // 학생, 부모 → 학생의 생년월일 6자리
+                    String studentPassword = extractBirthDate6Digits(report.getStudentInfo().getSsn());
+                    log.info("학생/부모 패스워드 생성 - 사용자: {}, 역할: {}, 패스워드: {}",
+                            username, userRole, studentPassword);
+                    return studentPassword;
+
+                case "TEACHER":
+                    // 교사 → 교사의 생년월일 6자리
+                    // 로그인한 유저 == username
+                    String teacherPassword = getTeacherBirthDate6Digits(username);
+                    log.info("교사 패스워드 생성 - 사용자: {}, 패스워드: {}", username, teacherPassword);
+                    return teacherPassword;
+
+                default:
+                    log.warn("알 수 없는 사용자 역할 - 사용자: {}, 역할: {}", username, userRole);
+                    return "123456"; // 기본 패스워드
+            }
+
+        } catch (Exception e) {
+            log.error("역할별 패스워드 생성 실패 - 사용자: {}, 역할: {}", username, userRole, e);
+            return "123456"; // 기본 패스워드
+        }
+    }
+
+    // 주민번호에서 생년월일 6자리 추출 (YYMMDD)
+    private String extractBirthDate6Digits(String ssn) {
+        try {
+            if (ssn != null && ssn.length() >= 6) {
+                return ssn.substring(0, 6); // YYMMDD 형식
+            }
+            return "000000"; // 기본값
+        } catch (Exception e) {
+            log.warn("주민번호에서 생년월일 추출 실패: {}", e.getMessage());
+            return "000000";
+        }
+    }
+
+    private String getTeacherBirthDate6Digits(String username) {
+        try {
+            // TeacherService를 통해 교사 정보 조회
+            Teacher teacher = teacherService.authenticate(username);
+
+            if (teacher != null && teacher.getPhone() != null) {
+                String teacherPassword = extractPhoneLast4Digits(teacher.getPhone());
+                log.info("교사 핸드폰 뒷자리 조회 성공 - 교사: {}, 패스워드: {}", username, teacherPassword);
+                return teacherPassword;
+            }
+
+            log.warn("교사 정보 조회 실패 - 교사: {}", username);
+            return "1234"; // 기본값
+
+        } catch (Exception e) {
+            log.error("교사 핸드폰 번호 조회 실패 - 교사: {}", username, e);
+            return "1234"; // 기본값
+        }
+    }
+
+    private String extractPhoneLast4Digits(String phone) {
+        try {
+            if (phone == null || phone.trim().isEmpty()) {
+                log.warn("핸드폰 번호가 null 또는 비어있음");
+                return "0000";
+            }
+
+            // 숫자만 추출 (하이픈, 공백 제거)
+            String numbersOnly = phone.replaceAll("[^0-9]", "");
+
+            if (numbersOnly.length() >= 4) {
+                String last4Digits = numbersOnly.substring(numbersOnly.length() - 4);
+                log.debug("핸드폰 번호에서 뒷자리 4자리 추출: {} -> ****{}",
+                        phone.replaceAll("\\d(?=\\d{4})", "*"), last4Digits);
+                return last4Digits;
+            }
+
+            log.warn("핸드폰 번호가 4자리보다 짧음: {}", phone);
+            return "0000"; // 기본값
+
+        } catch (Exception e) {
+            log.warn("핸드폰 번호에서 뒷자리 추출 실패: {}", e.getMessage());
+            return "0000";
+        }
+    }
+
+
+    private void addPasswordNoticeByRole(Document document, PdfFont font, boolean isKorean, String userRole) {
+        try {
+            String noticeText;
+
+            switch (userRole.toUpperCase()) {
+                case "STUDENT":
+                    noticeText = isKorean ?
+                            "PDF 열람 안내: 본 문서의 암호는 학생 본인의 생년월일 6자리(YYMMDD)입니다." :
+                            "PDF Access Guide: The password is the student's birth date (YYMMDD).";
+                    break;
+
+                case "PARENT":
+                    noticeText = isKorean ?
+                            "PDF 열람 안내: 본 문서의 암호는 자녀의 생년월일 6자리(YYMMDD)입니다." :
+                            "PDF Access Guide: The password is your child's birth date (YYMMDD).";
+                    break;
+
+                case "TEACHER":
+                    noticeText = isKorean ?
+                            "PDF 열람 안내: 본 문서의 암호는 선생님의 핸드폰 번호 뒷자리 4자리입니다." :
+                            "PDF Access Guide: The password is the last 4 digits of teacher's phone number.";
+                    break;
+
+                default:
+                    noticeText = isKorean ?
+                            "PDF 열람 안내: 본 문서는 암호로 보호됩니다." :
+                            "PDF Access Guide: This document is password protected.";
+            }
+
+            Paragraph notice = new Paragraph(noticeText)
+                    .setFont(font)
+                    .setFontSize(10)
+                    .setBold()
+                    .setBackgroundColor(new DeviceRgb(230, 245, 255)) // 연한 파란색 배경
+                    .setFontColor(new DeviceRgb(30, 80, 120)) // 진한 파란색 글자
+                    .setPadding(5)
+                    .setMarginTop(10)
+                    .setMarginBottom(5)
+                    .setTextAlignment(TextAlignment.CENTER);
+            document.add(notice);
+
+        } catch (Exception e) {
+            log.error("역할별 패스워드 안내 문구 추가 실패", e);
+        }
+    }
+
 
     private void addTitle(Document document, PdfFont font, boolean isKorean) {
         try {
@@ -956,6 +1137,36 @@ public class PdfGeneratorService {
             log.error("출결 피드백 섹션 추가 실패", e);
         }
     }
+
+    /**
+     * 데이터 보안 및 주의사항 추가
+     */
+    private void addDataSecurityNotice(Document document, PdfFont font, boolean isKorean) {
+        try {
+            // 하단 경고 문구
+            String warningText = isKorean ?
+                    "본 문서에 포함된 모든 정보는 기밀사항이며, 관련 법규에 따라 보호받습니다." :
+                    "All information contained in this document is confidential and protected by applicable laws.";
+
+            Paragraph warning = new Paragraph(warningText)
+                    .setFont(font)
+                    .setFontSize(10)
+                    .setBold()
+                    .setBackgroundColor(new DeviceRgb(255, 240, 240)) // 연한 빨간색 배경
+                    .setPadding(8)
+                    .setMarginTop(15)
+                    .setMarginBottom(10)
+                    .setTextAlignment(TextAlignment.CENTER);
+            document.add(warning);
+
+        } catch (Exception e) {
+            log.error("데이터 보안 안내사항 추가 실패", e);
+        }
+    }
+
+
+
+
 
     private void addTableRow(Table table, String label1, String value1, String label2, String value2, PdfFont font) {
         table.addCell(createLabelCell(sanitizeText(label1), font));

@@ -44,7 +44,6 @@ public class StudentReportService {
 
     private final ScoreSummaryService scoreSummaryService;
     private final ClassroomStudentService classroomStudentService;
-    private final ClassroomService classroomService;
     private final TeacherService teacherService;
     private final UserService userService;
     private final StudentService studentService; // StudentService 추가
@@ -164,33 +163,6 @@ public class StudentReportService {
         return generateStudentReport(requestDto);
     }
 
-    /**
-     * TODO: 반 전체 학생 보고서 일괄 생성 (비동기 처리 권장)
-     */
-    @Transactional
-    public String generateBulkClassReports(String teacherUsername, int year, int semester,
-                                           int grade, int classNum, StudentReportRequestDto template) {
-        log.info("반 전체 보고서 일괄 생성 - 교사: {}, {}년 {}학기 {}학년 {}반",
-                teacherUsername, year, semester, grade, classNum);
-
-        // 교사 권한 확인
-        teacherService.authenticate(teacherUsername);
-
-        // 해당 반 학생 목록 조회
-        List<ClassroomStudent> students = classroomStudentService.findByClassroom(
-                classroomService.findClassroom(year, grade, classNum));
-
-        // 작업 ID 생성
-        String jobId = UUID.randomUUID().toString();
-
-        // TODO: 비동기 처리로 각 학생별 보고서 생성
-        // 예: @Async 메서드 호출 또는 Queue 시스템 사용
-
-        log.info("일괄 생성 작업 시작 - 작업 ID: {}, 대상 학생 수: {}", jobId, students.size());
-
-        return jobId;
-    }
-
 
     /**
      * 특정 연도의 ClassroomStudent 조회
@@ -307,17 +279,24 @@ public class StudentReportService {
         log.debug("상담 정보 생성 중 - 학생: {}", classroomStudent.getStudent().getName());
 
         try {
-            // TODO: 실제 CounselService 구현 후 사용
+            Student student = classroomStudent.getStudent();
 
-             List<CounselDetailDto> counsels = counselService.getCounsels(
-                    classroomStudent.getStudent().getUser().getUsername(),
-                     classroomStudent.getStudent().getId());
+            // 상담 정보 조회 (권한에 따른 자동 복호화/마스킹 적용)
+            List<CounselDetailDto> counsels = counselService.getCounsels(
+                    student.getUser().getUsername(),
+                    student.getId()
+            );
 
-             return CounselingReportDto.from(counsels);
+            // CounselingReportDto로 변환
+            CounselingReportDto counselingReport = CounselingReportDto.from(counsels);
 
+            log.debug("상담 정보 생성 완료 - 학생: {}, 상담 건수: {}",
+                    student.getName(), counselingReport.getTotalSessions());
+
+            return counselingReport;
 
         } catch (Exception e) {
-            log.warn("상담 정보 조회 실패 - 학생: {}, 오류: {}",
+            log.warn("상담 정보 조회 실패, 기본값 반환 - 학생: {}, 오류: {}",
                     classroomStudent.getStudent().getName(), e.getMessage());
 
             return CounselingReportDto.builder()
