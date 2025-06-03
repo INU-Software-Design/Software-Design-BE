@@ -37,7 +37,6 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class StudentService {
