@@ -30,4 +30,28 @@ public interface ClassroomStudentRepository extends JpaRepository<ClassroomStude
     @Query(value = "SELECT cs FROM ClassroomStudent cs " +
             "WHERE cs.student.user = :user")
     Optional<ClassroomStudent> findByStudentUser(@Param("user") User user);
+
+    /**
+     * 학생 User로 모든 ClassroomStudent 조회 (연도별)
+     */
+    @Query("SELECT cs FROM ClassroomStudent cs WHERE cs.student.user = :user ORDER BY cs.classroom.year DESC")
+    List<ClassroomStudent> findAllByStudentUserOrderByYear(@Param("user") User user);
+
+    /**
+     * 특정 연도, 학년, 반의 모든 학생 조회
+     */
+    @Query("SELECT cs FROM ClassroomStudent cs WHERE cs.classroom.year = :year AND cs.classroom.grade = :grade AND cs.classroom.classNum = :classNum ORDER BY cs.number")
+    List<ClassroomStudent> findByClassroomInfo(@Param("year") int year, @Param("grade") int grade, @Param("classNum") int classNum);
+
+    /**
+     * 학생 ID와 연도로 ClassroomStudent 조회
+     */
+    @Query("SELECT cs FROM ClassroomStudent cs WHERE cs.student.id = :studentId AND cs.classroom.year = :year")
+    Optional<ClassroomStudent> findByStudentIdAndClassroomYear(@Param("studentId") Long studentId, @Param("year") int year);
+
+    /**
+     * 학생 ID로 ClassroomStudent 조회 (연도 내림차순) - 기존에 있던 메서드
+     */
+    @Query("SELECT cs FROM ClassroomStudent cs WHERE cs.student.id = :studentId ORDER BY cs.classroom.year DESC")
+    List<ClassroomStudent> findByStudentIdOrderByClassroomYearDesc(@Param("studentId") Long studentId);
 }

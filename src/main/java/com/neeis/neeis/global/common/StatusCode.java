@@ -48,6 +48,9 @@ public enum StatusCode {
     SUCCESS_GET_SCORE(HttpStatus.OK, "Score", "성적 조회에 성공하였습니다."),
 
     SUCCESS_GET_NOTIFICATION(HttpStatus.OK, "Notice", "알림 조회에 성공하였습니다."),
+
+    SUCCESS_GET_ALLPDF(HttpStatus.OK, "AllPDF", "일괄 생성 작업이 시작되었습니다."),
+    SUCCESS_GET_PDF(HttpStatus.OK, "PDF", "PDF 생성에 성공하였습니다."),
     ;
 
     private final HttpStatus status;

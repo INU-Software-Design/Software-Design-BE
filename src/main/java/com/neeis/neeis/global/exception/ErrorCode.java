@@ -53,6 +53,8 @@ public enum ErrorCode {
     SCORE_SUMMARY_NOT_FOUND(HttpStatus.NOT_FOUND, "Score-Summary-001", "점수 통계가 존재하지 않습니다."),
 
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "Notification-001", "알림이 존재하지 않습니다."),
+
+    PDF_GENERATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "PDF_GENERATION_ERROR", "PDF 생성에 실패하였습니다."),
     ;
 
     private final HttpStatus status;

@@ -155,4 +155,9 @@ public class TeacherService {
         return true;
     }
 
+    public Teacher findByUser(User user) {
+        return teacherRepository.findByUser(user)
+                .orElseThrow(() -> new CustomException(ErrorCode.TEACHER_NOT_FOUND));
+    }
+
 }

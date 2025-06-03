@@ -35,6 +35,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -211,8 +212,17 @@ public class StudentService {
     }
 
     public Student getStudent(Long studentId) {
+        log.info(">>> getStudent: {}", studentId);
         return studentRepository.findById(studentId).orElseThrow(
                 () -> new CustomException(ErrorCode.USER_NOT_FOUND)
         );
+    }
+
+    /**
+     * User로 Student 조회
+     */
+    public Student findByUser(User user) {
+        return studentRepository.findByUser(user)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 }
