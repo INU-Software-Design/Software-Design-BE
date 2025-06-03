@@ -17,6 +17,7 @@ import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.properties.HorizontalAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
+import com.neeis.neeis.domain.attendance.dto.res.AttendanceFeedbackResDto;
 import com.neeis.neeis.domain.scoreSummary.dto.res.SubjectScoreDto;
 import com.neeis.neeis.domain.student.dto.report.*;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -99,6 +101,14 @@ public class PdfGeneratorService {
             // 행동 및 종합 의견 (선택적)
             if (report.getBehavior() != null) {
                 addBehaviorSection(document, report.getBehavior(), font, isKorean, sectionNumber.getAndIncrement());
+            }
+
+            if (report.getScoreFeedbacks() != null) {
+                addScoreFeedbackSection(document, report.getScoreFeedbacks(), font, isKorean, sectionNumber.getAndIncrement());
+            }
+
+            if (report.getAttendanceFeedback() != null) {
+                addAttendanceFeedbackSection(document, report.getAttendanceFeedback(), font, isKorean, sectionNumber.getAndIncrement());
             }
 
             // Document 닫기
@@ -848,6 +858,104 @@ public class PdfGeneratorService {
         }
     }
 
+    /*
+    * 성적 피드백
+    * */
+    private void addScoreFeedbackSection(Document document,
+                                         List<SubjectFeedbackDto> feedbacks,
+                                         PdfFont font, boolean isKorean, int sectionNumber) {
+        try {
+            String sectionTitle = isKorean ?
+                    sectionNumber + ". 과목별 성적 피드백" :
+                    sectionNumber + ". Subject Feedback";
+
+            Paragraph title = new Paragraph(sectionTitle)
+                    .setFont(font)
+                    .setFontSize(14)
+                    .setBold()
+                    .setBackgroundColor(new DeviceRgb(52, 152, 219))
+                    .setFontColor(ColorConstants.WHITE)
+                    .setPadding(8)
+                    .setMarginTop(20)
+                    .setMarginBottom(10);
+            document.add(title);
+
+            if (feedbacks == null || feedbacks.isEmpty()) {
+                String noDataText = isKorean ?
+                        "등록된 피드백이 없습니다." :
+                        "No feedback available.";
+                document.add(new Paragraph(noDataText).setFont(font).setFontSize(11).setItalic());
+                return;
+            }
+
+            // 테이블: 2열 (과목명 | 피드백 내용)
+            Table table = new Table(UnitValue.createPercentArray(new float[]{1f, 3f}))
+                    .useAllAvailableWidth()
+                    .setMarginBottom(15);
+
+            // 헤더
+            String subjectHeader = isKorean ? "과목명" : "Subject";
+            String feedbackHeader = isKorean ? "피드백 내용" : "Feedback";
+            table.addHeaderCell(createHeaderCell(subjectHeader, font));
+            table.addHeaderCell(createHeaderCell(feedbackHeader, font));
+
+            // 데이터 행
+            for (SubjectFeedbackDto dto : feedbacks) {
+                table.addCell(createDataCell(dto.getSubjectName(), font));
+                String feedbackText = dto.getFeedback();
+                if (feedbackText == null || feedbackText.trim().isEmpty()) {
+                    feedbackText = "-";
+                    }
+                table.addCell(createDataCell(feedbackText, font));
+            }
+
+            document.add(table);
+
+        } catch (Exception e) {
+            log.error("과목별 성적 피드백 섹션 추가 실패", e);
+        }
+    }
+
+    /*
+    * 출결 피드백
+    * */
+    private void addAttendanceFeedbackSection(Document document,
+                                              AttendanceFeedbackResDto attendanceFeedback,
+                                              PdfFont font, boolean isKorean, int sectionNumber) {
+        try {
+            String sectionTitle = isKorean ?
+                    sectionNumber + ". 출결 피드백" :
+                    sectionNumber + ". Attendance Feedback";
+
+            Paragraph title = new Paragraph(sectionTitle)
+                    .setFont(font)
+                    .setFontSize(14)
+                    .setBold()
+                    .setBackgroundColor(new DeviceRgb(52, 152, 219))
+                    .setFontColor(ColorConstants.WHITE)
+                    .setPadding(8)
+                    .setMarginTop(20)
+                    .setMarginBottom(10);
+            document.add(title);
+
+            if (attendanceFeedback == null || attendanceFeedback.getFeedback() == null || attendanceFeedback.getFeedback().isEmpty()) {
+                String noDataText = isKorean ?
+                        "등록된 출결 피드백이 없습니다." :
+                        "No attendance feedback available.";
+                document.add(new Paragraph(noDataText).setFont(font).setFontSize(11).setItalic());
+                return;
+            }
+
+            // 피드백 내용을 박스 형태로 표시
+            addBehaviorBox(document,
+                    isKorean ? "출결 피드백 내용" : "Feedback Content",
+                    attendanceFeedback.getFeedback(),
+                    font, isKorean);
+
+        } catch (Exception e) {
+            log.error("출결 피드백 섹션 추가 실패", e);
+        }
+    }
 
     private void addTableRow(Table table, String label1, String value1, String label2, String value2, PdfFont font) {
         table.addCell(createLabelCell(sanitizeText(label1), font));

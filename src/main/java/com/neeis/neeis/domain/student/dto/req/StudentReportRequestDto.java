@@ -17,12 +17,9 @@ public class StudentReportRequestDto {
     private int semester;
 
     // 포함할 섹션 선택
-    private boolean includeAttendance = false;
+    private boolean includeAttendance = true;
     private boolean includeGrades = true;  // ScoreSummary 기반
-    private boolean includeCounseling = false;
-    private boolean includeBehavior = false;
-
-    // 기간 필터링
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private boolean includeCounseling = true;
+    private boolean includeBehavior = true;
+    private boolean includeFeedback = true;
 }

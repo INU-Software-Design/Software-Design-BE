@@ -1,14 +1,12 @@
 package com.neeis.neeis.domain.student.service;
 
+import com.neeis.neeis.domain.attendance.dto.res.AttendanceFeedbackResDto;
 import com.neeis.neeis.domain.attendance.service.AttendanceService;
 import com.neeis.neeis.domain.behavior.service.BehaviorService;
 import com.neeis.neeis.domain.counsel.dto.res.CounselDetailDto;
 import com.neeis.neeis.domain.counsel.service.CounselService;
 import com.neeis.neeis.domain.parent.ParentService;
-import com.neeis.neeis.domain.student.dto.report.AttendanceReportDto;
-import com.neeis.neeis.domain.student.dto.report.BehaviorReportDto;
-import com.neeis.neeis.domain.student.dto.report.CounselingReportDto;
-import com.neeis.neeis.domain.student.dto.report.GradesReportDto;
+import com.neeis.neeis.domain.student.dto.report.*;
 import com.neeis.neeis.domain.student.dto.req.StudentReportRequestDto;
 import com.neeis.neeis.domain.student.dto.res.*;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
@@ -94,6 +92,30 @@ public class StudentReportService {
             builder.behavior(createBehaviorReport(classroomStudent, requestDto));
         }
 
+        if(requestDto.isIncludeFeedback()){
+            List<SubjectFeedbackDto> feedbackList = scoreSummaryService.getSubjectFeedbacks(
+                    classroomStudent.getStudent().getUser().getUsername(),
+                    requestDto.getYear(),
+                    requestDto.getSemester(),
+                    classroomStudent.getClassroom().getGrade(),
+                    classroomStudent.getClassroom().getClassNum(),
+                    classroomStudent.getNumber()
+            );
+            builder.scoreFeedbacks(feedbackList);
+        }
+
+        if (requestDto.isIncludeFeedback()){
+            AttendanceFeedbackResDto attendanceFeedbackDto = attendanceService.getFeedback(
+                    classroomStudent.getStudent().getUser().getUsername(),
+                    requestDto.getYear(),
+                    classroomStudent.getClassroom().getGrade(),
+                    classroomStudent.getClassroom().getClassNum(),
+                    classroomStudent.getNumber()
+            );
+            builder.attendanceFeedback(attendanceFeedbackDto);
+        }
+
+
         // 6. 생성 시간
         builder.generatedAt(LocalDateTime.now());
 
@@ -102,6 +124,8 @@ public class StudentReportService {
 
         return result;
     }
+
+
 
     /**
      * TODO: 현재 로그인한 학생의 보고서 생성 (인증된 사용자용)
@@ -112,6 +136,11 @@ public class StudentReportService {
         // 현재 로그인한 사용자의 학생 정보 조회
         User user = userService.getUser(username);
         Student student = studentService.findByUser(user);
+
+        // 학생은 자신것만 조회 가능
+        if (!student.getId().equals(requestDto.getStudentId())) {
+            throw new CustomException(ErrorCode.HANDLE_ACCESS_DENIED);
+        }
 
         // 요청 DTO에 학생 ID 설정
         requestDto.setStudentId(student.getId());
