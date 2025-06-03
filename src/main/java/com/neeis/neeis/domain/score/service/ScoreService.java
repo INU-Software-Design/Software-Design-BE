@@ -26,12 +26,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
-
-import static org.springframework.data.repository.util.ClassUtils.ifPresent;
 
 @Service
 @RequiredArgsConstructor
@@ -176,35 +174,64 @@ public class ScoreService {
             int grade = Integer.parseInt(parts[2]);
             int classNum = Integer.parseInt(parts[3]);
 
+            // 성적 요약 업데이트
             scoreSummaryService.updateSummaryForClass(year, semester, grade, classNum);
+        }
 
-            // FCM 용
+        // 모든 트랜잭션이 커밋된 후 알림 발송 (별도 트랜잭션)
+        for (String key : scoreBuffer.keySet()) {
+            String[] parts = key.split("_");
+            int year = Integer.parseInt(parts[0]);
+            int semester = Integer.parseInt(parts[1]);
+            int grade = Integer.parseInt(parts[2]);
+            int classNum = Integer.parseInt(parts[3]);
+
+            sendNotificationsAfterScoreUpdate(year, semester, grade, classNum);
+        }
+    }
+
+    /*
+     * 알림 발송 중 오류가 발생해도 성적 저장 트랜잭션에 영향을 주지 않음
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void sendNotificationsAfterScoreUpdate(int year, int semester, int grade, int classNum) {
+        try {
             Classroom classroom = classroomService.findClassroom(year, grade, classNum);
             List<ClassroomStudent> students = classroomStudentService.findByClassroom(classroom);
             List<Subject> subjects = evaluationMethodService.findSubject(year, semester, grade);
 
-
             for (ClassroomStudent student : students) {
                 for (Subject subject : subjects) {
                     try {
-                        ScoreSummary summary = scoreSummaryService.findByStudentAndSubject(student.getId(), subject.getId());
-                        eventPublisher.publishEvent(new SendScoreFcmEvent(summary));
+                        // Optional을 사용하여 안전하게 처리
+                        scoreSummaryService.findByStudentAndSubjectOptional(student.getId(), subject.getId())
+                                .ifPresent(summary -> {
+                                    try {
+                                        // FCM 이벤트 발행
+                                        eventPublisher.publishEvent(new SendScoreFcmEvent(summary));
 
-                        // 알림 기록 저장
-                        User user = student.getStudent().getUser();
-                        String content = subject.getName() + "과목의 성적이 입력되었습니다.";
-                        notificationService.sendNotification(user, content);
-                    } catch (CustomException e) {
-                        if (e.getErrorCode() == ErrorCode.SCORE_SUMMARY_NOT_FOUND) {
-                            log.debug("성적 없음 → 스킵: {}, {}", student.getId(), subject.getName());
-                        } else {
-                            throw e;
-                        }
+                                        // 알림 기록 저장
+                                        User user = student.getStudent().getUser();
+                                        String content = subject.getName() + "과목의 성적이 입력되었습니다.";
+                                        notificationService.sendNotification(user, content);
+
+                                        log.debug("알림 발송 완료: 학생={}, 과목={}", student.getStudent().getName(), subject.getName());
+                                    } catch (Exception e) {
+                                        log.warn("개별 알림 발송 실패 (계속 진행): 학생={}, 과목={}, 오류={}",
+                                                student.getStudent().getName(), subject.getName(), e.getMessage());
+                                    }
+                                });
+                    } catch (Exception e) {
+                        log.warn("성적 요약 조회 실패 (계속 진행): 학생ID={}, 과목={}, 오류={}",
+                                student.getId(), subject.getName(), e.getMessage());
                     }
                 }
             }
+        } catch (Exception e) {
+            log.error("알림 발송 과정에서 전체 오류 발생: year={}, semester={}, grade={}, classNum={}, 오류={}",
+                    year, semester, grade, classNum, e.getMessage(), e);
+            // 알림 발송 실패는 전체 프로세스를 중단시키지 않음
         }
-
     }
 
 }
