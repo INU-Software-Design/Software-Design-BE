@@ -340,7 +340,7 @@ public class PdfGeneratorService {
                     .setBold()
                     .setBackgroundColor(new DeviceRgb(52, 152, 219))
                     .setFontColor(ColorConstants.WHITE)
-                    .setPadding(10)
+                    .setPadding(5)
                     .setMarginTop(20)
                     .setMarginBottom(10);
             document.add(title);
@@ -385,7 +385,7 @@ public class PdfGeneratorService {
                     .setBold()
                     .setBackgroundColor(new DeviceRgb(52, 152, 219))
                     .setFontColor(ColorConstants.WHITE)
-                    .setPadding(10)
+                    .setPadding(5)
                     .setMarginTop(20)
                     .setMarginBottom(10);
             document.add(title);
@@ -579,7 +579,7 @@ public class PdfGeneratorService {
                     .setBold()
                     .setBackgroundColor(new DeviceRgb(52, 152, 219))
                     .setFontColor(ColorConstants.WHITE)
-                    .setPadding(10)
+                    .setPadding(5)
                     .setMarginTop(20)
                     .setMarginBottom(10);
             document.add(title);
@@ -784,7 +784,7 @@ public class PdfGeneratorService {
                     .setBold()
                     .setBackgroundColor(new DeviceRgb(52, 152, 219))
                     .setFontColor(ColorConstants.WHITE)
-                    .setPadding(10)
+                    .setPadding(5)
                     .setMarginTop(20)
                     .setMarginBottom(10);
             document.add(title);
@@ -875,7 +875,7 @@ public class PdfGeneratorService {
                     .setBold()
                     .setBackgroundColor(new DeviceRgb(52, 152, 219))
                     .setFontColor(ColorConstants.WHITE)
-                    .setPadding(8)
+                    .setPadding(5)
                     .setMarginTop(20)
                     .setMarginBottom(10);
             document.add(title);
@@ -933,7 +933,7 @@ public class PdfGeneratorService {
                     .setBold()
                     .setBackgroundColor(new DeviceRgb(52, 152, 219))
                     .setFontColor(ColorConstants.WHITE)
-                    .setPadding(8)
+                    .setPadding(5)
                     .setMarginTop(20)
                     .setMarginBottom(10);
             document.add(title);
