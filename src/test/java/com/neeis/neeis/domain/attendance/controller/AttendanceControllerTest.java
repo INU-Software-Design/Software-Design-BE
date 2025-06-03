@@ -207,7 +207,7 @@ class AttendanceControllerTest {
     }
 
     @Test
-    @DisplayName("PUT /attendances/feedback/{feedbackId} → 피드백 수정")
+    @DisplayName("PUT /attendances/feedback → 피드백 수정")
     @WithMockUser(username = "teacher1", roles = "TEACHER")
     void updateFeedback() throws Exception {
         AttendanceFeedbackReqDto req = AttendanceFeedbackReqDto.builder()
@@ -225,7 +225,7 @@ class AttendanceControllerTest {
                 any(AttendanceFeedbackReqDto.class)))
                 .willReturn(resDto);
 
-        mockMvc.perform(put("/attendances/feedback/999")
+        mockMvc.perform(put("/attendances/feedback")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))

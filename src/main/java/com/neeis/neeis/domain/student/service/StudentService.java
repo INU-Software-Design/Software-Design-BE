@@ -200,6 +200,8 @@ public class StudentService {
         String fileName = UUID.randomUUID().toString().replace("-", "") + extension;
 
         Path savePath = Paths.get(uploadPath).resolve(fileName);
+        log.info(">>> uploadPath: {}", uploadPath);
+        log.info(">>> savePath: {}", savePath);
 
         try {
             Files.createDirectories(savePath.getParent());

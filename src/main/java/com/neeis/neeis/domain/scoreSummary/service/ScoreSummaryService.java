@@ -30,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
@@ -98,66 +99,100 @@ public class ScoreSummaryService {
                 .build();
     }
 
-    @Transactional
+    /**
+     * 반 전체의 성적 요약 업데이트
+     * 별도 트랜잭션으로 처리하여 안정성 확보
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateSummaryForClass(int year, int semester, int grade, int classNum) {
-        Classroom classroom = classroomService.findClassroom(year, grade, classNum);
-        List<ClassroomStudent> students = classroomStudentService.findByClassroom(classroom);
+        try {
+            Classroom classroom = classroomService.findClassroom(year, grade, classNum);
+            List<ClassroomStudent> students = classroomStudentService.findByClassroom(classroom);
+            List<Subject> subjects = evaluationMethodService.findSubject(year, semester, grade);
 
-        List<Subject> subjects = evaluationMethodService.findSubject(year, semester, grade);
+            log.debug("성적 요약 업데이트 시작: {}년 {}학기 {}학년 {}반", year, semester, grade, classNum);
 
-        for (Subject subject : subjects) {
-            List<EvaluationMethod> methods = evaluationMethodService.findAllBySubjectAndYearAndSemesterAndGrade(subject, year, semester, grade);
-
-            // 전체 학생 중 점수가 있는 학생만 필터링
-            Map<ClassroomStudent, List<Score>> scoreMap = students.stream()
-                    .map(student -> Map.entry(student, scoreRepository.findAllByStudentAndEvaluationMethodIn(student, methods)))
-                    .filter(entry -> !entry.getValue().isEmpty()) // 점수가 아예 없는 경우 제외
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-            if (scoreMap.isEmpty()) continue; // 이 과목에 대한 점수가 아무도 없으면 summary 건너뜀
-
-
-            Map<Long, Double> totalMap = scoreMap.entrySet().stream()
-                    .collect(Collectors.toMap(
-                            e -> e.getKey().getId(),
-                            e -> e.getValue().stream().mapToDouble(Score::getWeightedScore).sum()
-                    ));
-
-            Map<Long, Integer> rankMap = ScoreLevelUtil.calculateRanks(totalMap);
-            double avg = ScoreStatUtil.average(totalMap.values().stream().toList());
-            double stdDev = ScoreStatUtil.standardDeviation(totalMap.values());
-
-            scoreSummaryRepository.deleteBySubjectAndClassroomStudentIn(subject, students);
-
-            for (Map.Entry<ClassroomStudent, List<Score>> entry : scoreMap.entrySet()) {
-                ClassroomStudent student = entry.getKey();
-                List<Score> scores = entry.getValue();
-
-                double weightedSum = scores.stream().mapToDouble(Score::getWeightedScore).sum();
-                double rawScaledSum = scores.stream()
-                        .mapToDouble(s -> (s.getRawScore() / s.getEvaluationMethod().getFullScore()) * s.getEvaluationMethod().getWeight())
-                        .sum();
-
-                int originalScore = (int) Math.round(rawScaledSum);
-                int rank = rankMap.get(student.getId());
-                int gradeValue = ScoreLevelUtil.getGrade(rank, students.size());
-                String achievement = ScoreLevelUtil.toAchievementLevel(gradeValue);
-
-                scoreSummaryRepository.save(ScoreSummary.builder()
-                        .classroomStudent(student)
-                        .subject(subject)
-                        .originalScore(originalScore)
-                        .sumScore(weightedSum)
-                        .average(avg)
-                        .stdDeviation(stdDev)
-                        .rank(rank)
-                        .grade(gradeValue)
-                        .achievementLevel(achievement)
-                        .totalStudentCount(students.size())
-                        .build());
+            for (Subject subject : subjects) {
+                try {
+                    updateSummaryForSubject(subject, year, semester, grade, students);
+                } catch (Exception e) {
+                    log.error("과목별 성적 요약 업데이트 실패: 과목={}, 오류={}", subject.getName(), e.getMessage(), e);
+                    // 한 과목 실패해도 다른 과목은 계속 처리
+                }
             }
+
+            log.debug("성적 요약 업데이트 완료: {}년 {}학기 {}학년 {}반", year, semester, grade, classNum);
+        } catch (Exception e) {
+            log.error("성적 요약 업데이트 전체 실패: {}년 {}학기 {}학년 {}반, 오류={}",
+                    year, semester, grade, classNum, e.getMessage(), e);
+            throw e; // 전체 실패는 예외를 다시 던져서 트랜잭션 롤백
         }
     }
+
+    /**
+     * 특정 과목의 성적 요약 업데이트
+     */
+    private void updateSummaryForSubject(Subject subject, int year, int semester, int grade, List<ClassroomStudent> students) {
+        List<EvaluationMethod> methods = evaluationMethodService.findAllBySubjectAndYearAndSemesterAndGrade(subject, year, semester, grade);
+
+        // 전체 학생 중 점수가 있는 학생만 필터링
+        Map<ClassroomStudent, List<Score>> scoreMap = students.stream()
+                .map(student -> Map.entry(student, scoreRepository.findAllByStudentAndEvaluationMethodIn(student, methods)))
+                .filter(entry -> !entry.getValue().isEmpty()) // 점수가 아예 없는 경우 제외
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        if (scoreMap.isEmpty()) {
+            log.debug("과목 {} - 점수 데이터가 없어 요약 생성 생략", subject.getName());
+            return; // 이 과목에 대한 점수가 아무도 없으면 summary 건너뜀
+        }
+
+        Map<Long, Double> totalMap = scoreMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> e.getKey().getId(),
+                        e -> e.getValue().stream().mapToDouble(Score::getWeightedScore).sum()
+                ));
+
+        Map<Long, Integer> rankMap = ScoreLevelUtil.calculateRanks(totalMap);
+        double avg = ScoreStatUtil.average(totalMap.values().stream().toList());
+        double stdDev = ScoreStatUtil.standardDeviation(totalMap.values());
+
+        // 기존 요약 삭제 (과목별로만 삭제)
+        scoreSummaryRepository.deleteBySubjectAndClassroomStudentIn(subject, students);
+
+        // 새로운 요약 생성
+        List<ScoreSummary> summariesToSave = new ArrayList<>();
+        for (Map.Entry<ClassroomStudent, List<Score>> entry : scoreMap.entrySet()) {
+            ClassroomStudent student = entry.getKey();
+            List<Score> scores = entry.getValue();
+
+            double weightedSum = scores.stream().mapToDouble(Score::getWeightedScore).sum();
+            double rawScaledSum = scores.stream()
+                    .mapToDouble(s -> (s.getRawScore() / s.getEvaluationMethod().getFullScore()) * s.getEvaluationMethod().getWeight())
+                    .sum();
+
+            int originalScore = (int) Math.round(rawScaledSum);
+            int rank = rankMap.get(student.getId());
+            int gradeValue = ScoreLevelUtil.getGrade(rank, students.size());
+            String achievement = ScoreLevelUtil.toAchievementLevel(gradeValue);
+
+            summariesToSave.add(ScoreSummary.builder()
+                    .classroomStudent(student)
+                    .subject(subject)
+                    .originalScore(originalScore)
+                    .sumScore(weightedSum)
+                    .average(avg)
+                    .stdDeviation(stdDev)
+                    .rank(rank)
+                    .grade(gradeValue)
+                    .achievementLevel(achievement)
+                    .totalStudentCount(students.size())
+                    .build());
+        }
+
+        scoreSummaryRepository.saveAll(summariesToSave);
+        log.debug("과목 {} - {} 명의 성적 요약 저장 완료", subject.getName(), summariesToSave.size());
+    }
+
 
     @Transactional
     public void saveFeedback(String username, ScoreFeedbackRequestDto requestDto) {
@@ -249,10 +284,21 @@ public class ScoreSummaryService {
                 })
                 .toList();
     }
+  
 
+    /**
+     * 예외를 던지는 기존 메서드 (하위 호환성 유지)
+     */
     public ScoreSummary findByStudentAndSubject(Long studentId, Long subjectId) {
         return scoreSummaryRepository.findByStudentAndSubject(studentId, subjectId)
                 .orElseThrow(() -> new CustomException(ErrorCode.SCORE_SUMMARY_NOT_FOUND));
+    }
+
+    /**
+     * Optional을 반환하는 안전한 메서드 (새로 추가)
+     */
+    public Optional<ScoreSummary> findByStudentAndSubjectOptional(Long studentId, Long subjectId) {
+        return scoreSummaryRepository.findByStudentAndSubject(studentId, subjectId);
     }
 
     private ClassroomStudent checkValidate(String username, int year, int grade, int classNum, int number) {
@@ -301,4 +347,6 @@ public class ScoreSummaryService {
             teacherService.authenticate(username); // 추가 보안
         }
     }
+
+
 }

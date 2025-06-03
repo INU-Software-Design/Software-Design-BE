@@ -67,7 +67,6 @@ dependencies {
     implementation 'org.apache.poi:poi-ooxml:5.2.5'
 
     // PDF
-    implementation 'com.openhtmltopdf:openhtmltopdf-slf4j:1.0.10' // 로그용 (선택)
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
     implementation 'com.itextpdf:layout:7.2.5'
