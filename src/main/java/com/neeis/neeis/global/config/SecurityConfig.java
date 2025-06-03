@@ -49,7 +49,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests((auth) -> auth
                         .requestMatchers("/swagger-ui/**","/swagger-ui/index.html#/","/v3/api-docs/**", "/swagger-resources/**").permitAll()
-                        .requestMatchers("/users/login","/users/password", "/students/id", "/students/password", "/images/**").permitAll()
+                        .requestMatchers("/users/login","/users/password", "/students/id", "/students/password", "/images/**", "/report/student/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/teacherSubjects", "/subjects", "/users/fcm/register").permitAll()
                         // 학적
                         .requestMatchers(HttpMethod.GET, "/teachers/students/**").hasAnyAuthority( "ROLE_STUDENT", "ROLE_PARENT", "ROLE_TEACHER")

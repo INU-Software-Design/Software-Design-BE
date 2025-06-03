@@ -69,8 +69,11 @@ dependencies {
     // PDF
     implementation 'com.openhtmltopdf:openhtmltopdf-slf4j:1.0.10' // 로그용 (선택)
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-    implementation 'com.itextpdf:itext7-core:7.1.2'
-    implementation 'com.itextpdf:html2pdf:3.0.2'
+
+    implementation 'com.itextpdf:layout:7.2.5'
+    implementation 'com.itextpdf:kernel:7.2.5'
+    implementation 'com.itextpdf:io:7.2.5'
+    implementation 'com.itextpdf:font-asian:7.2.5' // 한글 폰트 지원
 }
 
 

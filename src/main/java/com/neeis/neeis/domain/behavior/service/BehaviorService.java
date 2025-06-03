@@ -13,6 +13,9 @@ import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudentService;
 import com.neeis.neeis.domain.notification.service.NotificationService;
+import com.neeis.neeis.domain.parent.Parent;
+import com.neeis.neeis.domain.parent.ParentService;
+import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.domain.teacher.service.TeacherService;
 import com.neeis.neeis.domain.user.User;
@@ -27,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static com.neeis.neeis.domain.user.Role.STUDENT;
 import static com.neeis.neeis.domain.user.Role.TEACHER;
+import static com.neeis.neeis.global.exception.ErrorCode.CLASSROOM_NOT_FOUND;
 import static com.neeis.neeis.global.exception.ErrorCode.HANDLE_ACCESS_DENIED;
 
 @Service
@@ -41,6 +45,7 @@ public class BehaviorService {
     private final NotificationService notificationService;
     private final UserService userService;
     private final ClassroomStudentRepository classroomStudentRepository;
+    private final ParentService parentService;
 
     // [교사] 행동 작성
     @Transactional //false
@@ -112,11 +117,28 @@ public class BehaviorService {
             }
 
             case TEACHER -> {
-                Teacher teacher = teacherService.authenticate(username);
-                Classroom classroom = classroomService.findClassroom(year, grade, classNum, teacher.getId());
+                teacherService.authenticate(username);
+                Classroom classroom = classroomService.findClassroom(year, grade, classNum);
 
                 return classroomStudentRepository.findByClassroomAndNumber(classroom, number)
                         .orElseThrow(() -> new CustomException(HANDLE_ACCESS_DENIED));
+            }
+
+            case PARENT -> {
+                Parent parent = parentService.getParentByUser(user);
+
+                Student student = parent.getStudent();
+                Classroom classroom = classroomService.findClassroom(year, grade, classNum);
+
+                ClassroomStudent classroomStudent = classroomStudentRepository.findByClassroomAndNumber(classroom, number)
+                        .orElseThrow(() -> new CustomException(CLASSROOM_NOT_FOUND));
+
+                // 자녀가 아니면 접근 불가함.
+                if (!student.getId().equals(classroomStudent.getStudent().getId())) {
+                    throw new CustomException(HANDLE_ACCESS_DENIED);
+                }
+
+                return classroomStudent;
             }
 
             default -> throw new CustomException(HANDLE_ACCESS_DENIED);
