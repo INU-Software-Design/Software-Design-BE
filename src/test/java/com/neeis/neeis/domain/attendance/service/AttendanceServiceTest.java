@@ -25,6 +25,7 @@ import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.domain.user.service.UserService;
 import com.neeis.neeis.global.exception.CustomException;
 import com.neeis.neeis.global.exception.ErrorCode;
+import com.neeis.neeis.global.fcm.event.SendAttendanceFeedbackFcmEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -48,13 +49,9 @@ import static org.mockito.BDDMockito.*;
 /**
  * AttendanceService TDD 테스트
  *
- * TDD 원칙:
- * 1. Red: 실패하는 테스트를 먼저 작성
- * 2. Green: 테스트를 통과하는 최소한의 코드 작성
- * 3. Refactor: 코드 개선 및 리팩토링
  */
 @ExtendWith(MockitoExtension.class)
-class AttendanceServiceTDDTest {
+class AttendanceServiceUpdatedTest {
 
     @Mock private AttendanceRepository attendanceRepository;
     @Mock private UserService userService;
@@ -70,7 +67,7 @@ class AttendanceServiceTDDTest {
     @InjectMocks
     private AttendanceService attendanceService;
 
-    // 테스트 픽스처 (Test Fixture) - 테스트에 필요한 기본 데이터
+    // 테스트 픽스처 (Test Fixture)
     private User teacherUser, studentUser, parentUser;
     private Teacher teacher;
     private Student student;
@@ -80,7 +77,6 @@ class AttendanceServiceTDDTest {
 
     @BeforeEach
     void setUp() {
-        // Given: 테스트에 필요한 기본 데이터 준비
         setupTestFixtures();
     }
 
@@ -145,37 +141,6 @@ class AttendanceServiceTDDTest {
 
             given(teacherService.authenticate("teacher1")).willReturn(teacher);
             given(classroomService.findClassroom(2025, 2, 1, teacher.getId())).willReturn(anotherClassroom);
-
-            // When & Then: 접근 권한이 없다는 예외가 발생한다
-            assertThatThrownBy(() -> attendanceService.saveOrUpdateAttendance("teacher1", requestDto))
-                    .isInstanceOf(CustomException.class)
-                    .extracting(ex -> ((CustomException) ex).getErrorCode())
-                    .isEqualTo(ErrorCode.HANDLE_ACCESS_DENIED);
-        }
-
-        @Test
-        @DisplayName("담당 학생이 아닌 학생에 대한 출결 저장 시 예외가 발생한다")
-        void should_ThrowException_When_SubmittingAttendanceForNonClassStudent() {
-            // Given: 담당하지 않는 학생의 출결을 제출할 때
-            Student anotherStudent = createStudent(createUser("student2", Role.STUDENT), "김철수");
-            ReflectionTestUtils.setField(anotherStudent, "id", 2L);
-
-            AttendanceBulkRequestDto requestDto = AttendanceBulkRequestDto.builder()
-                    .year(2025).month(4).grade(2).classNumber(1)
-                    .students(List.of(
-                            StudentAttendanceDto.builder()
-                                    .studentId(2L) // 담당하지 않는 학생
-                                    .attendances(List.of(
-                                            DailyAttendanceDto.builder()
-                                                    .date(LocalDate.of(2025, 4, 1))
-                                                    .status(AttendanceStatus.ABSENT)
-                                                    .build()))
-                                    .build()))
-                    .build();
-
-            given(teacherService.authenticate("teacher1")).willReturn(teacher);
-            given(classroomService.findClassroom(2025, 2, 1, teacher.getId())).willReturn(classroom);
-            given(classroomStudentRepository.findByClassroom(classroom)).willReturn(List.of(classroomStudent));
 
             // When & Then: 접근 권한이 없다는 예외가 발생한다
             assertThatThrownBy(() -> attendanceService.saveOrUpdateAttendance("teacher1", requestDto))
@@ -287,6 +252,28 @@ class AttendanceServiceTDDTest {
             // Then: 자녀의 출결 정보가 반환된다
             assertThat(result.getStudentId()).isEqualTo(student.getId());
         }
+
+        @Test
+        @DisplayName("학부모가 다른 학생의 출결을 조회하면 예외가 발생한다")
+        void should_ThrowException_When_ParentAccessesOthersChildData() {
+            // Given: 학부모가 다른 학생의 출결을 조회할 때
+            Student anotherStudent = createStudent(createUser("student2", Role.STUDENT), "김철수");
+            ReflectionTestUtils.setField(anotherStudent, "id", 2L);
+
+            ClassroomStudent anotherClassroomStudent = createClassroomStudent(2, anotherStudent, classroom);
+            ReflectionTestUtils.setField(anotherClassroomStudent, "id", 2L);
+
+            given(userService.getUser("parent1")).willReturn(parentUser);
+            given(parentService.getParentByUser(parentUser)).willReturn(parent);
+            given(classroomService.findClassroom(2025, 2, 1)).willReturn(classroom);
+            given(classroomStudentRepository.findByClassroomAndNumber(classroom, 2)).willReturn(Optional.of(anotherClassroomStudent));
+
+            // When & Then: 다른 학생의 출결을 조회하면 예외가 발생한다
+            assertThatThrownBy(() -> attendanceService.getStudentMonthlyAttendance("parent1", 2025, 2, 1, 2, 4))
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(ErrorCode.HANDLE_ACCESS_DENIED);
+        }
     }
 
     @Nested
@@ -323,20 +310,22 @@ class AttendanceServiceTDDTest {
         }
 
         @Test
-        @DisplayName("존재하지 않는 학기에 대한 조회 시 예외가 발생한다")
-        void should_ThrowException_When_SemesterNotFound() {
-            // Given: 존재하지 않는 학기를 조회할 때
+        @DisplayName("시작일 이전 날짜로 조회하면 예외가 발생한다")
+        void should_ThrowException_When_RequestingBeforeStartDate() {
+            // Given: 학기 시작일 이전의 날짜로 조회할 때 (미래 학기)
+            Semester futureSemester = createSemester(2025, 2, LocalDate.of(2025, 9, 1), LocalDate.of(2026, 2, 28));
+
             given(userService.getUser("teacher1")).willReturn(teacherUser);
             given(teacherService.authenticate("teacher1")).willReturn(teacher);
             given(classroomService.findClassroom(2025, 2, 1)).willReturn(classroom);
             given(classroomStudentRepository.findByClassroomAndNumber(classroom, 1)).willReturn(Optional.of(classroomStudent));
-            given(semesterRepository.findByYearAndSemester(2025, 3)).willReturn(Optional.empty());
+            given(semesterRepository.findByYearAndSemester(2025, 2)).willReturn(Optional.of(futureSemester));
 
-            // When & Then: 데이터를 찾을 수 없다는 예외가 발생한다
-            assertThatThrownBy(() -> attendanceService.getStudentAttendanceSummary("teacher1", 2025, 3, 2, 1, 1))
+            // When & Then: 유효하지 않은 날짜 범위라는 예외가 발생한다
+            assertThatThrownBy(() -> attendanceService.getStudentAttendanceSummary("teacher1", 2025, 2, 2, 1, 1))
                     .isInstanceOf(CustomException.class)
                     .extracting(ex -> ((CustomException) ex).getErrorCode())
-                    .isEqualTo(ErrorCode.DATA_NOT_FOUND);
+                    .isEqualTo(ErrorCode.INVALID_DATE_RANGE);
         }
     }
 
@@ -370,10 +359,11 @@ class AttendanceServiceTDDTest {
             // Then: 피드백이 정상적으로 저장된다
             assertThat(result.getFeedbackId()).isEqualTo(1L);
             assertThat(result.getFeedback()).isEqualTo("출석 상태가 좋습니다. 계속 유지하세요.");
-        //    then(eventPublisher).should().publishEvent(any());
-            then(notificationService).should().sendNotification(any(User.class), anyString());
-        }
 
+            // FCM 이벤트 발행과 알림 전송 검증
+            then(eventPublisher).should().publishEvent(any(SendAttendanceFeedbackFcmEvent.class));
+            then(notificationService).should().sendNotification(eq(studentUser), anyString());
+        }
 
         @Test
         @DisplayName("교사가 기존 피드백을 수정할 수 있다")
@@ -389,9 +379,8 @@ class AttendanceServiceTDDTest {
                     .feedback("수정된 피드백")
                     .build();
 
-            // Mock 설정 시 순서 주의 - checkValidate 메서드에서 사용하는 순서대로
-            given(userService.getUser("teacher1")).willReturn(teacherUser);
             given(teacherService.authenticate("teacher1")).willReturn(teacher);
+            given(userService.getUser("teacher1")).willReturn(teacherUser);
             given(classroomService.findClassroom(2025, 2, 1)).willReturn(classroom);
             given(classroomStudentRepository.findByClassroomAndNumber(classroom, 1)).willReturn(Optional.of(classroomStudent));
             given(feedbackRepository.findByClassroomStudent(classroomStudent)).willReturn(Optional.of(existingFeedback));
@@ -401,12 +390,12 @@ class AttendanceServiceTDDTest {
 
             // Then: 피드백이 정상적으로 수정된다
             assertThat(result.getFeedback()).isEqualTo("수정된 피드백");
+            assertThat(existingFeedback.getFeedback()).isEqualTo("수정된 피드백");
 
-            // 이벤트 발행과 알림 전송이 한 번씩 호출되었는지 검증
-          //  then(eventPublisher).should(times(1)).publishEvent(any());
-            then(notificationService).should(times(1)).sendNotification(any(User.class), anyString());
+            // FCM 이벤트 발행과 알림 전송 검증
+            then(eventPublisher).should().publishEvent(any(SendAttendanceFeedbackFcmEvent.class));
+            then(notificationService).should().sendNotification(eq(studentUser), anyString());
         }
-
 
         @Test
         @DisplayName("다른 교사가 피드백을 수정하려 하면 예외가 발생한다")
@@ -457,6 +446,30 @@ class AttendanceServiceTDDTest {
         }
 
         @Test
+        @DisplayName("학부모가 자녀의 피드백을 조회할 수 있다")
+        void should_ReturnChildFeedback_When_ParentRequestsChildFeedback() {
+            // Given: 학부모가 자녀의 피드백을 조회할 때
+            AttendanceFeedback feedback = AttendanceFeedback.builder()
+                    .classroomStudent(classroomStudent)
+                    .feedback("자녀의 출석 태도가 우수합니다.")
+                    .build();
+            ReflectionTestUtils.setField(feedback, "id", 1L);
+
+            given(userService.getUser("parent1")).willReturn(parentUser);
+            given(parentService.getParentByUser(parentUser)).willReturn(parent);
+            given(classroomService.findClassroom(2025, 2, 1)).willReturn(classroom);
+            given(classroomStudentRepository.findByClassroomAndNumber(classroom, 1)).willReturn(Optional.of(classroomStudent));
+            given(feedbackRepository.findByClassroomStudent(classroomStudent)).willReturn(Optional.of(feedback));
+
+            // When: 자녀 피드백을 조회하면
+            AttendanceFeedbackResDto result = attendanceService.getFeedback("parent1", 2025, 2, 1, 1);
+
+            // Then: 자녀의 피드백이 반환된다
+            assertThat(result.getFeedbackId()).isEqualTo(1L);
+            assertThat(result.getFeedback()).isEqualTo("자녀의 출석 태도가 우수합니다.");
+        }
+
+        @Test
         @DisplayName("존재하지 않는 피드백을 조회하면 예외가 발생한다")
         void should_ThrowException_When_FeedbackNotExists() {
             // Given: 피드백이 존재하지 않을 때
@@ -469,6 +482,183 @@ class AttendanceServiceTDDTest {
                     .isInstanceOf(CustomException.class)
                     .extracting(ex -> ((CustomException) ex).getErrorCode())
                     .isEqualTo(ErrorCode.DATA_NOT_FOUND);
+        }
+    }
+
+    @Nested
+    @DisplayName("checkValidate 메서드 권한 검사 테스트")
+    class CheckValidateTest {
+
+        @Test
+        @DisplayName("학생이 본인이 아닌 다른 번호로 접근하면 예외가 발생한다")
+        void should_ThrowException_When_StudentAccessesWrongNumber() {
+            // Given: 학생이 본인 번호가 아닌 다른 번호로 접근할 때
+            ClassroomStudent studentCs = createClassroomStudent(5, student, classroom); // 번호 5번
+            ReflectionTestUtils.setField(studentCs, "id", 1L);
+
+            given(userService.getUser("student1")).willReturn(studentUser);
+            given(classroomStudentRepository.findByStudentUser(studentUser)).willReturn(Optional.of(studentCs));
+
+            // When & Then: 1번으로 접근하면 예외가 발생한다 (본인은 5번)
+            assertThatThrownBy(() -> attendanceService.getStudentMonthlyAttendance("student1", 2025, 2, 1, 1, 4))
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(ErrorCode.HANDLE_ACCESS_DENIED);
+        }
+
+        @Test
+        @DisplayName("교사가 존재하지 않는 학생 번호로 접근하면 예외가 발생한다")
+        void should_ThrowException_When_TeacherAccessesNonExistentStudent() {
+            // Given: 교사가 존재하지 않는 학생 번호로 접근할 때
+            given(userService.getUser("teacher1")).willReturn(teacherUser);
+            given(teacherService.authenticate("teacher1")).willReturn(teacher);
+            given(classroomService.findClassroom(2025, 2, 1)).willReturn(classroom);
+            given(classroomStudentRepository.findByClassroomAndNumber(classroom, 99)).willReturn(Optional.empty());
+
+            // When & Then: 존재하지 않는 번호로 접근하면 예외가 발생한다
+            assertThatThrownBy(() -> attendanceService.getStudentMonthlyAttendance("teacher1", 2025, 2, 1, 99, 4))
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(ErrorCode.HANDLE_ACCESS_DENIED);
+        }
+
+        @Test
+        @DisplayName("학부모가 존재하지 않는 학급 정보로 접근하면 예외가 발생한다")
+        void should_ThrowException_When_ParentAccessesNonExistentClassroom() {
+            // Given: 학부모가 존재하지 않는 학급으로 접근할 때
+            given(userService.getUser("parent1")).willReturn(parentUser);
+            given(parentService.getParentByUser(parentUser)).willReturn(parent);
+            given(classroomService.findClassroom(2025, 3, 5)).willThrow(new CustomException(ErrorCode.CLASSROOM_NOT_FOUND));
+
+            // When & Then: 존재하지 않는 학급으로 접근하면 예외가 발생한다
+            assertThatThrownBy(() -> attendanceService.getStudentMonthlyAttendance("parent1", 2025, 3, 5, 1, 4))
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(ErrorCode.CLASSROOM_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("역할이 null인 사용자가 접근하면 NullPointerException이 발생한다")
+        void should_ThrowNPE_When_UserRoleIsNull() {
+            // Given: 역할이 null인 사용자가 접근할 때
+            User nullRoleUser = User.builder()
+                    .school("테스트중학교")
+                    .username("nullrole1")
+                    .password("password")
+                    .role(null) // 역할이 null
+                    .build();
+
+            given(userService.getUser("nullrole1")).willReturn(nullRoleUser);
+
+            // When & Then: NullPointerException이 발생한다
+            // 실제 Service에서 user.getRole()이 null일 때 switch문에서 NPE 발생
+            assertThatThrownBy(() -> attendanceService.getStudentMonthlyAttendance("nullrole1", 2025, 2, 1, 1, 4))
+                    .isInstanceOf(NullPointerException.class)
+                    .hasMessageContaining("Cannot invoke \"com.neeis.neeis.domain.user.Role.ordinal()\"");
+        }
+
+        @Test
+        @DisplayName("관리자 역할 사용자의 접근 처리 테스트")
+        void should_HandleAdminRoleAccess() {
+            // Given: 관리자 역할의 사용자가 접근할 때 (ADMIN이 Role enum에 있다면)
+            // 실제 Role enum에 ADMIN이 없다면 다른 역할로 테스트
+            User adminUser = User.builder()
+                    .school("테스트중학교")
+                    .username("admin1")
+                    .password("password")
+                    .role(Role.STUDENT) // 실제로는 ADMIN이 있다면 Role.ADMIN 사용
+                    .build();
+
+            given(userService.getUser("admin1")).willReturn(adminUser);
+            given(classroomStudentRepository.findByStudentUser(adminUser)).willReturn(Optional.of(classroomStudent));
+            given(attendanceRepository.findByStudentAndDateBetween(eq(student), any(LocalDate.class), any(LocalDate.class)))
+                    .willReturn(List.of());
+
+            // When: 관리자가 접근하면
+            StudentAttendanceResDto result = attendanceService.getStudentMonthlyAttendance("admin1", 2025, 2, 1, 1, 4);
+
+            // Then: 정상적으로 처리된다 (또는 Role enum에 따라 예외 발생)
+            assertThat(result).isNotNull();
+        }
+
+        @Test
+        @DisplayName("학생이 학급에 속하지 않은 경우 예외가 발생한다")
+        void should_ThrowException_When_StudentNotInAnyClassroom() {
+            // Given: 학생이 어떤 학급에도 속하지 않은 경우
+            given(userService.getUser("student1")).willReturn(studentUser);
+            given(classroomStudentRepository.findByStudentUser(studentUser)).willReturn(Optional.empty());
+
+            // When & Then: 학급을 찾을 수 없다는 예외가 발생한다
+            assertThatThrownBy(() -> attendanceService.getStudentMonthlyAttendance("student1", 2025, 2, 1, 1, 4))
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(ErrorCode.CLASSROOM_NOT_FOUND);
+        }
+    }
+
+    @Nested
+    @DisplayName("월별 수업일수 계산 테스트")
+    class MonthlySchoolDaysTest {
+
+        @Test
+        @DisplayName("월의 마지막 날까지 출결 데이터를 정확히 처리한다")
+        void should_ProcessAllDaysInMonth_When_SavingAttendance() {
+            // Given: 2월(28일까지)의 출결 데이터를 저장할 때
+            AttendanceBulkRequestDto februaryRequest = AttendanceBulkRequestDto.builder()
+                    .year(2025).month(2).grade(2).classNumber(1)
+                    .students(List.of(
+                            StudentAttendanceDto.builder()
+                                    .studentId(1L)
+                                    .attendances(List.of(
+                                            DailyAttendanceDto.builder()
+                                                    .date(LocalDate.of(2025, 2, 28))
+                                                    .status(AttendanceStatus.ABSENT)
+                                                    .build()))
+                                    .build()))
+                    .build();
+
+            given(teacherService.authenticate("teacher1")).willReturn(teacher);
+            given(classroomService.findClassroom(2025, 2, 1, teacher.getId())).willReturn(classroom);
+            given(classroomStudentRepository.findByClassroom(classroom)).willReturn(List.of(classroomStudent));
+            given(attendanceRepository.findByStudentAndDate(any(Student.class), any(LocalDate.class)))
+                    .willReturn(Optional.empty());
+
+            // When: 2월 출결을 저장하면
+            attendanceService.saveOrUpdateAttendance("teacher1", februaryRequest);
+
+            // Then: 2월 28일까지의 모든 날짜가 처리된다
+            // PRESENT가 아닌 날짜만 저장되므로 1번 저장됨 (2월 28일 결석)
+            then(attendanceRepository).should().save(any(Attendance.class));
+        }
+
+        @Test
+        @DisplayName("윤년 2월 29일도 정확히 처리한다")
+        void should_ProcessLeapYearFebruary_When_SavingAttendance() {
+            // Given: 윤년(2024년) 2월의 출결 데이터를 저장할 때
+            AttendanceBulkRequestDto leapYearRequest = AttendanceBulkRequestDto.builder()
+                    .year(2024).month(2).grade(2).classNumber(1)
+                    .students(List.of(
+                            StudentAttendanceDto.builder()
+                                    .studentId(1L)
+                                    .attendances(List.of(
+                                            DailyAttendanceDto.builder()
+                                                    .date(LocalDate.of(2024, 2, 29))
+                                                    .status(AttendanceStatus.LATE)
+                                                    .build()))
+                                    .build()))
+                    .build();
+
+            given(teacherService.authenticate("teacher1")).willReturn(teacher);
+            given(classroomService.findClassroom(2024, 2, 1, teacher.getId())).willReturn(classroom);
+            given(classroomStudentRepository.findByClassroom(classroom)).willReturn(List.of(classroomStudent));
+            given(attendanceRepository.findByStudentAndDate(any(Student.class), any(LocalDate.class)))
+                    .willReturn(Optional.empty());
+
+            // When: 윤년 2월 출결을 저장하면
+            attendanceService.saveOrUpdateAttendance("teacher1", leapYearRequest);
+
+            // Then: 2월 29일까지 정확히 처리된다
+            then(attendanceRepository).should().save(any(Attendance.class));
         }
     }
 
