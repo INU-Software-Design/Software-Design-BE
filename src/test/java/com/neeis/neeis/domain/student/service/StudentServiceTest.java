@@ -4,7 +4,7 @@ import com.neeis.neeis.domain.classroom.Classroom;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
 import com.neeis.neeis.domain.parent.Parent;
-import com.neeis.neeis.domain.parent.ParentRepository;
+import com.neeis.neeis.domain.parent.ParentService;
 import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.domain.student.StudentRepository;
 import com.neeis.neeis.domain.student.dto.req.FindIdRequestDto;
@@ -28,14 +28,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.Method;
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,9 +45,9 @@ class StudentServiceTest {
 
     @Mock private UserRepository userRepository;
     @Mock private StudentRepository studentRepository;
-    @Mock private ParentRepository parentRepository;
+    @Mock private ParentService parentService; // ParentRepository → ParentService로 변경
     @Mock private ClassroomStudentRepository classroomStudentRepository;
-    @Mock PasswordEncoder passwordEncoder;
+    @Mock private PasswordEncoder passwordEncoder;
 
     @InjectMocks private StudentService studentService;
 
@@ -94,7 +91,7 @@ class StudentServiceTest {
                 .build();
 
         // 관리자, 교사 유저
-        adminUser   = User.builder().school("S").username("admin").role(Role.ADMIN).build();
+        adminUser = User.builder().school("S").username("admin").role(Role.ADMIN).build();
         ReflectionTestUtils.setField(adminUser, "id", 1L);
 
         teacherUser = User.builder().username("teacher").role(Role.TEACHER).build();
@@ -106,7 +103,7 @@ class StudentServiceTest {
                 .email("teacher1@test.com")
                 .user(teacherUser)
                 .build();
-        ReflectionTestUtils.setField(teacher,   "id", 10L);
+        ReflectionTestUtils.setField(teacher, "id", 10L);
 
         // 기존 학생 + 부모 엔티티
         existingStudent = Student.builder()
@@ -127,11 +124,19 @@ class StudentServiceTest {
         mother = Parent.builder().relationShip("모").name("모어머니").phone("010-7777-8888").build();
         ReflectionTestUtils.setField(mother, "id", 12L);
 
+        classroom = Classroom.builder()
+                .grade(2)
+                .classNum(1)
+                .year(2025)
+                .teacher(teacher)
+                .build();
+        ReflectionTestUtils.setField(classroom, "id", 20L);
+
         cs = ClassroomStudent.builder().student(existingStudent).classroom(classroom).build();
         ReflectionTestUtils.setField(cs, "id", 20L);
+
         // uploadPath 테스트용으로 임시 디렉토리 지정
         ReflectionTestUtils.setField(studentService, "uploadPath", System.getProperty("java.io.tmpdir"));
-
     }
 
     @Test
@@ -139,7 +144,7 @@ class StudentServiceTest {
     void findUsername_success() {
         Student student = Student.builder()
                 .phone("010-1111-2222").name("홍길동").ssn("123").address("A").image("img").gender("M")
-                .admissionDate(LocalDate.of(2025,1,1))
+                .admissionDate(LocalDate.of(2025, 1, 1))
                 .user(User.builder().school("S").username("u").password("p").role(Role.STUDENT).build())
                 .build();
         given(studentRepository.findByPhone("010-1111-2222")).willReturn(Optional.of(student));
@@ -168,7 +173,7 @@ class StudentServiceTest {
                 .build();
         given(studentRepository.findByPhone("010")).willReturn(Optional.of(s));
         assertThatThrownBy(() -> studentService.findUsername(
-                FindIdRequestDto.builder().name(" B").phone("010").school("X").build()))
+                FindIdRequestDto.builder().name("B").phone("010").school("X").build()))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.INVALID_INPUT_VALUE.getMessage());
     }
@@ -208,28 +213,21 @@ class StudentServiceTest {
                 .name("N").phone("010")
                 .user(User.builder().school("S").build())
                 .build();
-
-        classroom = Classroom.builder()
-                .grade(2)
-                .classNum(1)
-                .year(2025)
-                .teacher(teacher)
-                .build();
-        ReflectionTestUtils.setField(classroom, "id", 20L);
-
-
         ReflectionTestUtils.setField(s, "id", id);
 
-        ClassroomStudent cs = ClassroomStudent.builder().student(s)
-                .number(3).classroom(classroom).build();
+        ClassroomStudent cs = ClassroomStudent.builder()
+                .student(s)
+                .number(3)
+                .classroom(classroom)
+                .build();
+
+        Parent father = Parent.builder().name("F").relationShip("부").build();
+        Parent mother = Parent.builder().name("M").relationShip("모").build();
 
         given(studentRepository.findById(id)).willReturn(Optional.of(s));
         given(classroomStudentRepository.findByStudentAndClassroomYear(id, year))
                 .willReturn(Optional.of(cs));
-        Parent father = Parent.builder().name("F").relationShip("부").build();
-        Parent mother =  Parent.builder().name("M").relationShip("모").build();
-        given(parentRepository.findByStudent(s))
-                .willReturn(List.of(father, mother));
+        given(parentService.getParents(s)).willReturn(List.of(father, mother)); // ParentService 사용
 
         StudentDetailResDto dto = studentService.getStudentDetails(id, year);
         assertThat(dto.getName()).isEqualTo("N");
@@ -242,7 +240,27 @@ class StudentServiceTest {
     void getStudentDetails_notFoundStudent() {
         given(studentRepository.findById(any()))
                 .willReturn(Optional.empty());
-        assertThatThrownBy(() -> studentService.getStudentDetails(1L,2025))
+        assertThatThrownBy(() -> studentService.getStudentDetails(1L, 2025))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(ErrorCode.USER_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    @DisplayName("getStudentDetails: ClassroomStudent 없음 -> USER_NOT_FOUND")
+    void getStudentDetails_notFoundClassroomStudent() {
+        Long id = 5L;
+        int year = 2025;
+        Student s = Student.builder()
+                .name("N").phone("010")
+                .user(User.builder().school("S").build())
+                .build();
+        ReflectionTestUtils.setField(s, "id", id);
+
+        given(studentRepository.findById(id)).willReturn(Optional.of(s));
+        given(classroomStudentRepository.findByStudentAndClassroomYear(id, year))
+                .willReturn(Optional.empty()); // ClassroomStudent 없음
+
+        assertThatThrownBy(() -> studentService.getStudentDetails(id, year))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.USER_NOT_FOUND.getMessage());
     }
@@ -280,7 +298,6 @@ class StudentServiceTest {
                 .hasMessageContaining(ErrorCode.USER_NOT_FOUND.getMessage());
     }
 
-
     @Test
     @DisplayName("saveStudent: 권한 없으면 HANDLE_ACCESS_DENIED")
     void saveStudent_noPermission() {
@@ -293,7 +310,6 @@ class StudentServiceTest {
                 .isInstanceOf(CustomException.class)
                 .hasMessageContaining(ErrorCode.HANDLE_ACCESS_DENIED.getMessage());
     }
-
 
     @Test
     @DisplayName("saveStudent: 성공 (이미지 없이)")
@@ -355,7 +371,7 @@ class StudentServiceTest {
         // given: TEACHER 권한
         given(userRepository.findByUsername("teacher")).willReturn(Optional.of(teacherUser));
         given(studentRepository.findById(5L)).willReturn(Optional.of(existingStudent));
-        given(parentRepository.findByStudent(existingStudent)).willReturn(List.of(father, mother));
+        given(parentService.getParents(existingStudent)).willReturn(List.of(father, mother)); // ParentService 사용
 
         // when
         studentService.updateStudent("teacher", 5L, updateDto, null);
@@ -369,5 +385,51 @@ class StudentServiceTest {
         assertThat(father.getPhone()).isEqualTo("010-0000-1111");
         assertThat(mother.getName()).isEqualTo("최어머니");
         assertThat(mother.getPhone()).isEqualTo("010-2222-3333");
+    }
+
+    @Test
+    @DisplayName("getStudent: 성공")
+    void getStudent_success() {
+        Long studentId = 5L;
+        given(studentRepository.findById(studentId)).willReturn(Optional.of(existingStudent));
+
+        Student result = studentService.getStudent(studentId);
+
+        assertThat(result).isEqualTo(existingStudent);
+        then(studentRepository).should().findById(studentId);
+    }
+
+    @Test
+    @DisplayName("getStudent: 학생 없음 -> USER_NOT_FOUND")
+    void getStudent_notFound() {
+        Long studentId = 999L;
+        given(studentRepository.findById(studentId)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> studentService.getStudent(studentId))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(ErrorCode.USER_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    @DisplayName("findByUser: 성공")
+    void findByUser_success() {
+        User user = User.builder().username("testuser").build();
+        given(studentRepository.findByUser(user)).willReturn(Optional.of(existingStudent));
+
+        Student result = studentService.findByUser(user);
+
+        assertThat(result).isEqualTo(existingStudent);
+        then(studentRepository).should().findByUser(user);
+    }
+
+    @Test
+    @DisplayName("findByUser: 학생 없음 -> USER_NOT_FOUND")
+    void findByUser_notFound() {
+        User user = User.builder().username("nonexistent").build();
+        given(studentRepository.findByUser(user)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> studentService.findByUser(user))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(ErrorCode.USER_NOT_FOUND.getMessage());
     }
 }
