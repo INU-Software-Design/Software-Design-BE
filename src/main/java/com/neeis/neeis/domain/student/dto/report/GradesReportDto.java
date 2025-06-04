@@ -4,6 +4,7 @@ import com.neeis.neeis.domain.scoreSummary.dto.res.StudentScoreSummaryDto;
 import com.neeis.neeis.domain.scoreSummary.dto.res.SubjectScoreDto;
 import lombok.Builder;
 import lombok.Getter;
+
 import java.util.List;
 
 

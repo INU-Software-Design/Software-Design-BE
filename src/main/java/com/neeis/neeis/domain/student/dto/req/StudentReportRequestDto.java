@@ -1,9 +1,7 @@
 package com.neeis.neeis.domain.student.dto.req;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+
 import java.time.LocalDate;
 
 
@@ -11,6 +9,7 @@ import java.time.LocalDate;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class StudentReportRequestDto {
     private Long studentId;  // username 대신 studentId 사용
     private int year;

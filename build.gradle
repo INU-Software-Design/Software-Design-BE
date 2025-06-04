@@ -107,19 +107,27 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.mysql:mysql-connector-j'
     annotationProcessor 'org.projectlombok:lombok'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'org.springframework.retry:spring-retry'
+
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
     implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
+
     implementation 'com.google.firebase:firebase-admin:9.4.3'
+
     implementation 'org.apache.poi:poi:5.2.5'
     implementation 'org.apache.poi:poi-ooxml:5.2.5'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
@@ -127,6 +135,7 @@ dependencies {
     implementation 'com.itextpdf:kernel:7.2.5'
     implementation 'com.itextpdf:io:7.2.5'
     implementation 'com.itextpdf:font-asian:7.2.5'
+
 }
 
 // 테스트 설정 (최신 API 사용)
