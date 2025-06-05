@@ -38,12 +38,13 @@ jacoco {
     reportsDirectory = layout.buildDirectory.dir('jacocoReport')
 }
 
-// SonarQube 설정 (모든 경고 해결)
+// SonarCloud
 sonar {
     properties {
-        property "sonar.projectKey", "neeis-project"
-        property "sonar.projectName", "NEEIS Project"
-        property "sonar.host.url", "http://localhost:9000"
+        property "sonar.projectKey", "INU-Software-Design_Software-Design-BE"
+        property "sonar.organization", "inu-software-design"
+        property "sonar.host.url", "https://sonarcloud.io"
+
 
         // 컴파일 skip 설정 (경고 해결)
         property "sonar.gradle.skipCompile", "true"
