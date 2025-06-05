@@ -49,7 +49,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests((auth) -> auth
                         .requestMatchers("/swagger-ui/**","/swagger-ui/index.html#/","/v3/api-docs/**", "/swagger-resources/**").permitAll()
-                        .requestMatchers("/users/login","/users/password", "/students/id", "/students/password", "/images/**", "/report/student/**").permitAll()
+                        .requestMatchers("/users/login","/users/password", "/students/id", "/students/password", "/images/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/teacherSubjects", "/subjects", "/users/fcm/register").permitAll()
                         // 학적
                         .requestMatchers(HttpMethod.GET, "/teachers/students/**").hasAnyAuthority( "ROLE_STUDENT", "ROLE_PARENT", "ROLE_TEACHER")
@@ -63,7 +63,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/evaluation-methods").hasAnyAuthority("ROLE_STUDENT", "ROLE_PARENT", "ROLE_TEACHER")
                         .requestMatchers(HttpMethod.GET, "/score-summary", "/score-summary/feedback/**").hasAnyAuthority("ROLE_STUDENT", "ROLE_PARENT", "ROLE_TEACHER")
                         // 보고서
-                        .requestMatchers(HttpMethod.GET, "/reports/counsels/**").hasAnyAuthority("ROLE_STUDENT", "ROLE_PARENT", "ROLE_TEACHER")
+                        .requestMatchers("/reports/**").hasAnyAuthority("ROLE_STUDENT", "ROLE_PARENT", "ROLE_TEACHER")
                         // 교사 권한
                         .requestMatchers("/teachers/**", "/attendances/**", "/behavior/**" , "/counsel/**", "/evaluation-methods/**","/scores","/scores/**", "/score-summary/**").hasAnyAuthority("ROLE_TEACHER")
                         .requestMatchers("/students/register","/students/**","/subjects/**","/teacherSubjects/**").hasAnyAuthority("ROLE_TEACHER","ROLE_ADMIN")

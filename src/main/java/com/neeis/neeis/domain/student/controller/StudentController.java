@@ -39,7 +39,7 @@ public class StudentController {
     @Operation(summary = "비밀번호 찾기")
     public ResponseEntity<CommonResponse<PasswordResponseDto>> findPassword(
             @Valid @RequestBody PasswordRequestDto passwordRequestDto) {
-        return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_USERNAME.getMessage(), studentService.findPassword(passwordRequestDto)));
+        return ResponseEntity.ok(CommonResponse.from(SUCCESS_GET_PASSWORD.getMessage(), studentService.findPassword(passwordRequestDto)));
     }
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

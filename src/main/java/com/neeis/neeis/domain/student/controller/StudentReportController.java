@@ -244,6 +244,7 @@ public class StudentReportController {
         }
     }
 
+    @Operation(summary = "")
     @GetMapping("/password-info")
     public ResponseEntity<Map<String, String>> getPasswordInfo(
             @AuthenticationPrincipal UserDetails userDetails) {

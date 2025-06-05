@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface ParentRepository extends JpaRepository<Parent, Long> {
     List<Parent> findByStudent(Student student);
     Optional<Parent> findByUser(User user);
+    Optional<Parent> findByPhone(String phone);
 }

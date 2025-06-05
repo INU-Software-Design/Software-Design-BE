@@ -59,7 +59,7 @@ public class UserService {
                 throw new CustomException(ErrorCode.LOGIN_INPUT_INVALID);
             }
         } else {
-            if (storedPw != null && storedPw.equals(inputPw)) {
+            if (storedPw == null || !storedPw.equals(inputPw)) {
                 throw new CustomException(ErrorCode.LOGIN_INPUT_INVALID);
             }
 

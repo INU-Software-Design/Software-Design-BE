@@ -4,6 +4,7 @@ import com.neeis.neeis.domain.classroom.Classroom;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
 import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
 import com.neeis.neeis.domain.parent.Parent;
+import com.neeis.neeis.domain.parent.ParentRepository;
 import com.neeis.neeis.domain.parent.ParentService;
 import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.domain.student.StudentRepository;
@@ -15,6 +16,8 @@ import com.neeis.neeis.domain.student.dto.res.PasswordResponseDto;
 import com.neeis.neeis.domain.student.dto.res.StudentDetailResDto;
 import com.neeis.neeis.domain.student.dto.res.StudentResponseDto;
 import com.neeis.neeis.domain.student.dto.res.StudentSaveResponseDto;
+import com.neeis.neeis.domain.teacher.Teacher;
+import com.neeis.neeis.domain.teacher.TeacherRepository;
 import com.neeis.neeis.domain.user.Role;
 import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.domain.user.UserRepository;
@@ -33,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -41,6 +45,8 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class StudentService {
     private final StudentRepository studentRepository;
+    private final TeacherRepository teacherRepository;
+    private final ParentRepository parentRepository;
     private final ClassroomStudentRepository classroomStudentRepository;
     private final UserRepository userRepository;
     private final ParentService parentService;
@@ -51,30 +57,97 @@ public class StudentService {
 
     // 아이디 찾기
     public StudentResponseDto findUsername(FindIdRequestDto findIdRequestDto) {
-        Student student = studentRepository.findByPhone(findIdRequestDto.getPhone()).orElseThrow(
-                () -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            // 1. 먼저 학생에서 찾기
+            Optional<Student> studentOpt = studentRepository.findByPhone(findIdRequestDto.getPhone());
+            if (studentOpt.isPresent()) {
+                Student student = studentOpt.get();
+                if (student.getName().equals(findIdRequestDto.getName()) &&
+                        student.getUser().getSchool().equals(findIdRequestDto.getSchool())) {
+                    return StudentResponseDto.of(student);
+                }
+            }
 
-        if(!student.getName().equals(findIdRequestDto.getName()) ||
-        !student.getUser().getSchool().equals(findIdRequestDto.getSchool())) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            // 2. 교사에서 찾기
+            Optional<Teacher> teacherOpt = teacherRepository.findByPhone(findIdRequestDto.getPhone());
+            if (teacherOpt.isPresent()) {
+                Teacher teacher = teacherOpt.get();
+                if (teacher.getName().equals(findIdRequestDto.getName()) &&
+                        teacher.getUser().getSchool().equals(findIdRequestDto.getSchool())) {
+                    // Teacher를 Student 형태로 변환해서 반환
+                    return StudentResponseDto.ofTeacher(teacher);
+                }
+            }
+
+            // 3. 부모에서 찾기
+            Optional<Parent> parentOpt = parentRepository.findByPhone(findIdRequestDto.getPhone());
+            if (parentOpt.isPresent()) {
+                Parent parent = parentOpt.get();
+                if (parent.getName().equals(findIdRequestDto.getName()) &&
+                        parent.getUser().getSchool().equals(findIdRequestDto.getSchool())) {
+                    // Parent를 Student 형태로 변환해서 반환
+                    return StudentResponseDto.ofParent(parent);
+                }
+            }
+
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
         }
 
-        return StudentResponseDto.of(student);
-    }
 
-    // 비밀번호 찾기
-    public PasswordResponseDto findPassword(PasswordRequestDto passwordRequestDto) {
-        Student student = studentRepository.findByPhone(passwordRequestDto.getPhone()).orElseThrow(
-                () -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        // 비밀번호 찾기
+        // 비밀번호 찾기 - 임시 비밀번호 생성 방식
+        @Transactional // 트랜잭션 추가 필요
+        public PasswordResponseDto findPassword(PasswordRequestDto passwordRequestDto) {
+            // 1. 학생에서 찾기
+            Optional<Student> studentOpt = studentRepository.findByPhone(passwordRequestDto.getPhone());
+            if (studentOpt.isPresent()) {
+                Student student = studentOpt.get();
+                if (student.getName().equals(passwordRequestDto.getName()) &&
+                        student.getUser().getSchool().equals(passwordRequestDto.getSchool()) &&
+                        student.getSsn().equals(passwordRequestDto.getSsn())) {
 
-        if(!student.getName().equals(passwordRequestDto.getName()) ||
-                !student.getUser().getSchool().equals(passwordRequestDto.getSchool()) ||
-        !student.getSsn().equals(passwordRequestDto.getSsn())) {
+                    // 초기 비밀번호 (핸드폰 뒷자리 4자리)로 리셋
+                    String tempPassword = generateTempPassword();
+                    student.getUser().updatePassword(passwordEncoder.encode(tempPassword));
+                    userRepository.save(student.getUser());
+
+                    return PasswordResponseDto.of(tempPassword);
+                }
+            }
+
+            // 2. 교사에서 찾기
+            Optional<Teacher> teacherOpt = teacherRepository.findByPhone(passwordRequestDto.getPhone());
+            if (teacherOpt.isPresent()) {
+                Teacher teacher = teacherOpt.get();
+                if (teacher.getName().equals(passwordRequestDto.getName()) &&
+                        teacher.getUser().getSchool().equals(passwordRequestDto.getSchool())) {
+
+                    // 교사도 핸드폰 뒷자리 4자리로 리셋
+                    String newPassword = generateTempPassword();
+                    teacher.getUser().updatePassword(passwordEncoder.encode(newPassword));
+                    userRepository.save(teacher.getUser());
+
+                    return PasswordResponseDto.of(newPassword);
+                }
+            }
+
+            // 3. 부모에서 찾기
+            Optional<Parent> parentOpt = parentRepository.findByPhone(passwordRequestDto.getPhone());
+            if (parentOpt.isPresent()) {
+                Parent parent = parentOpt.get();
+                if (parent.getName().equals(passwordRequestDto.getName()) &&
+                        parent.getUser().getSchool().equals(passwordRequestDto.getSchool())) {
+
+                    // 부모도 핸드폰 뒷자리 4자리로 리셋
+                    String newPassword = generateTempPassword();
+                    parent.getUser().updatePassword(passwordEncoder.encode(newPassword));
+                    userRepository.save(parent.getUser());
+
+                    return PasswordResponseDto.of(newPassword);
+                }
+            }
+
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
-
-        return PasswordResponseDto.of(student);
-    }
 
     // 학생 상세 정보 조회
     public StudentDetailResDto getStudentDetails(Long studentId, int year) {
@@ -226,6 +299,10 @@ public class StudentService {
         return studentRepository.findById(studentId).orElseThrow(
                 () -> new CustomException(ErrorCode.USER_NOT_FOUND)
         );
+    }
+
+    private String generateTempPassword() {
+        return String.format("%06d", (int)(Math.random() * 1000000));
     }
 
     /**

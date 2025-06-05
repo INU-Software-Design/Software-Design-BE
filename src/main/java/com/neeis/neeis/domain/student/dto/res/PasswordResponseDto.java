@@ -1,6 +1,5 @@
 package com.neeis.neeis.domain.student.dto.res;
 
-import com.neeis.neeis.domain.student.Student;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -14,9 +13,11 @@ public class PasswordResponseDto {
         this.password = password;
     }
 
-    public static PasswordResponseDto of(Student student) {
+    public static PasswordResponseDto of(String password) {
         return PasswordResponseDto.builder()
-                .password(student.getUser().getPassword())
+                .password(password)
                 .build();
     }
+
+
 }
