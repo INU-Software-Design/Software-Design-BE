@@ -46,8 +46,11 @@ sonar {
         property "sonar.host.url", "https://sonarcloud.io"
 
 
-        // 컴파일 skip 설정 (경고 해결)
+        // 컴파일 skip 설정
         property "sonar.gradle.skipCompile", "true"
+        property "sonar.qualitygate.wait", "false"
+        property "sonar.scanner.force-deprecated-java-version", "false"
+
 
         // 소스 코드 경로 설정
         property "sonar.sources", "src/main/java"
@@ -91,8 +94,6 @@ sonar {
                 "**/notification/**/*"
         ].join(",")
 
-        // Quality Gate 설정
-        property "sonar.qualitygate.wait", "false"
 
         // 언어 및 인코딩
         property "sonar.java.source", "21"
@@ -232,6 +233,17 @@ tasks.named('jacocoTestCoverageVerification') {
 // SonarQube 태스크 의존성 설정 (최신 API)
 tasks.named('sonar') {
     dependsOn tasks.compileJava, tasks.compileTestJava, tasks.test, tasks.jacocoTestReport
+
+    if (tasks.findByName('test')) {
+        dependsOn tasks.test, tasks.jacocoTestReport
+    }
+
+    doFirst {
+        println "🔍 SonarCloud 분석 시작..."
+        println "프로젝트: INU-Software-Design_Software-Design-BE"
+        println "조직: inu-software-design"
+    }
+
 }
 
 // 커스텀 태스크들 (최신 Task API 사용)
