@@ -58,7 +58,7 @@ import static org.mockito.BDDMockito.*;
  * 4. 학생/교사 역할별 접근 권한 처리
  */
 @ExtendWith(MockitoExtension.class)
-class ScoreSummaryServiceUpdatedTest {
+class ScoreSummaryServiceTest {
 
     @Mock private ScoreSummaryRepository scoreSummaryRepository;
     @Mock private ClassroomService classroomService;
