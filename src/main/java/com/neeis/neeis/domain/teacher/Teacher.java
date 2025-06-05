@@ -26,15 +26,19 @@ public class Teacher extends BaseEntity {
     @Column(nullable = false)
     private String email;
 
+    @Column(nullable = true)
+    private String ssn;
+
     @JoinColumn(name = "user_id")
     @ManyToOne(fetch = FetchType.LAZY)
     private User user;
 
     @Builder
-    private Teacher(String name, String phone, String email, User user) {
+    private Teacher(String name, String phone, String email, String ssn, User user) {
         this.name = name;
         this.phone = phone;
         this.email = email;
+        this.ssn = ssn;
         this.user = user;
     }
 }
