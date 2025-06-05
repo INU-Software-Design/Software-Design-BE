@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,6 +55,8 @@ public class StudentService {
 
     @Value("${image.path}")
     private String uploadPath;
+
+    private final SecureRandom random = new SecureRandom();
 
     // 아이디 찾기
     public StudentResponseDto findUsername(FindIdRequestDto findIdRequestDto) {
@@ -302,7 +305,8 @@ public class StudentService {
     }
 
     private String generateTempPassword() {
-        return String.format("%06d", (int)(Math.random() * 1000000));
+
+        return String.format("%06d", random.nextInt(1000000));
     }
 
     /**
