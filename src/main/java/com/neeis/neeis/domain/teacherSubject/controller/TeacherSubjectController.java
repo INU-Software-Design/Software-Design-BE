@@ -40,7 +40,7 @@ public class TeacherSubjectController {
 
     @GetMapping
     @Operation(
-            summary = "교사-과목 배정 전체 조회",
+            summary = "[전체 접근] 교사-과목 배정 전체 조회",
             description = "등록된 모든 교사-과목 배정 목록을 조회합니다. <br>" +
                     "해당 API는 인증 없이 접근 가능합니다.")
     public ResponseEntity<CommonResponse<List<TeacherSubjectResponseDto>>> getAlls(){

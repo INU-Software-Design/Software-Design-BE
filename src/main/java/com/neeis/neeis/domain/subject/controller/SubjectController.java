@@ -44,7 +44,7 @@ public class SubjectController {
 
     @GetMapping
     @Operation(
-            summary = "과목 전체 조회",
+            summary = "[전체 접근] 과목 전체 조회",
             description = "등록된 모든 과목을 이름 오름차순으로 조회합니다."
     )
     public ResponseEntity<CommonResponse<List<SubjectResponseDto>>> getSubjects() {
@@ -53,7 +53,7 @@ public class SubjectController {
 
     @GetMapping("/subjects")
     @Operation(
-            summary = "과목 목록 조회",
+            summary = "[전체 접근] 과목 목록 조회",
             description = """
                     입력한 연도, 학기, 학년에 개설된 평가방식이 존재하는 과목들을 반환합니다.<br><br>
                     - 평가 방식이 1개라도 존재하는 과목만 반환됩니다.<br>
