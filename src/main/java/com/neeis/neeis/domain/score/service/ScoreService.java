@@ -18,15 +18,10 @@ import com.neeis.neeis.domain.subject.service.SubjectService;
 import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.domain.teacher.service.TeacherService;
 import com.neeis.neeis.domain.teacherSubject.service.TeacherSubjectService;
-import com.neeis.neeis.domain.user.User;
-import com.neeis.neeis.global.exception.CustomException;
-import com.neeis.neeis.global.exception.ErrorCode;
-import com.neeis.neeis.global.fcm.event.SendScoreFcmEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
@@ -44,8 +39,7 @@ public class ScoreService {
     private final ClassroomService classroomService;
     private final SubjectService subjectService;
     private final ScoreSummaryService scoreSummaryService;
-    private final ApplicationEventPublisher eventPublisher;
-    private final NotificationService notificationService;
+    private final ScoreNotificationService scoreNotificationService;
 
 
     // 교사 전용 -> 과목에 대한 해당 반 학생들의 점수 조회
@@ -199,57 +193,7 @@ public class ScoreService {
             int classNum = Integer.parseInt(parts[3]);
 
             // 영향받는 과목들에만 알림 발송
-            sendNotificationsForAffectedSubjects(year, semester, grade, classNum, affectedSubjectIds);
-        }
-    }
-
-    /*
-     * 특정 과목들에만 알림 발송
-     */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void sendNotificationsForAffectedSubjects(int year, int semester, int grade, int classNum, Set<Long> affectedSubjectIds) {
-        try {
-            Classroom classroom = classroomService.findClassroom(year, grade, classNum);
-            List<ClassroomStudent> students = classroomStudentService.findByClassroom(classroom);
-
-            // 🔥 핵심: 영향받는 과목들만 조회
-            List<Subject> affectedSubjects = affectedSubjectIds.stream()
-                    .map(subjectService::findById)
-                    .toList();
-
-            log.info("알림 발송 시작 - 대상 과목: {}",
-                    affectedSubjects.stream().map(Subject::getName).toList());
-
-            for (ClassroomStudent student : students) {
-                for (Subject subject : affectedSubjects) { // 영향받는 과목들만 순회
-                    try {
-                        scoreSummaryService.findByStudentAndSubjectOptional(student.getId(), subject.getId())
-                                .ifPresent(summary -> {
-                                    try {
-                                        // FCM 이벤트 발행
-                                        eventPublisher.publishEvent(new SendScoreFcmEvent(summary));
-
-                                        // 알림 기록 저장
-                                        User user = student.getStudent().getUser();
-                                        String content = subject.getName() + " 과목의 성적이 입력되었습니다.";
-                                        notificationService.sendNotification(user, content);
-
-                                        log.debug("알림 발송 완료: 학생={}, 과목={}", student.getStudent().getName(), subject.getName());
-                                    } catch (Exception e) {
-                                        log.warn("개별 알림 발송 실패 (계속 진행): 학생={}, 과목={}, 오류={}", student.getStudent().getName(), subject.getName(), e.getMessage());
-                                    }
-                                });
-                    } catch (Exception e) {
-                        log.warn("성적 요약 조회 실패 (계속 진행): 학생ID={}, 과목={}, 오류={}", student.getId(), subject.getName(), e.getMessage());
-                    }
-                }
-            }
-
-            log.info("알림 발송 완료 - 처리된 과목 수: {}", affectedSubjects.size());
-
-        } catch (Exception e) {
-            log.error("알림 발송 과정에서 전체 오류 발생: year={}, semester={}, grade={}, classNum={}, 과목수={}, 오류={}",
-                    year, semester, grade, classNum, affectedSubjectIds.size(), e.getMessage(), e);
+            scoreNotificationService.sendNotificationsForAffectedSubjects(year, semester, grade, classNum, affectedSubjectIds);
         }
     }
 
