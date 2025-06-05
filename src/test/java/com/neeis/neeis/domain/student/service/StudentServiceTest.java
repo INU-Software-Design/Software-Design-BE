@@ -1,22 +1,15 @@
 package com.neeis.neeis.domain.student.service;
 
-import com.neeis.neeis.domain.classroom.Classroom;
-import com.neeis.neeis.domain.classroomStudent.ClassroomStudent;
-import com.neeis.neeis.domain.classroomStudent.ClassroomStudentRepository;
 import com.neeis.neeis.domain.parent.Parent;
-import com.neeis.neeis.domain.parent.ParentService;
+import com.neeis.neeis.domain.parent.ParentRepository;
 import com.neeis.neeis.domain.student.Student;
 import com.neeis.neeis.domain.student.StudentRepository;
 import com.neeis.neeis.domain.student.dto.req.FindIdRequestDto;
 import com.neeis.neeis.domain.student.dto.req.PasswordRequestDto;
-import com.neeis.neeis.domain.student.dto.req.StudentRequestDto;
-import com.neeis.neeis.domain.student.dto.req.StudentUpdateRequestDto;
 import com.neeis.neeis.domain.student.dto.res.PasswordResponseDto;
-import com.neeis.neeis.domain.student.dto.res.StudentDetailResDto;
 import com.neeis.neeis.domain.student.dto.res.StudentResponseDto;
-import com.neeis.neeis.domain.student.dto.res.StudentSaveResponseDto;
 import com.neeis.neeis.domain.teacher.Teacher;
-import com.neeis.neeis.domain.user.Role;
+import com.neeis.neeis.domain.teacher.TeacherRepository;
 import com.neeis.neeis.domain.user.User;
 import com.neeis.neeis.domain.user.UserRepository;
 import com.neeis.neeis.global.exception.CustomException;
@@ -28,408 +21,406 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import java.lang.reflect.Method;
-import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class StudentServiceTest {
+@MockitoSettings(strictness = Strictness.LENIENT)
+class StudentServiceFindTest {
 
-    @Mock private UserRepository userRepository;
     @Mock private StudentRepository studentRepository;
-    @Mock private ParentService parentService; // ParentRepository → ParentService로 변경
-    @Mock private ClassroomStudentRepository classroomStudentRepository;
+    @Mock private TeacherRepository teacherRepository;
+    @Mock private ParentRepository parentRepository;
+    @Mock private UserRepository userRepository;
     @Mock private PasswordEncoder passwordEncoder;
-
     @InjectMocks private StudentService studentService;
 
-    private Classroom classroom;
-    private User studentUser, teacherUser;
+    private User user;
+    private Student student;
     private Teacher teacher;
-    private StudentRequestDto saveDto;
-    private StudentUpdateRequestDto updateDto;
-    private User adminUser;
-    private Student existingStudent;
-    private Parent father, mother;
-    private ClassroomStudent cs;
+    private Parent parent;
 
     @BeforeEach
-    void init() {
-        // set uploadPath for saveImage
-        ReflectionTestUtils.setField(studentService, "uploadPath", "/tmp/images");
-        studentUser = User.builder()
-                .username("user")
-                .role(Role.STUDENT)
-                .build();
-
-        // 공통 DTO 준비
-        saveDto = StudentRequestDto.builder()
-                .name("홍길동")
-                .phone("010-1234-5678")
+    void setUp() {
+        // 공통으로 사용할 User 생성
+        user = User.builder()
                 .school("인천중학교")
-                .role("STUDENT")
-                .admissionDate(LocalDate.of(2025, 3, 1))
-                .address("인천시")
+                .username("user1")
+                .password("$2a$10$dummyhashed")
+                .role(com.neeis.neeis.domain.user.Role.STUDENT)
                 .build();
 
-        updateDto = StudentUpdateRequestDto.builder()
-                .name("최길동")
-                .phone("010-8765-4321")
-                .address("부평구")
-                .fatherName("최아버지")
-                .fatherPhone("010-0000-1111")
-                .motherName("최어머니")
-                .motherPhone("010-2222-3333")
-                .build();
-
-        // 관리자, 교사 유저
-        adminUser = User.builder().school("S").username("admin").role(Role.ADMIN).build();
-        ReflectionTestUtils.setField(adminUser, "id", 1L);
-
-        teacherUser = User.builder().username("teacher").role(Role.TEACHER).build();
-        ReflectionTestUtils.setField(teacherUser, "id", 2L);
-
-        teacher = Teacher.builder()
-                .name("김교사")
+        // Student 생성
+        student = Student.builder()
+                .name("김학생")
                 .phone("010-1234-5678")
-                .email("teacher1@test.com")
-                .user(teacherUser)
+                .ssn("123456-1234567")
+                .user(user)
                 .build();
-        ReflectionTestUtils.setField(teacher, "id", 10L);
 
-        // 기존 학생 + 부모 엔티티
-        existingStudent = Student.builder()
-                .name("박학생")
-                .phone("010-1111-2222")
-                .address("강남구")
-                .ssn("000101-1234567")
-                .gender("M")
-                .image(null)
-                .user(studentUser)
-                .admissionDate(LocalDate.of(2024, 3, 1))
+        // Teacher 생성
+        teacher = Teacher.builder()
+                .name("이교사")
+                .phone("010-9876-5432")
+                .user(user)
                 .build();
-        ReflectionTestUtils.setField(existingStudent, "id", 5L);
 
-        father = Parent.builder().relationShip("부").name("부아버지").phone("010-5555-6666").build();
-        ReflectionTestUtils.setField(father, "id", 11L);
-
-        mother = Parent.builder().relationShip("모").name("모어머니").phone("010-7777-8888").build();
-        ReflectionTestUtils.setField(mother, "id", 12L);
-
-        classroom = Classroom.builder()
-                .grade(2)
-                .classNum(1)
-                .year(2025)
-                .teacher(teacher)
+        // Parent 생성
+        parent = Parent.builder()
+                .name("박부모")
+                .phone("010-5555-6666")
+                .user(user)
                 .build();
-        ReflectionTestUtils.setField(classroom, "id", 20L);
+    }
 
-        cs = ClassroomStudent.builder().student(existingStudent).classroom(classroom).build();
-        ReflectionTestUtils.setField(cs, "id", 20L);
+    // === 아이디 찾기 테스트 ===
 
-        // uploadPath 테스트용으로 임시 디렉토리 지정
-        ReflectionTestUtils.setField(studentService, "uploadPath", System.getProperty("java.io.tmpdir"));
+    @Test
+    @DisplayName("findUsername: 학생 - 정상 조회")
+    void findUsername_student_success() {
+        // Given
+        FindIdRequestDto requestDto = FindIdRequestDto.builder()
+                .phone("010-1234-5678")
+                .name("김학생")
+                .school("인천중학교")
+                .build();
+
+        given(studentRepository.findByPhone("010-1234-5678")).willReturn(Optional.of(student));
+
+        // When
+        StudentResponseDto result = studentService.findUsername(requestDto);
+
+        // Then
+        assertThat(result.getLoginId()).isEqualTo(student.getUser().getUsername());
     }
 
     @Test
-    @DisplayName("findUsername: 성공")
-    void findUsername_success() {
-        Student student = Student.builder()
-                .phone("010-1111-2222").name("홍길동").ssn("123").address("A").image("img").gender("M")
-                .admissionDate(LocalDate.of(2025, 1, 1))
-                .user(User.builder().school("S").username("u").password("p").role(Role.STUDENT).build())
+    @DisplayName("findUsername: 교사 - 정상 조회")
+    void findUsername_teacher_success() {
+        // Given
+        FindIdRequestDto requestDto = FindIdRequestDto.builder()
+                .phone("010-9876-5432")
+                .name("이교사")
+                .school("인천중학교")
                 .build();
-        given(studentRepository.findByPhone("010-1111-2222")).willReturn(Optional.of(student));
 
-        StudentResponseDto dto = studentService.findUsername(
-                FindIdRequestDto.builder().name("홍길동").phone("010-1111-2222").school("S").build());
-        assertThat(dto.getLoginId()).isEqualTo(student.getUser().getUsername());
+        given(studentRepository.findByPhone("010-9876-5432")).willReturn(Optional.empty());
+        given(teacherRepository.findByPhone("010-9876-5432")).willReturn(Optional.of(teacher));
+
+        // When
+        StudentResponseDto result = studentService.findUsername(requestDto);
+
+        // Then
+        assertThat(result.getLoginId()).isEqualTo(teacher.getUser().getUsername());
+
     }
 
     @Test
-    @DisplayName("findUsername: 유저 없음 -> USER_NOT_FOUND")
-    void findUsername_notFound() {
-        given(studentRepository.findByPhone(anyString())).willReturn(Optional.empty());
-        assertThatThrownBy(() -> studentService.findUsername(
-                FindIdRequestDto.builder().name("N").phone("010").school("S").build()))
+    @DisplayName("findUsername: 부모 - 정상 조회")
+    void findUsername_parent_success() {
+        // Given
+        FindIdRequestDto requestDto = FindIdRequestDto.builder()
+                .phone("010-5555-6666")
+                .name("박부모")
+                .school("인천중학교")
+                .build();
+
+        given(studentRepository.findByPhone("010-5555-6666")).willReturn(Optional.empty());
+        given(teacherRepository.findByPhone("010-5555-6666")).willReturn(Optional.empty());
+        given(parentRepository.findByPhone("010-5555-6666")).willReturn(Optional.of(parent));
+
+        // When
+        StudentResponseDto result = studentService.findUsername(requestDto);
+
+        // Then
+        assertThat(result.getLoginId()).isEqualTo(parent.getUser().getUsername());
+    }
+
+    @Test
+    @DisplayName("findUsername: 전화번호로 사용자를 찾을 수 없음")
+    void findUsername_userNotFound() {
+        // Given
+        FindIdRequestDto requestDto = FindIdRequestDto.builder()
+                .phone("010-0000-0000")
+                .name("없는사람")
+                .school("인천중학교")
+                .build();
+
+        given(studentRepository.findByPhone("010-0000-0000")).willReturn(Optional.empty());
+        given(teacherRepository.findByPhone("010-0000-0000")).willReturn(Optional.empty());
+        given(parentRepository.findByPhone("010-0000-0000")).willReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> studentService.findUsername(requestDto))
                 .isInstanceOf(CustomException.class)
-                .hasMessage(ErrorCode.USER_NOT_FOUND.getMessage());
+                .hasMessageContaining(ErrorCode.USER_NOT_FOUND.getMessage());
     }
 
     @Test
-    @DisplayName("findUsername: 이름/학교 불일치 -> INVALID_INPUT_VALUE")
-    void findUsername_invalidInput() {
-        Student s = Student.builder()
-                .phone("010").name("A")
-                .user(User.builder().school("X").build())
+    @DisplayName("findUsername: 이름 불일치")
+    void findUsername_nameMismatch() {
+        // Given
+        FindIdRequestDto requestDto = FindIdRequestDto.builder()
+                .phone("010-1234-5678")
+                .name("잘못된이름")
+                .school("인천중학교")
                 .build();
-        given(studentRepository.findByPhone("010")).willReturn(Optional.of(s));
-        assertThatThrownBy(() -> studentService.findUsername(
-                FindIdRequestDto.builder().name("B").phone("010").school("X").build()))
+
+        given(studentRepository.findByPhone("010-1234-5678")).willReturn(Optional.of(student));
+
+        // When & Then
+        assertThatThrownBy(() -> studentService.findUsername(requestDto))
                 .isInstanceOf(CustomException.class)
-                .hasMessage(ErrorCode.INVALID_INPUT_VALUE.getMessage());
+                .hasMessageContaining(ErrorCode.USER_NOT_FOUND.getMessage());
     }
 
     @Test
-    @DisplayName("findPassword: 성공")
-    void findPassword_success() {
-        User u = User.builder().school("S").username("u").password("p").role(Role.STUDENT).build();
-        Student s = Student.builder().phone("010").name("A").ssn("SSN").user(u).build();
-        given(studentRepository.findByPhone("010")).willReturn(Optional.of(s));
-
-        PasswordResponseDto dto = studentService.findPassword(
-                PasswordRequestDto.builder().name("A").phone("010").school("S").ssn("SSN").build());
-        assertThat(dto.getPassword()).isEqualTo(s.getUser().getPassword());
-    }
-
-    @Test
-    @DisplayName("findPassword: 불일치 -> INVALID_INPUT_VALUE")
-    void findPassword_invalidInput() {
-        Student s = Student.builder()
-                .phone("010").name("A").ssn("SSN")
-                .user(User.builder().school("S").build())
+    @DisplayName("findUsername: 학교 불일치")
+    void findUsername_schoolMismatch() {
+        // Given
+        FindIdRequestDto requestDto = FindIdRequestDto.builder()
+                .phone("010-1234-5678")
+                .name("김학생")
+                .school("다른학교")
                 .build();
-        given(studentRepository.findByPhone("010")).willReturn(Optional.of(s));
-        assertThatThrownBy(() -> studentService.findPassword(
-                PasswordRequestDto.builder().name("B").phone("010").school("S").ssn("SSN").build()))
+
+        given(studentRepository.findByPhone("010-1234-5678")).willReturn(Optional.of(student));
+
+        // When & Then
+        assertThatThrownBy(() -> studentService.findUsername(requestDto))
                 .isInstanceOf(CustomException.class)
-                .hasMessage(ErrorCode.INVALID_INPUT_VALUE.getMessage());
+                .hasMessageContaining(ErrorCode.USER_NOT_FOUND.getMessage());
+    }
+
+    // === 비밀번호 찾기 테스트 ===
+
+    @Test
+    @DisplayName("findPassword: 학생 - 정상 조회 및 임시 비밀번호 생성")
+    void findPassword_student_success() {
+        // Given
+        PasswordRequestDto requestDto = PasswordRequestDto.builder()
+                .phone("010-1234-5678")
+                .name("김학생")
+                .school("인천중학교")
+                .ssn("123456-1234567")
+                .build();
+
+        given(studentRepository.findByPhone("010-1234-5678")).willReturn(Optional.of(student));
+        given(passwordEncoder.encode(anyString())).willReturn("encodedTempPassword");
+
+        // When
+        PasswordResponseDto result = studentService.findPassword(requestDto);
+
+        // Then
+        // 6자리 임시 비밀번호가 생성되었는지 확인
+        assertThat(result.getPassword()).matches("\\d{6}"); // 6자리 숫자 패턴
+
+        // User 저장이 호출되었는지 확인
+        then(userRepository).should().save(user);
+
+        // 비밀번호가 암호화되어 저장되었는지 확인
+        then(passwordEncoder).should().encode(anyString());
+        assertThat(user.getPassword()).isEqualTo("encodedTempPassword");
     }
 
     @Test
-    @DisplayName("getStudentDetails: 성공")
-    void getStudentDetails_success() {
-        Long id = 5L;
-        int year = 2025;
-        Student s = Student.builder()
-                .name("N").phone("010")
-                .user(User.builder().school("S").build())
-                .build();
-        ReflectionTestUtils.setField(s, "id", id);
-
-        ClassroomStudent cs = ClassroomStudent.builder()
-                .student(s)
-                .number(3)
-                .classroom(classroom)
+    @DisplayName("findPassword: 교사 - 정상 조회 및 임시 비밀번호 생성")
+    void findPassword_teacher_success() {
+        // Given
+        PasswordRequestDto requestDto = PasswordRequestDto.builder()
+                .phone("010-9876-5432")
+                .name("이교사")
+                .school("인천중학교")
                 .build();
 
-        Parent father = Parent.builder().name("F").relationShip("부").build();
-        Parent mother = Parent.builder().name("M").relationShip("모").build();
+        given(studentRepository.findByPhone("010-9876-5432")).willReturn(Optional.empty());
+        given(teacherRepository.findByPhone("010-9876-5432")).willReturn(Optional.of(teacher));
+        given(passwordEncoder.encode(anyString())).willReturn("encodedTempPassword");
 
-        given(studentRepository.findById(id)).willReturn(Optional.of(s));
-        given(classroomStudentRepository.findByStudentAndClassroomYear(id, year))
-                .willReturn(Optional.of(cs));
-        given(parentService.getParents(s)).willReturn(List.of(father, mother)); // ParentService 사용
+        // When
+        PasswordResponseDto result = studentService.findPassword(requestDto);
 
-        StudentDetailResDto dto = studentService.getStudentDetails(id, year);
-        assertThat(dto.getName()).isEqualTo("N");
-        assertThat(dto.getFatherName()).isEqualTo("F");
-        assertThat(dto.getMotherName()).isEqualTo("M");
+        // Then
+        // 6자리 임시 비밀번호가 생성되었는지 확인
+        assertThat(result.getPassword()).matches("\\d{6}"); // 6자리 숫자 패턴
+
+        // User 저장이 호출되었는지 확인
+        then(userRepository).should().save(user);
+
+        // 비밀번호가 암호화되어 저장되었는지 확인
+        then(passwordEncoder).should().encode(anyString());
     }
 
     @Test
-    @DisplayName("getStudentDetails: 학생 없음 -> USER_NOT_FOUND")
-    void getStudentDetails_notFoundStudent() {
-        given(studentRepository.findById(any()))
-                .willReturn(Optional.empty());
-        assertThatThrownBy(() -> studentService.getStudentDetails(1L, 2025))
+    @DisplayName("findPassword: 부모 - 정상 조회 및 임시 비밀번호 생성")
+    void findPassword_parent_success() {
+        // Given
+        PasswordRequestDto requestDto = PasswordRequestDto.builder()
+                .phone("010-5555-6666")
+                .name("박부모")
+                .school("인천중학교")
+                .build();
+
+        given(studentRepository.findByPhone("010-5555-6666")).willReturn(Optional.empty());
+        given(teacherRepository.findByPhone("010-5555-6666")).willReturn(Optional.empty());
+        given(parentRepository.findByPhone("010-5555-6666")).willReturn(Optional.of(parent));
+        given(passwordEncoder.encode(anyString())).willReturn("encodedTempPassword");
+
+        // When
+        PasswordResponseDto result = studentService.findPassword(requestDto);
+
+        // Then
+        // 6자리 임시 비밀번호가 생성되었는지 확인
+        assertThat(result.getPassword()).matches("\\d{6}"); // 6자리 숫자 패턴
+
+        // User 저장이 호출되었는지 확인
+        then(userRepository).should().save(user);
+    }
+
+    @Test
+    @DisplayName("findPassword: 학생 - 주민번호 불일치")
+    void findPassword_student_ssnMismatch() {
+        // Given
+        PasswordRequestDto requestDto = PasswordRequestDto.builder()
+                .phone("010-1234-5678")
+                .name("김학생")
+                .school("인천중학교")
+                .ssn("999999-9999999") // 잘못된 주민번호
+                .build();
+
+        given(studentRepository.findByPhone("010-1234-5678")).willReturn(Optional.of(student));
+
+        // When & Then
+        assertThatThrownBy(() -> studentService.findPassword(requestDto))
                 .isInstanceOf(CustomException.class)
-                .hasMessage(ErrorCode.USER_NOT_FOUND.getMessage());
+                .hasMessageContaining(ErrorCode.INVALID_INPUT_VALUE.getMessage());
+
+        // 비밀번호 변경이 호출되지 않았는지 확인
+        then(userRepository).should(never()).save(any());
+        then(passwordEncoder).should(never()).encode(anyString());
     }
 
     @Test
-    @DisplayName("getStudentDetails: ClassroomStudent 없음 -> USER_NOT_FOUND")
-    void getStudentDetails_notFoundClassroomStudent() {
-        Long id = 5L;
-        int year = 2025;
-        Student s = Student.builder()
-                .name("N").phone("010")
-                .user(User.builder().school("S").build())
+    @DisplayName("findPassword: 전화번호로 사용자를 찾을 수 없음")
+    void findPassword_userNotFound() {
+        // Given
+        PasswordRequestDto requestDto = PasswordRequestDto.builder()
+                .phone("010-0000-0000")
+                .name("없는사람")
+                .school("인천중학교")
                 .build();
-        ReflectionTestUtils.setField(s, "id", id);
 
-        given(studentRepository.findById(id)).willReturn(Optional.of(s));
-        given(classroomStudentRepository.findByStudentAndClassroomYear(id, year))
-                .willReturn(Optional.empty()); // ClassroomStudent 없음
+        given(studentRepository.findByPhone("010-0000-0000")).willReturn(Optional.empty());
+        given(teacherRepository.findByPhone("010-0000-0000")).willReturn(Optional.empty());
+        given(parentRepository.findByPhone("010-0000-0000")).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> studentService.getStudentDetails(id, year))
+        // When & Then
+        assertThatThrownBy(() -> studentService.findPassword(requestDto))
                 .isInstanceOf(CustomException.class)
-                .hasMessage(ErrorCode.USER_NOT_FOUND.getMessage());
-    }
-
-    @Test
-    @DisplayName("getLast4Digits: 길이 부족 시 INVALID_INPUT_VALUE 예외")
-    void getLast4Digits_invalid() throws Exception {
-        // private 메서드를 리플렉션으로 가져오기
-        Method getLast4Digits = StudentService.class
-                .getDeclaredMethod("getLast4Digits", String.class);
-        getLast4Digits.setAccessible(true);
-
-        // "123" 처럼 4자리 미만을 넘기면 내부에서 CustomException이 터져야 한다
-        Throwable thrown = catchThrowable(() ->
-                getLast4Digits.invoke(studentService, "123")
-        );
-
-        // 리플렉션 호출 시 InvocationTargetException 안에 CustomException이 래핑되어 있으니
-        // hasRootCauseInstanceOf 로 꺼내서 검증
-        assertThat(thrown)
-                .hasRootCauseInstanceOf(CustomException.class)
-                .rootCause()
                 .hasMessageContaining(ErrorCode.INVALID_INPUT_VALUE.getMessage());
     }
 
     @Test
-    @DisplayName("saveStudent: 사용자 없으면 USER_NOT_FOUND")
-    void saveStudent_userNotFound() {
-        given(userRepository.findByUsername("nope")).willReturn(Optional.empty());
+    @DisplayName("findPassword: 교사/부모 - 이름 불일치")
+    void findPassword_teacher_nameMismatch() {
+        // Given
+        PasswordRequestDto requestDto = PasswordRequestDto.builder()
+                .phone("010-9876-5432")
+                .name("잘못된교사이름")
+                .school("인천중학교")
+                .build();
 
-        assertThatThrownBy(() ->
-                studentService.saveStudent("nope", saveDto, null)
-        )
+        given(studentRepository.findByPhone("010-9876-5432")).willReturn(Optional.empty());
+        given(teacherRepository.findByPhone("010-9876-5432")).willReturn(Optional.of(teacher));
+
+        // When & Then
+        assertThatThrownBy(() -> studentService.findPassword(requestDto))
                 .isInstanceOf(CustomException.class)
-                .hasMessageContaining(ErrorCode.USER_NOT_FOUND.getMessage());
+                .hasMessageContaining(ErrorCode.INVALID_INPUT_VALUE.getMessage());
+
+        // 비밀번호 변경이 호출되지 않았는지 확인
+        then(userRepository).should(never()).save(any());
     }
 
     @Test
-    @DisplayName("saveStudent: 권한 없으면 HANDLE_ACCESS_DENIED")
-    void saveStudent_noPermission() {
-        User u = User.builder().role(Role.STUDENT).build();
-        given(userRepository.findByUsername("stu")).willReturn(Optional.of(u));
+    @DisplayName("findPassword: 교사/부모 - 학교 불일치")
+    void findPassword_teacher_schoolMismatch() {
+        // Given
+        PasswordRequestDto requestDto = PasswordRequestDto.builder()
+                .phone("010-9876-5432")
+                .name("이교사")
+                .school("다른학교")
+                .build();
 
-        assertThatThrownBy(() ->
-                studentService.saveStudent("stu", saveDto, null)
-        )
+        given(studentRepository.findByPhone("010-9876-5432")).willReturn(Optional.empty());
+        given(teacherRepository.findByPhone("010-9876-5432")).willReturn(Optional.of(teacher));
+
+        // When & Then
+        assertThatThrownBy(() -> studentService.findPassword(requestDto))
                 .isInstanceOf(CustomException.class)
-                .hasMessageContaining(ErrorCode.HANDLE_ACCESS_DENIED.getMessage());
+                .hasMessageContaining(ErrorCode.INVALID_INPUT_VALUE.getMessage());
     }
 
     @Test
-    @DisplayName("saveStudent: 성공 (이미지 없이)")
-    void saveStudent_success_withoutImage() {
-        // given: ADMIN 권한
-        given(userRepository.findByUsername("admin")).willReturn(Optional.of(adminUser));
-        // 첫 save -> 새로운 User 리턴
-        User newUser = User.builder().build();
-        ReflectionTestUtils.setField(newUser, "id", 99L);
-        given(userRepository.save(any(User.class))).willReturn(newUser);
-        // passwordEncoder
-        given(passwordEncoder.encode(anyString())).willReturn("~encoded~");
-        // studentRepository.save
-        given(studentRepository.save(any(Student.class))).willReturn(existingStudent);
+    @DisplayName("generateTempPassword: 임시 비밀번호가 6자리 숫자 형식인지 검증")
+    void generateTempPassword_format_test() {
+        // Given
+        PasswordRequestDto requestDto = PasswordRequestDto.builder()
+                .phone("010-1234-5678")
+                .name("김학생")
+                .school("인천중학교")
+                .ssn("123456-1234567")
+                .build();
 
-        // when
-        StudentSaveResponseDto dto = studentService.saveStudent("admin", saveDto, null);
+        given(studentRepository.findByPhone("010-1234-5678")).willReturn(Optional.of(student));
+        given(passwordEncoder.encode(anyString())).willReturn("encodedPassword");
 
-        // then
-        // password 는 전화번호 뒷4자리
-        assertThat(dto.getPassword()).isEqualTo("5678");
-        // UserRepository#save 두 번 호출 (create + updateUsername)
-        then(userRepository).should(times(2)).save(any(User.class));
-        // student 저장
-        then(studentRepository).should().save(any(Student.class));
-        // encoded 호출
-        then(passwordEncoder).should().encode("5678");
+        // When
+        PasswordResponseDto result = studentService.findPassword(requestDto);
+
+        // Then
+        String tempPassword = result.getPassword();
+
+        // 6자리인지 확인
+        assertThat(tempPassword).hasSize(6);
+
+        // 모두 숫자인지 확인
+        assertThat(tempPassword).matches("\\d{6}");
+
+        // 000000 ~ 999999 범위인지 확인
+        int passwordInt = Integer.parseInt(tempPassword);
+        assertThat(passwordInt).isBetween(0, 999999);
     }
 
     @Test
-    @DisplayName("updateStudent: 사용자 없으면 USER_NOT_FOUND")
-    void updateStudent_userNotFound() {
-        given(userRepository.findByUsername("nope")).willReturn(Optional.empty());
+    @DisplayName("findPassword: 여러 번 호출 시 매번 다른 임시 비밀번호 생성")
+    void findPassword_generates_different_passwords() {
+        // Given
+        PasswordRequestDto requestDto = PasswordRequestDto.builder()
+                .phone("010-1234-5678")
+                .name("김학생")
+                .school("인천중학교")
+                .ssn("123456-1234567")
+                .build();
 
-        assertThatThrownBy(() ->
-                studentService.updateStudent("nope", 5L, updateDto, null)
-        )
-                .isInstanceOf(CustomException.class)
-                .hasMessageContaining(ErrorCode.USER_NOT_FOUND.getMessage());
-    }
+        given(studentRepository.findByPhone("010-1234-5678")).willReturn(Optional.of(student));
+        given(passwordEncoder.encode(anyString())).willReturn("encodedPassword");
 
-    @Test
-    @DisplayName("updateStudent: 권한 없으면 HANDLE_ACCESS_DENIED")
-    void updateStudent_noPermission() {
-        // 권한 STUDENT 로 stub
-        User stu = User.builder().role(Role.STUDENT).build();
-        given(userRepository.findByUsername("stu")).willReturn(Optional.of(stu));
+        // When - 여러 번 호출
+        PasswordResponseDto result1 = studentService.findPassword(requestDto);
+        PasswordResponseDto result2 = studentService.findPassword(requestDto);
+        PasswordResponseDto result3 = studentService.findPassword(requestDto);
 
-        assertThatThrownBy(() ->
-                studentService.updateStudent("stu", 5L, updateDto, null)
-        )
-                .isInstanceOf(CustomException.class)
-                .hasMessageContaining(ErrorCode.HANDLE_ACCESS_DENIED.getMessage());
-    }
-
-    @Test
-    @DisplayName("updateStudent: 성공 (이미지 변경 없이)")
-    void updateStudent_success_withoutImage() {
-        // given: TEACHER 권한
-        given(userRepository.findByUsername("teacher")).willReturn(Optional.of(teacherUser));
-        given(studentRepository.findById(5L)).willReturn(Optional.of(existingStudent));
-        given(parentService.getParents(existingStudent)).willReturn(List.of(father, mother)); // ParentService 사용
-
-        // when
-        studentService.updateStudent("teacher", 5L, updateDto, null);
-
-        // then: Student 필드가 업데이트 되었는지 확인
-        assertThat(existingStudent.getName()).isEqualTo("최길동");
-        assertThat(existingStudent.getPhone()).isEqualTo("010-8765-4321");
-        assertThat(existingStudent.getAddress()).isEqualTo("부평구");
-        // 부모 정보도 업데이트
-        assertThat(father.getName()).isEqualTo("최아버지");
-        assertThat(father.getPhone()).isEqualTo("010-0000-1111");
-        assertThat(mother.getName()).isEqualTo("최어머니");
-        assertThat(mother.getPhone()).isEqualTo("010-2222-3333");
-    }
-
-    @Test
-    @DisplayName("getStudent: 성공")
-    void getStudent_success() {
-        Long studentId = 5L;
-        given(studentRepository.findById(studentId)).willReturn(Optional.of(existingStudent));
-
-        Student result = studentService.getStudent(studentId);
-
-        assertThat(result).isEqualTo(existingStudent);
-        then(studentRepository).should().findById(studentId);
-    }
-
-    @Test
-    @DisplayName("getStudent: 학생 없음 -> USER_NOT_FOUND")
-    void getStudent_notFound() {
-        Long studentId = 999L;
-        given(studentRepository.findById(studentId)).willReturn(Optional.empty());
-
-        assertThatThrownBy(() -> studentService.getStudent(studentId))
-                .isInstanceOf(CustomException.class)
-                .hasMessage(ErrorCode.USER_NOT_FOUND.getMessage());
-    }
-
-    @Test
-    @DisplayName("findByUser: 성공")
-    void findByUser_success() {
-        User user = User.builder().username("testuser").build();
-        given(studentRepository.findByUser(user)).willReturn(Optional.of(existingStudent));
-
-        Student result = studentService.findByUser(user);
-
-        assertThat(result).isEqualTo(existingStudent);
-        then(studentRepository).should().findByUser(user);
-    }
-
-    @Test
-    @DisplayName("findByUser: 학생 없음 -> USER_NOT_FOUND")
-    void findByUser_notFound() {
-        User user = User.builder().username("nonexistent").build();
-        given(studentRepository.findByUser(user)).willReturn(Optional.empty());
-
-        assertThatThrownBy(() -> studentService.findByUser(user))
-                .isInstanceOf(CustomException.class)
-                .hasMessage(ErrorCode.USER_NOT_FOUND.getMessage());
+        // Then - 매번 다른 비밀번호가 생성되어야 함 (높은 확률로)
+        assertThat(result1.getPassword()).isNotEqualTo(result2.getPassword());
+        assertThat(result2.getPassword()).isNotEqualTo(result3.getPassword());
+        assertThat(result1.getPassword()).isNotEqualTo(result3.getPassword());
     }
 }

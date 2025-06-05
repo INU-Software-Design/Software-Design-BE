@@ -136,7 +136,7 @@ class StudentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.response").exists())
                 .andExpect(jsonPath("$.response.password").value("temp1234"))
-                .andExpect(jsonPath("$.message").value(StatusCode.SUCCESS_GET_USERNAME.getMessage()));
+                .andExpect(jsonPath("$.message").value(StatusCode.SUCCESS_GET_PASSWORD.getMessage()));
     }
 
     @Test
