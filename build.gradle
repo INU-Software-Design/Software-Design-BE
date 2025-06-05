@@ -193,7 +193,7 @@ afterEvaluate {
     }
 }
 
-// 커버리지 검증 (현실적 기준)
+// 커버리지 검증
 tasks.named('jacocoTestCoverageVerification') {
     violationRules {
         rule {
@@ -203,13 +203,13 @@ tasks.named('jacocoTestCoverageVerification') {
             limit {
                 counter = 'LINE'
                 value = 'COVEREDRATIO'
-                minimum = 0.00
+                minimum = 0.4
             }
 
             limit {
                 counter = 'BRANCH'
                 value = 'COVEREDRATIO'
-                minimum = 0.00
+                minimum = 0.8
             }
 
             excludes = [
@@ -230,7 +230,7 @@ tasks.named('jacocoTestCoverageVerification') {
     }
 }
 
-// SonarQube 태스크 의존성 설정 (최신 API)
+// SonarQube 태스크 의존성 설정
 tasks.named('sonar') {
     dependsOn tasks.compileJava, tasks.compileTestJava, tasks.test, tasks.jacocoTestReport
 
@@ -246,7 +246,7 @@ tasks.named('sonar') {
 
 }
 
-// 커스텀 태스크들 (최신 Task API 사용)
+
 tasks.register('testOnly') {
     group = 'verification'
     description = "테스트만 실행 (실패 무시)"
