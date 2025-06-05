@@ -56,5 +56,11 @@ public class SubjectService {
                 () -> new CustomException(ErrorCode.DATA_NOT_FOUND)
         );
     }
+
+    public Subject findById(Long subjectId) {
+        return subjectRepository.findById(subjectId).orElseThrow(
+                () -> new CustomException(ErrorCode.DATA_NOT_FOUND)
+        );
+    }
 }
 

@@ -19,6 +19,7 @@ import com.neeis.neeis.domain.scoreSummary.dto.req.ScoreFeedbackRequestDto;
 import com.neeis.neeis.domain.scoreSummary.dto.req.ScoreFeedbackUpdateDto;
 import com.neeis.neeis.domain.student.dto.report.SubjectFeedbackDto;
 import com.neeis.neeis.domain.subject.Subject;
+import com.neeis.neeis.domain.subject.service.SubjectService;
 import com.neeis.neeis.domain.teacher.Teacher;
 import com.neeis.neeis.domain.teacher.service.TeacherService;
 import com.neeis.neeis.domain.user.User;
@@ -49,6 +50,7 @@ public class ScoreSummaryService {
     private final ClassroomService classroomService;
     private final UserService userService;
     private final ClassroomStudentService classroomStudentService;
+    private final SubjectService subjectService;
     private final ClassroomStudentRepository classroomStudentRepository;
 
     private final EvaluationMethodService evaluationMethodService;
@@ -193,6 +195,32 @@ public class ScoreSummaryService {
         log.debug("과목 {} - {} 명의 성적 요약 저장 완료", subject.getName(), summariesToSave.size());
     }
 
+    /**
+     * 특정 과목만 업데이트하는 새로운 메서드
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void updateSummaryForSpecificSubject(Long subjectId, int year, int semester, int grade, int classNum) {
+        try {
+            Classroom classroom = classroomService.findClassroom(year, grade, classNum);
+            List<ClassroomStudent> students = classroomStudentService.findByClassroom(classroom);
+
+            // 특정 과목만 조회
+            Subject subject = subjectService.findById(subjectId);
+
+            log.debug("특정 과목 성적 요약 업데이트 시작: {}년 {}학기 {}학년 {}반 - 과목: {}",
+                    year, semester, grade, classNum, subject.getName());
+
+            updateSummaryForSubject(subject, year, semester, grade, students);
+
+            log.debug("특정 과목 성적 요약 업데이트 완료: {}년 {}학기 {}학년 {}반 - 과목: {}",
+                    year, semester, grade, classNum, subject.getName());
+
+        } catch (Exception e) {
+            log.error("특정 과목 성적 요약 업데이트 실패: 과목ID={}, {}년 {}학기 {}학년 {}반, 오류={}",
+                    subjectId, year, semester, grade, classNum, e.getMessage(), e);
+            throw e;
+        }
+    }
 
     @Transactional
     public void saveFeedback(String username, ScoreFeedbackRequestDto requestDto) {

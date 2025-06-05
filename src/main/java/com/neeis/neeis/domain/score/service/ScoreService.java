@@ -125,7 +125,9 @@ public class ScoreService {
         // 교사 권한 체크
         Teacher teacher = teacherService.authenticate(username);
 
+        Map<String, Set<Long>> affectedSubjectsByClass = new HashMap<>();
         Map<String, List<Score>> scoreBuffer = new HashMap<>();
+
 
         for (ScoreRequestDto requestDto : requestList) {
             EvaluationMethod eval = evaluationMethodService.findById(requestDto.getEvaluationId());
@@ -134,13 +136,15 @@ public class ScoreService {
 
             Classroom classroom = classroomService.findClassroom(eval.getYear(), eval.getGrade(), requestDto.getClassNum());
 
+            // 클래스별 영향받는 과목 추적
+            String classKey = eval.getYear() + "_" + eval.getSemester() + "_" + eval.getGrade() + "_" + requestDto.getClassNum();
+            affectedSubjectsByClass.computeIfAbsent(classKey, k -> new HashSet<>()).add(subject.getId());
+
             for (ScoreRequestDto.StudentScoreDto studentDto : requestDto.getStudents()) {
                 ClassroomStudent student = classroomStudentService.findByClassroomAndNumber(classroom, studentDto.getNumber());
 
                 double raw = studentDto.getRawScore();
-
                 ScoreValidator.validateRawScore(raw, eval);
-
                 double weighted = (raw / eval.getFullScore()) * eval.getWeight();
 
                 // 점수 저장
@@ -158,52 +162,67 @@ public class ScoreService {
                                         .build()
                         ));
 
-                // 과목별 누적 요약 계산용 버퍼
-                String key = eval.getYear() + "_" + eval.getSemester() + "_" + eval.getGrade() + "_" + requestDto.getClassNum();
-                scoreBuffer.computeIfAbsent(key, k -> new ArrayList<>()).add(score);
+                scoreBuffer.computeIfAbsent(classKey, k -> new ArrayList<>()).add(score);
             }
         }
 
         scoreRepository.flush();
 
-        // 요약 저장 로직은 key 단위로 처리
-        for (String key : scoreBuffer.keySet()) {
-            String[] parts = key.split("_");
+        for (Map.Entry<String, Set<Long>> entry : affectedSubjectsByClass.entrySet()) {
+            String classKey = entry.getKey();
+            Set<Long> affectedSubjectIds = entry.getValue();
+
+            String[] parts = classKey.split("_");
             int year = Integer.parseInt(parts[0]);
             int semester = Integer.parseInt(parts[1]);
             int grade = Integer.parseInt(parts[2]);
             int classNum = Integer.parseInt(parts[3]);
 
-            // 성적 요약 업데이트
-            scoreSummaryService.updateSummaryForClass(year, semester, grade, classNum);
+            log.info("성적 업데이트 - 영향받는 과목 수: {} ({}년 {}학기 {}학년 {}반)",
+                    affectedSubjectIds.size(), year, semester, grade, classNum);
+
+            // 영향받는 과목들만 업데이트
+            for (Long subjectId : affectedSubjectIds) {
+                scoreSummaryService.updateSummaryForSpecificSubject(subjectId, year, semester, grade, classNum);
+            }
         }
 
-        // 모든 트랜잭션이 커밋된 후 알림 발송 (별도 트랜잭션)
-        for (String key : scoreBuffer.keySet()) {
-            String[] parts = key.split("_");
+        // 영향받는 과목들에만 알림 발송
+        for (Map.Entry<String, Set<Long>> entry : affectedSubjectsByClass.entrySet()) {
+            String classKey = entry.getKey();
+            Set<Long> affectedSubjectIds = entry.getValue();
+
+            String[] parts = classKey.split("_");
             int year = Integer.parseInt(parts[0]);
             int semester = Integer.parseInt(parts[1]);
             int grade = Integer.parseInt(parts[2]);
             int classNum = Integer.parseInt(parts[3]);
 
-            sendNotificationsAfterScoreUpdate(year, semester, grade, classNum);
+            // 영향받는 과목들에만 알림 발송
+            sendNotificationsForAffectedSubjects(year, semester, grade, classNum, affectedSubjectIds);
         }
     }
 
     /*
-     * 알림 발송 중 오류가 발생해도 성적 저장 트랜잭션에 영향을 주지 않음
+     * 특정 과목들에만 알림 발송
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void sendNotificationsAfterScoreUpdate(int year, int semester, int grade, int classNum) {
+    public void sendNotificationsForAffectedSubjects(int year, int semester, int grade, int classNum, Set<Long> affectedSubjectIds) {
         try {
             Classroom classroom = classroomService.findClassroom(year, grade, classNum);
             List<ClassroomStudent> students = classroomStudentService.findByClassroom(classroom);
-            List<Subject> subjects = evaluationMethodService.findSubject(year, semester, grade);
+
+            // 🔥 핵심: 영향받는 과목들만 조회
+            List<Subject> affectedSubjects = affectedSubjectIds.stream()
+                    .map(subjectService::findById)
+                    .toList();
+
+            log.info("알림 발송 시작 - 대상 과목: {}",
+                    affectedSubjects.stream().map(Subject::getName).toList());
 
             for (ClassroomStudent student : students) {
-                for (Subject subject : subjects) {
+                for (Subject subject : affectedSubjects) { // 영향받는 과목들만 순회
                     try {
-                        // Optional을 사용하여 안전하게 처리
                         scoreSummaryService.findByStudentAndSubjectOptional(student.getId(), subject.getId())
                                 .ifPresent(summary -> {
                                     try {
@@ -212,25 +231,25 @@ public class ScoreService {
 
                                         // 알림 기록 저장
                                         User user = student.getStudent().getUser();
-                                        String content = subject.getName() + "과목의 성적이 입력되었습니다.";
+                                        String content = subject.getName() + " 과목의 성적이 입력되었습니다.";
                                         notificationService.sendNotification(user, content);
 
                                         log.debug("알림 발송 완료: 학생={}, 과목={}", student.getStudent().getName(), subject.getName());
                                     } catch (Exception e) {
-                                        log.warn("개별 알림 발송 실패 (계속 진행): 학생={}, 과목={}, 오류={}",
-                                                student.getStudent().getName(), subject.getName(), e.getMessage());
+                                        log.warn("개별 알림 발송 실패 (계속 진행): 학생={}, 과목={}, 오류={}", student.getStudent().getName(), subject.getName(), e.getMessage());
                                     }
                                 });
                     } catch (Exception e) {
-                        log.warn("성적 요약 조회 실패 (계속 진행): 학생ID={}, 과목={}, 오류={}",
-                                student.getId(), subject.getName(), e.getMessage());
+                        log.warn("성적 요약 조회 실패 (계속 진행): 학생ID={}, 과목={}, 오류={}", student.getId(), subject.getName(), e.getMessage());
                     }
                 }
             }
+
+            log.info("알림 발송 완료 - 처리된 과목 수: {}", affectedSubjects.size());
+
         } catch (Exception e) {
-            log.error("알림 발송 과정에서 전체 오류 발생: year={}, semester={}, grade={}, classNum={}, 오류={}",
-                    year, semester, grade, classNum, e.getMessage(), e);
-            // 알림 발송 실패는 전체 프로세스를 중단시키지 않음
+            log.error("알림 발송 과정에서 전체 오류 발생: year={}, semester={}, grade={}, classNum={}, 과목수={}, 오류={}",
+                    year, semester, grade, classNum, affectedSubjectIds.size(), e.getMessage(), e);
         }
     }
 
