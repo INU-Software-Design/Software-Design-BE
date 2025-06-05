@@ -33,6 +33,7 @@ import static com.neeis.neeis.global.exception.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserService {
 
     private final UserRepository userRepository;
